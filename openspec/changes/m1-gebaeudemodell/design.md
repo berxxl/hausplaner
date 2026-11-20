@@ -28,7 +28,7 @@ Leeres Repository. Datenmodell, Dateiformat, Modulschnitt und Technik sind in `d
 
 | Endpunkt | Anfrage | Antwort |
 |---|---|---|
-| `GET /api/project` | – | 200 `{"status":"ok","files":{"<pfad>":"<inhalt>"}}` mit allen `*.yaml` (rekursiv, ohne `.git/`); 200 `{"status":"empty"}` wenn keine `*.yaml`; 200 `{"status":"missing"}` wenn der Ordner fehlt |
+| `GET /api/project` | – | 200 `{"status":"ok","folder":"<ordnername>","files":{"<pfad>":"<inhalt>"}}` mit allen `*.yaml` (rekursiv, ohne `.git/`); 200 `{"status":"empty","folder":…}` wenn keine `*.yaml`; 200 `{"status":"missing","folder":…}` wenn der Ordner fehlt. `folder` ist der Name des Projektordners (Vorschlag für den Projektnamen) |
 | `PUT /api/files` | `{"files":{"<pfad>":"<inhalt>" \| null}}`, `null` = löschen | 200 `{"results":{"<pfad>":"ok" \| {"error":"<meldung>"}}}`; `null` auf eine nicht vorhandene Datei ergibt `"ok"`; 400 bzw. 403, wenn ein Pfad ungültig ist oder außerhalb liegt (dann wird nichts aus dem Stapel geschrieben); legt fehlende Ordner an |
 | `GET /api/raw/<pfad>` | – | 200 Rohbytes mit Content-Type nach Endung; 404 |
 | `PUT /api/raw/plaene/<name>` | Rohbytes | Liegt in `plaene/` eine Datei mit gleichem SHA-256: 200 `{"path":"plaene/<vorhandene>"}`, nichts wird geschrieben. Sonst Schreiben unter `plaene/<name>`, bei Namenskollision `-2`, `-3` … vor der Endung: 201 `{"path":"plaene/<neu>"}`. Nur direkt unter `plaene/` erlaubt, sonst 400 |

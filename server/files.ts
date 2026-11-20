@@ -28,11 +28,14 @@ export async function exists(path: string): Promise<boolean> {
 }
 
 export type ProjectListing =
-  { status: "ok"; files: Record<string, string> } | { status: "empty" } | { status: "missing" };
+  | { status: "ok"; folder: string; files: Record<string, string> }
+  | { status: "empty"; folder: string }
+  | { status: "missing"; folder: string };
 
 /** Alle *.yaml im Projektordner (rekursiv, ohne .git/), nur innerhalb des Projektordners. */
 export async function readProject(root: string): Promise<ProjectListing> {
-  if (!(await exists(root))) return { status: "missing" };
+  const folder = basename(root);
+  if (!(await exists(root))) return { status: "missing", folder };
   const realRoot = await realpath(root);
   const files: Record<string, string> = {};
   const walk = async (dir: string): Promise<void> => {
@@ -55,7 +58,9 @@ export async function readProject(root: string): Promise<ProjectListing> {
     }
   };
   await walk(root);
-  return Object.keys(files).length === 0 ? { status: "empty" } : { status: "ok", files };
+  return Object.keys(files).length === 0
+    ? { status: "empty", folder }
+    : { status: "ok", folder, files };
 }
 
 /** Schreibt über eine temporäre Datei im selben Ordner und rename (je Datei atomar). */

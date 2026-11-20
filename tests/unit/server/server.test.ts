@@ -48,16 +48,23 @@ describe("Endpunkte (3.2)", () => {
   test("GET /api/project: missing, empty, ok (rekursiv, ohne .git/)", async () => {
     const root = join(await tempDir(), "daten");
     s = await startApp(root);
-    expect((await call(s.port, "GET", "/api/project")).json()).toEqual({ status: "missing" });
+    expect((await call(s.port, "GET", "/api/project")).json()).toEqual({
+      status: "missing",
+      folder: "daten",
+    });
     await mkdir(join(root, ".git"), { recursive: true });
     await writeFile(join(root, "README.md"), "x");
     await writeFile(join(root, ".git", "x.yaml"), "a: 1\n");
-    expect((await call(s.port, "GET", "/api/project")).json()).toEqual({ status: "empty" });
+    expect((await call(s.port, "GET", "/api/project")).json()).toEqual({
+      status: "empty",
+      folder: "daten",
+    });
     await mkdir(join(root, "geschosse"));
     await writeFile(join(root, "projekt.yaml"), "a: 1\n");
     await writeFile(join(root, "geschosse", "eg.yaml"), "b: 2\n");
     expect((await call(s.port, "GET", "/api/project")).json()).toEqual({
       status: "ok",
+      folder: "daten",
       files: { "projekt.yaml": "a: 1\n", "geschosse/eg.yaml": "b: 2\n" },
     });
   });
@@ -167,7 +174,7 @@ describe("Pfadprüfung (3.3)", () => {
     expect(r.status).toBe(403);
     expect(r.json()).toMatchObject({ error: { code: "outside-project" } });
     // Auch die Projektliste liest ihn nicht.
-    expect((await call(s.port, "GET", "/api/project")).json()).toEqual({ status: "empty" });
+    expect((await call(s.port, "GET", "/api/project")).json()).toMatchObject({ status: "empty" });
   });
 
   test("Symlink-Ordner nach außen mit neuer Datei → 403, nichts aus dem Stapel geschrieben", async () => {

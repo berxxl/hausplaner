@@ -13,7 +13,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"], channel: "chromium" } },
     ...(allBrowsers
       ? [
           { name: "firefox", use: { ...devices["Desktop Firefox"] } },
@@ -22,7 +22,7 @@ export default defineConfig({
       : []),
   ],
   webServer: {
-    command: "npm run dev:ui -- --port 5173 --strictPort",
+    command: "npm run dev -- tests/fixtures/klein --port 5173 --strictPort",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
   },

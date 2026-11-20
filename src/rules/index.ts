@@ -1,0 +1,25 @@
+/** Alle Warnungen des Projekts (berechnet, nie gespeichert). Frei von React. */
+import type { Project } from "../model/types";
+import { openingsWithoutWall } from "./openings";
+
+export type WarningTarget =
+  { kind: "room"; id: string } | { kind: "opening"; id: string } | { kind: "none" };
+
+export interface ProjectWarning {
+  /** Stabiler Schlüssel `<regel>:<objektId>`. */
+  key: string;
+  text: string;
+  /** Ziel eines Klicks in der Warnungsleiste (design.md Tabelle „Warnungen“). */
+  target: WarningTarget;
+  /** Aktion „Löschen“ für Objekte, die nicht dargestellt werden können. */
+  deletable?: { kind: "opening"; id: string };
+}
+
+export function computeWarnings(project: Project): ProjectWarning[] {
+  const warnings: ProjectWarning[] = [];
+  for (const w of openingsWithoutWall(project)) {
+    const id = w.key.slice("opening-without-wall:".length);
+    warnings.push({ ...w, target: { kind: "none" }, deletable: { kind: "opening", id } });
+  }
+  return warnings.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}

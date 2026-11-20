@@ -3,7 +3,9 @@
 export type FileResult = "ok" | { error: string };
 
 export type ProjectListing =
-  { status: "ok"; files: Record<string, string> } | { status: "empty" } | { status: "missing" };
+  | { status: "ok"; folder: string; files: Record<string, string> }
+  | { status: "empty"; folder: string }
+  | { status: "missing"; folder: string };
 
 export interface Api {
   getProject(): Promise<ProjectListing>;
