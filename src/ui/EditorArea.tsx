@@ -4,6 +4,7 @@ import type { EditorKind, ViewStore } from "../store/view";
 import { PlanView } from "./plan/PlanView";
 import { SurfaceView } from "./surface/SurfaceView";
 import { lazy, Suspense } from "react";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 // three.js nur laden, wenn die 3D-Ansicht geöffnet wird
 const ModelView = lazy(() => import("./three/ModelView").then((m) => ({ default: m.ModelView })));
@@ -46,9 +47,11 @@ export function EditorArea({ store, view }: { store: ProjectStore; view: ViewSto
         ) : editor === "surface" ? (
           <SurfaceView store={store} view={view} />
         ) : (
-          <Suspense fallback={<p className="placeholder">Lade 3D …</p>}>
-            <ModelView store={store} view={view} />
-          </Suspense>
+          <ErrorBoundary title="3D-Ansicht konnte nicht gestartet werden (WebGL nicht verfügbar?)">
+            <Suspense fallback={<p className="placeholder">Lade 3D …</p>}>
+              <ModelView store={store} view={view} />
+            </Suspense>
+          </ErrorBoundary>
         )}
       </div>
     </main>

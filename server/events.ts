@@ -72,17 +72,15 @@ export class ProjectEvents implements OwnWrites {
     if (removed) {
       if (this.ownDeletes.delete(rel)) return;
     } else {
-      const own = this.ownHashes.get(rel);
-      if (own !== undefined) {
-        let content: string;
-        try {
-          content = await readFile(absPath, "utf8");
-        } catch {
-          // Datei inzwischen wieder weg: die folgende Lösch-Meldung entscheidet
-          return;
-        }
-        if (sha256(content) === own) return;
+      let content: string;
+      try {
+        content = await readFile(absPath, "utf8");
+      } catch {
+        // Datei inzwischen wieder weg (z. B. verspätete Meldung nach eigenem Schreiben und
+        // Löschen): die Lösch-Meldung entscheidet
+        return;
       }
+      if (sha256(content) === this.ownHashes.get(rel)) return;
     }
     this.pending.add(rel);
     if (this.timer) clearTimeout(this.timer);

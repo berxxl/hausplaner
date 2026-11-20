@@ -129,7 +129,7 @@ function ProjectionHook({ container }: { container: HTMLElement | null }) {
 }
 
 function CameraFit({ bounds }: { bounds: THREE.Box3 }) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const done = useRef(false);
   useEffect(() => {
     if (done.current || bounds.isEmpty()) return;
@@ -138,8 +138,9 @@ function CameraFit({ bounds }: { bounds: THREE.Box3 }) {
     camera.position.set(c.x - r * 0.6, c.y + r * 0.8, c.z + r * 0.9);
     camera.lookAt(c);
     camera.updateProjectionMatrix();
+    invalidate();
     done.current = true;
-  }, [bounds, camera]);
+  }, [bounds, camera, invalidate]);
   return null;
 }
 
@@ -207,6 +208,8 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
           .join(",")}
       >
         <Canvas
+          // nur bei Änderungen rendern: eine Dauerschleife blockiert ohne GPU den Hauptthread
+          frameloop="demand"
           camera={{ fov: 45, near: 0.05, far: 2000 }}
           onPointerMissed={() => view.select(null)}
         >

@@ -18,7 +18,16 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"], channel: "chromium" } },
     ...(allBrowsers
       ? [
-          { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+          {
+            name: "firefox",
+            use: {
+              ...devices["Desktop Firefox"],
+              // WebGL ohne GPU (CI unter Linux) per Software-Rendering erlauben
+              launchOptions: {
+                firefoxUserPrefs: { "webgl.force-enabled": true, "webgl.disabled": false },
+              },
+            },
+          },
           { name: "webkit", use: { ...devices["Desktop Safari"] } },
         ]
       : []),
