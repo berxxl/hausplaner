@@ -28,6 +28,8 @@ test("9.1 Gesamtablauf: neues Projekt bis Neuladen, Projekt danach unverändert"
   page,
   request,
 }) => {
+  // langer Ablauf: auf langsamen CI-Runnern reichen 30 s nicht
+  test.setTimeout(90_000);
   await clearProject(request);
   await page.goto("/");
   const form = page.getByRole("form", { name: "Neues Projekt" });

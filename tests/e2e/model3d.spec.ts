@@ -8,8 +8,11 @@ async function open3d(page: Page) {
     timeout: 20000,
   });
   // Fehlermeldung der Ansicht (z. B. kein WebGL) im Testprotokoll sichtbar machen
-  await expect(page.getByTestId("view-error")).toHaveCount(0);
-  await page.waitForFunction(() => "__hausplaner3d" in window);
+  await page.waitForFunction(
+    () => "__hausplaner3d" in window || document.querySelector('[data-testid="view-error"]'),
+  );
+  const error = page.getByTestId("view-error");
+  if ((await error.count()) > 0) throw new Error(`3D-Ansicht: ${await error.innerText()}`);
   await page.waitForTimeout(300); // Kamera eingepasst
 }
 

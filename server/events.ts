@@ -6,13 +6,14 @@ import { watch, type FSWatcher } from "chokidar";
 import { exists, sha256, type OwnWrites } from "./files.ts";
 
 export const DEBOUNCE_MS = 300;
+const DELETED = "deleted";
 
 export class ProjectEvents implements OwnWrites {
   private readonly root: string;
   private watcher: FSWatcher | null = null;
   private readonly clients = new Set<ServerResponse>();
-  private readonly ownHashes = new Map<string, string>();
-  private readonly ownDeletes = new Set<string>();
+  /** Zuletzt selbst hergestellter Zustand je Datei: SHA-256 des Inhalts oder DELETED. */
+  private readonly own = new Map<string, string>();
   private pending = new Set<string>();
   private timer: NodeJS.Timeout | null = null;
   private ready: Promise<void> = Promise.resolve();
@@ -22,13 +23,11 @@ export class ProjectEvents implements OwnWrites {
   }
 
   written(rel: string, hash: string): void {
-    this.ownHashes.set(rel, hash);
-    this.ownDeletes.delete(rel);
+    this.own.set(rel, hash);
   }
 
   deleted(rel: string): void {
-    this.ownDeletes.add(rel);
-    this.ownHashes.delete(rel);
+    this.own.set(rel, DELETED);
   }
 
   /** Startet die Beobachtung, sobald der Ordner existiert; mehrfach aufrufbar. */
@@ -41,9 +40,8 @@ export class ProjectEvents implements OwnWrites {
     });
     this.watcher = watcher;
     this.ready = new Promise((resolve) => watcher.once("ready", () => resolve()));
-    watcher.on("add", (p) => void this.onChange(p, false));
-    watcher.on("change", (p) => void this.onChange(p, false));
-    watcher.on("unlink", (p) => void this.onChange(p, true));
+    for (const event of ["add", "change", "unlink"] as const)
+      watcher.on(event, (p) => void this.onChange(p));
     return this.ready;
   }
 
@@ -66,22 +64,21 @@ export class ProjectEvents implements OwnWrites {
     res.on("close", () => this.clients.delete(res));
   }
 
-  private async onChange(absPath: string, removed: boolean): Promise<void> {
+  /**
+   * Vergleicht den aktuellen Zustand der Datei mit dem zuletzt selbst geschriebenen, statt
+   * einzelne Ereignisse abzuhaken: Beobachter melden je nach System doppelt, verspätet oder
+   * in anderer Reihenfolge (z. B. „add“ erst nach dem eigenen Löschen).
+   */
+  private async onChange(absPath: string): Promise<void> {
     const rel = relative(this.root, absPath).split(sep).join("/");
     if (!rel.endsWith(".yaml") || rel.startsWith("plaene/")) return;
-    if (removed) {
-      if (this.ownDeletes.delete(rel)) return;
-    } else {
-      let content: string;
-      try {
-        content = await readFile(absPath, "utf8");
-      } catch {
-        // Datei inzwischen wieder weg (z. B. verspätete Meldung nach eigenem Schreiben und
-        // Löschen): die Lösch-Meldung entscheidet
-        return;
-      }
-      if (sha256(content) === this.ownHashes.get(rel)) return;
+    let state: string;
+    try {
+      state = sha256(await readFile(absPath, "utf8"));
+    } catch {
+      state = DELETED;
     }
+    if (state === this.own.get(rel)) return;
     this.pending.add(rel);
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => this.flush(), DEBOUNCE_MS);
