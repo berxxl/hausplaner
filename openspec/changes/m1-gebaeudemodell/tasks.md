@@ -72,8 +72,8 @@
 
 ## 9. Integration
 
-- [ ] 9.1 Playwright-Ablauf in CI: neues Projekt, PDF laden, kalibrieren, vier Wände, Raum, Fenster, Wandansicht öffnen, speichern, Seite neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
-- [ ] 9.2 Playwright: Änderung im DG ändert nur `geschosse/dg.yaml`; Laden und Speichern ohne Änderung schreibt keine Datei
+- [x] 9.1 Playwright-Ablauf in CI: neues Projekt, PDF laden, kalibrieren, vier Wände, Raum, Fenster, Wandansicht öffnen, speichern, Seite neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
+- [x] 9.2 Playwright: Änderung im DG ändert nur `geschosse/dg.yaml`; Laden und Speichern ohne Änderung schreibt keine Datei
 - [ ] 9.3 Manuell: `npm start` auf macOS, Windows und Linux; Projekt in Safari und Firefox öffnen
 - [ ] 9.4 Mit einem echten Architektenplan ein Geschoss nachzeichnen; gefundene Probleme als Issues oder Folge-Tasks festhalten
 

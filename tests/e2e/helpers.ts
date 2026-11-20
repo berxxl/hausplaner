@@ -81,3 +81,24 @@ export async function worldToPage(
     y: box.y + box.height / 2 - (world.y - cy!) * zoom!,
   };
 }
+
+/** Leert den Projektordner (alle YAML-Dateien löschen); Pläne bleiben liegen. */
+export async function clearProject(request: APIRequestContext): Promise<void> {
+  const current = (await (await request.get("/api/project")).json()) as {
+    files?: Record<string, string>;
+  };
+  const files: Record<string, null> = {};
+  for (const path of Object.keys(current.files ?? {})) files[path] = null;
+  if (Object.keys(files).length > 0) await request.put("/api/files", { data: { files } });
+}
+
+/** Fixture-Dateien mehrerer Projekte zusammenführen und schreiben. */
+export async function writeFiles(
+  request: APIRequestContext,
+  files: Record<string, string>,
+): Promise<void> {
+  const res = await request.put("/api/files", { data: { files } });
+  if (!res.ok()) throw new Error(`Schreiben fehlgeschlagen: ${res.status()}`);
+}
+
+export { fixtureFiles };
