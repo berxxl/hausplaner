@@ -24,7 +24,8 @@ function open(name = "klein") {
 const treeNames = () =>
   within(screen.getByRole("tree", { name: "Geschosse" }))
     .getAllByRole("treeitem")
-    .map((i) => i.textContent);
+    .filter((i) => i.getAttribute("aria-level") === "1")
+    .map((i) => i.getAttribute("aria-label"));
 
 function addStorey(name: string, elevation?: string) {
   fireEvent.click(screen.getByRole("button", { name: "Geschoss hinzufügen" }));

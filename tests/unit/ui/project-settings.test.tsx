@@ -63,3 +63,26 @@ describe("Projekteinstellungen (4.8)", () => {
     expect(input).toHaveValue("0,0");
   });
 });
+
+test("Nordrichtung 90°: die Namen der Wandansichten im Baum folgen, Rückgängig stellt sie her (4.8)", () => {
+  const { store, dialog } = open();
+  const kitchen = () =>
+    within(screen.getByRole("tree")).getAllByRole("treeitem", { name: "Küche" })[0]!;
+  const doorView = () =>
+    [...kitchen().querySelectorAll('[role="treeitem"]')]
+      .find((x) => {
+        fireEvent.click(x);
+        return screen
+          .getByRole("img", { name: "Flächenansicht" })
+          .querySelector('[data-opening="o2tuer00"]');
+      })
+      ?.getAttribute("aria-label");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Schließen" }));
+  expect(doorView()).toBe("Wand Ost");
+  act(() =>
+    store.execute({ label: "Nordrichtung ändern", run: (d) => void (d.settings.northDeg = 90) }),
+  );
+  expect(doorView()).toBe("Wand Nord");
+  act(() => store.undo());
+  expect(doorView()).toBe("Wand Ost");
+});

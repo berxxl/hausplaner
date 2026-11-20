@@ -13,6 +13,14 @@ export interface Selection {
 
 export type EditorKind = "plan" | "surface" | "3d";
 
+/** Was die Flächenansicht zeigt. */
+export type SurfaceTarget =
+  | { kind: "room-wall"; key: string }
+  | { kind: "wall-side"; ref: string }
+  | { kind: "ceiling"; roomId: string }
+  | { kind: "floor"; roomId: string }
+  | { kind: "slope"; roomId: string; slopeId: string };
+
 export type PlanTool =
   | "select"
   | "measure"
@@ -35,6 +43,8 @@ export interface ViewState {
   toolRoomId: string | null;
   /** Dicke der zuletzt gezeichneten Wand (Start 240 mm). */
   lastThicknessMm: number;
+  /** Offene Fläche im Editor „Fläche“. */
+  surface: SurfaceTarget | null;
 }
 
 export interface ViewStore extends StoreApi<ViewState> {
@@ -44,6 +54,8 @@ export interface ViewStore extends StoreApi<ViewState> {
   setEditor(editor: EditorKind): void;
   setPlanTool(tool: PlanTool, roomId?: string): void;
   setLastThickness(mm: number): void;
+  /** Öffnet eine Fläche im Editor „Fläche“. */
+  openSurface(target: SurfaceTarget, storeyId?: string): void;
   /** Entfernt eine Auswahl, deren Objekt nicht mehr existiert. */
   prune(exists: (selection: Selection) => boolean): void;
 }
@@ -56,6 +68,7 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     planTool: "select",
     toolRoomId: null,
     lastThicknessMm: 240,
+    surface: null,
     ...initial,
   }));
   return Object.assign(store, {
@@ -77,6 +90,13 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setLastThickness(lastThicknessMm: number) {
       store.setState({ lastThicknessMm });
+    },
+    openSurface(surface: SurfaceTarget, storeyId?: string) {
+      store.setState({
+        surface,
+        editor: "surface",
+        ...(storeyId ? { activeStoreyId: storeyId } : {}),
+      });
     },
     prune(exists: (selection: Selection) => boolean) {
       const s = store.getState().selection;

@@ -3,7 +3,8 @@ import { pdfToWorld } from "../../src/geometry/underlay";
 import { openProject, PDF, projectFiles, saveNow, storeyFile, worldToPage } from "./helpers";
 
 async function choosePdf(page: Page, storey: string, file: string) {
-  await page.getByRole("treeitem", { name: storey }).click();
+  // auf die Beschriftung klicken, nicht auf die Mitte des Eintrags mit seinen Räumen
+  await page.getByRole("treeitem", { name: storey }).locator(":scope > .tree__item").click();
   const props = page.getByRole("complementary", { name: "Eigenschaften" });
   await props.getByLabel("PDF-Datei").setInputFiles(file);
   await expect(page.getByTestId("underlay")).toBeAttached();

@@ -71,6 +71,7 @@ import {
   WallsLayer,
 } from "./layers";
 import { renderScaleFor, useUnderlayImage } from "./useUnderlayImage";
+import { surfaceAt } from "./navigate";
 
 const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "select", label: "Auswählen" },
@@ -87,7 +88,7 @@ const PLAN_TOOLS: { tool: PlanTool; label: string }[] = [
 ];
 
 const HINTS: Record<PlanTool, string> = {
-  select: "Klick wählt aus, Ziehen verschiebt die Ansicht, Mausrad zoomt.",
+  select: "Klick wählt aus, Doppelklick öffnet die Wandansicht, Ziehen verschiebt die Ansicht.",
   measure: "Zwei Punkte anklicken.",
   wall: "Anfangspunkt anklicken; jeder weitere Klick setzt eine Wand. Esc beendet.",
   room: "In eine von Wänden umschlossene Fläche klicken.",
@@ -651,6 +652,11 @@ export function PlanView({ store, view }: PlanViewProps) {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
+          onDoubleClick={(e) => {
+            if (!storey || (tool !== "select" && tool !== "room")) return;
+            const target = surfaceAt(project, storey.id, toWorld(e), Math.max(1000, 40 / cam.zoom));
+            if (target) view.openSurface(target, storey.id);
+          }}
         >
           <g transform={worldTransform(cam, vp)}>
             {underlay?.visible && matrix && image.status === "ready" && (

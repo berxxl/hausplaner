@@ -33,7 +33,7 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
   const name = useStore(store, (s) => s.project.name);
   const { confirm, dialog } = useConfirm();
   const [view] = useState(() =>
-    createViewStore({ activeStoreyId: store.getState().project.storeys[0]?.id ?? null }),
+    createViewStore({ activeStoreyId: sortedStoreys(store.getState().project)[0]?.id ?? null }),
   );
   // Auswahl verwerfen, wenn ihr Objekt verschwindet (Löschen, Undo)
   useEffect(

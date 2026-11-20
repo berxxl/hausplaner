@@ -70,9 +70,16 @@ button {
   margin: 0;
   padding: 0.5rem 0;
 }
+.tree ul[role="group"] {
+  padding: 0;
+}
 .tree__item {
-  padding: 0.25rem 1rem;
+  padding: 0.2rem 1rem;
   cursor: pointer;
+}
+.tree__item--marked {
+  background: #e3efff;
+  font-weight: 600;
 }
 .tree__item--selected {
   background: #0071e3;
@@ -381,4 +388,63 @@ button {
 }
 .properties button {
   margin: 0.25rem 0.25rem 0.25rem 0;
+}
+.surface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.surface__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #e5e5ea;
+  background: #fafafa;
+}
+.surface__head h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.surface__nav {
+  display: flex;
+  gap: 0.25rem;
+}
+.surface__canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+.surface__contour {
+  fill: #f2f2f7;
+  stroke: #1d1d1f;
+  stroke-width: 1.5;
+}
+.surface__opening rect {
+  fill: #fff;
+  stroke: #1d1d1f;
+  stroke-width: 1;
+}
+.surface__opening--selected > rect:first-child {
+  fill: #cfe3ff;
+}
+.surface__opening .surface__shutter {
+  fill: #e5e5ea;
+  stroke-dasharray: 4 2;
+}
+.surface__label {
+  font-size: 12px;
+  fill: #0066cc;
+  cursor: pointer;
+  text-decoration: underline;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+.surface__raw {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid #e5e5ea;
 }

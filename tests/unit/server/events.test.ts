@@ -21,12 +21,18 @@ function collect(port: number, ms: number, action: () => Promise<void>): Promise
           if (/^event: changed$/m.test(block) && data) events.push(JSON.parse(data).paths);
         }
       });
-      void action().then(() =>
-        setTimeout(() => {
-          req.destroy();
-          resolve(events);
-        }, ms),
-      );
+      // verspätete Meldungen aus dem Testaufbau (FSEvents) abwarten und verwerfen
+      void wait(600)
+        .then(() => {
+          events.length = 0;
+          return action();
+        })
+        .then(() =>
+          setTimeout(() => {
+            req.destroy();
+            resolve(events);
+          }, ms),
+        );
     });
     req.on("error", (e) => (e.message.includes("socket hang up") ? undefined : reject(e)));
     req.end();
@@ -46,7 +52,6 @@ describe("Dateibeobachtung (3.4)", () => {
     await writeFile(join(root, "geschosse", "eg.yaml"), "b: 1\n");
     s = await startApp(root);
     const events = await collect(s.port, 1500, async () => {
-      await wait(100);
       await writeFile(join(root, "projekt.yaml"), "a: 2\n");
       await writeFile(join(root, "geschosse", "og.yaml"), "c: 1\n");
       await rm(join(root, "geschosse", "eg.yaml"));
@@ -59,7 +64,6 @@ describe("Dateibeobachtung (3.4)", () => {
     await writeFile(join(root, "projekt.yaml"), "a: 1\n");
     s = await startApp(root);
     const events = await collect(s.port, 1500, async () => {
-      await wait(100);
       await putFiles(s.port, { "projekt.yaml": "a: 2\n", "geschosse/eg.yaml": "b: 1\n" });
       await putFiles(s.port, { "geschosse/eg.yaml": null });
       await mkdir(join(root, "plaene"), { recursive: true });

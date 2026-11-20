@@ -2,6 +2,7 @@ import { useStore } from "zustand";
 import type { ProjectStore } from "../store/history";
 import type { EditorKind, ViewStore } from "../store/view";
 import { PlanView } from "./plan/PlanView";
+import { SurfaceView } from "./surface/SurfaceView";
 
 const TABS: { kind: EditorKind; label: string }[] = [
   { kind: "plan", label: "Grundriss" },
@@ -38,6 +39,8 @@ export function EditorArea({ store, view }: { store: ProjectStore; view: ViewSto
       >
         {editor === "plan" ? (
           <PlanView store={store} view={view} />
+        ) : editor === "surface" ? (
+          <SurfaceView store={store} view={view} />
         ) : (
           <p className="placeholder">{active.label}</p>
         )}

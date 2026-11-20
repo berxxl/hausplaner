@@ -49,3 +49,35 @@ describe("Auswahlmodell (4.7)", () => {
     });
   });
 });
+
+describe("Klickziel „Öffnung ungültig“ (6.7)", () => {
+  const warning = (id: string) => ({
+    key: `opening-invalid:${id}`,
+    text: "Öffnung ungültig",
+    target: { kind: "opening" as const, id },
+  });
+
+  test("Wand mit Räumen auf beiden Seiten: Ansicht des Raums an Seite L, in dessen Abschnitt die Öffnungsmitte liegt", () => {
+    const result = loadProject(readFixture("klein"));
+    if (result.status !== "ok") throw new Error();
+    const store = createProjectStore(result.project);
+    const view = createViewStore();
+    // Tür o2tuer00 in der Mittelwand 1aiv0ert (Seite L = Küche/Bad, Seite R = Wohnen/Schlafen), Mitte bei y ≈ 1443
+    activateWarning(warning("o2tuer00"), store, view);
+    expect(view.getState()).toMatchObject({
+      selection: { kind: "opening", id: "o2tuer00" },
+      editor: "surface",
+      surface: { kind: "room-wall", key: "wall:1aiv0ert:L@r1kueche#0" },
+    });
+  });
+
+  test("Wand ohne Raum: ganze Wandseite L", () => {
+    const result = loadProject(readFixture("klein"));
+    if (result.status !== "ok") throw new Error();
+    result.project.rooms = [];
+    const store = createProjectStore(result.project);
+    const view = createViewStore();
+    activateWarning(warning("o1fenstr"), store, view);
+    expect(view.getState().surface).toEqual({ kind: "wall-side", ref: "wall:0aw1s0ud:L" });
+  });
+});
