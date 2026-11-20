@@ -229,6 +229,39 @@ export function PlanView({ store, view }: PlanViewProps) {
     renderScaleFor(underlay ? cam.zoom * underlayScale(underlay) : 1),
   );
 
+  /** Kamera, die Wände und Planseite einpasst; null, wenn nichts da ist. */
+  const cameraForAll = (): Camera | null => {
+    const pts: Vec[] = walls.flatMap((w) => [w.start, w.end]);
+    if (underlay && image.status === "ready") {
+      const { width, height } = image.page;
+      for (const c of [
+        { x: 0, y: 0 },
+        { x: width, y: 0 },
+        { x: 0, y: height },
+        { x: width, y: height },
+      ])
+        pts.push(pdfToWorld(underlay, c));
+    }
+    if (pts.length === 0) return null;
+    return fitBounds(
+      vp,
+      { x: Math.min(...pts.map((p) => p.x)), y: Math.min(...pts.map((p) => p.y)) },
+      { x: Math.max(...pts.map((p) => p.x)), y: Math.max(...pts.map((p) => p.y)) },
+      0.02,
+    );
+  };
+
+  // Neue PDF oder andere Seite: Ansicht einpassen, sonst liegt ein unkalibrierter Plan oft außerhalb
+  const planKey = `${activeStoreyId}|${underlay ? `${underlay.file}#${underlay.page}` : ""}`;
+  const [knownPlan, setKnownPlan] = useState(planKey);
+  if (planKey !== knownPlan && (!underlay || image.status === "ready")) {
+    setKnownPlan(planKey);
+    // nur innerhalb desselben Geschosses; beim Geschosswechsel passt initialCamera ein
+    const sameStorey = knownPlan.split("|")[0] === String(activeStoreyId);
+    const fitted = underlay && sameStorey ? cameraForAll() : null;
+    if (fitted) setCamera(fitted);
+  }
+
   // Plan-Werkzeuge ohne Plan zurücksetzen
   useEffect(() => {
     if (!underlay && ["calibrate", "move-underlay", "rotate-underlay"].includes(tool))
@@ -538,26 +571,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   };
 
   const showAll = () => {
-    const pts: Vec[] = walls.flatMap((w) => [w.start, w.end]);
-    if (underlay && image.status === "ready") {
-      const { width, height } = image.page;
-      for (const c of [
-        { x: 0, y: 0 },
-        { x: width, y: 0 },
-        { x: 0, y: height },
-        { x: width, y: height },
-      ])
-        pts.push(pdfToWorld(underlay, c));
-    }
-    if (pts.length === 0) return;
-    setCamera(
-      fitBounds(
-        vp,
-        { x: Math.min(...pts.map((p) => p.x)), y: Math.min(...pts.map((p) => p.y)) },
-        { x: Math.max(...pts.map((p) => p.x)), y: Math.max(...pts.map((p) => p.y)) },
-        0.02,
-      ),
-    );
+    const c = cameraForAll();
+    if (c) setCamera(c);
   };
 
   const matrix = underlay ? underlayMatrix(underlay) : null;

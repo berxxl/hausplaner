@@ -157,3 +157,29 @@ test.describe("Kalibrieren und Ausrichten (5.4, 5.5)", () => {
     expect((await storeyFile(request, "eg")).storey.underlay!.offset).toEqual({ x: 0, y: 0 });
   });
 });
+
+test.describe("Sichtbarkeit nach dem Wählen (Fehlerbericht)", () => {
+  /** Anteil des sichtbaren Grundrisses, den das Planbild bedeckt. */
+  async function coverage(page: Page) {
+    const svg = (await page.getByRole("img", { name: "Grundriss" }).boundingBox())!;
+    const img = (await page.getByTestId("underlay").boundingBox())!;
+    const w = Math.max(0, Math.min(svg.x + svg.width, img.x + img.width) - Math.max(svg.x, img.x));
+    const h = Math.max(
+      0,
+      Math.min(svg.y + svg.height, img.y + img.height) - Math.max(svg.y, img.y),
+    );
+    return (w * h) / (svg.width * svg.height);
+  }
+
+  test("PDF bei offenem Grundriss wählen: Ansicht passt den Plan ein, auch nach Seitenwechsel", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "leer");
+    const props = await choosePdf(page, "EG", PDF.vector);
+    await expect.poll(() => coverage(page)).toBeGreaterThan(0.3);
+    await props.getByLabel("Seite").selectOption("2");
+    await expect(page.getByTestId("underlay")).toBeAttached();
+    await expect.poll(() => coverage(page)).toBeGreaterThan(0.3);
+  });
+});
