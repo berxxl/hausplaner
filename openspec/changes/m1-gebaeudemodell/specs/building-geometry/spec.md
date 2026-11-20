@@ -7,7 +7,7 @@ Erfasst das Gebäude maßlich: Geschosse, Wände, Räume, Öffnungen, Decken und
 ## ADDED Requirements
 
 ### Requirement: Geschosse
-Das System SHALL beliebig viele Geschosse mit Name, Höhenlage des Rohfußbodens und Rohbau-Geschosshöhe (Oberkante Rohfußboden bis Unterkante Rohdecke) verwalten.
+Das System SHALL beliebig viele Geschosse mit Name, Höhenlage des Rohfußbodens und Rohbau-Geschosshöhe (Oberkante Rohfußboden bis Unterkante Rohdecke) verwalten. Ein neues Geschoss MUST Rohbauhöhe und Standardaufbauten des höchsten Geschosses übernehmen und 300 mm über dessen Rohdecke vorgeschlagen werden. Geschosse MUST mit allen ihren Bauteilen gelöscht werden können.
 
 #### Scenario: Geschoss anlegen
 - **WHEN** der Benutzer „DG“ mit Höhenlage 5600 mm und Rohbauhöhe 2450 mm anlegt
@@ -17,8 +17,16 @@ Das System SHALL beliebig viele Geschosse mit Name, Höhenlage des Rohfußbodens
 - **WHEN** der Benutzer zuerst „OG“ (2800 mm), dann „KG“ (−2600 mm) anlegt
 - **THEN** zeigen Baum und 3D die Reihenfolge KG, EG, OG
 
+#### Scenario: Vorschlag für das nächste Geschoss
+- **WHEN** das höchste Geschoss „EG“ die Höhenlage 0 und die Rohbauhöhe 2500 mm hat und der Benutzer ein Geschoss hinzufügt
+- **THEN** schlägt das System die Höhenlage 2800 mm, die Rohbauhöhe 2500 mm und die Standardaufbauten des EG vor
+
+#### Scenario: Geschoss löschen
+- **WHEN** der Benutzer das Geschoss „DG“ löscht und speichert
+- **THEN** sind seine Wände, Räume und Öffnungen entfernt und `geschosse/dg.yaml` ist gelöscht; nach Rückgängig und Speichern ist die Datei wieder da
+
 ### Requirement: Wände zeichnen
-Das System SHALL lotrechte, gerade Wände über Anfangs- und Endpunkt der Achse, Dicke und Art (Außen- oder Innenwand) erfassen. Im Grundriss MUST jeder Winkel möglich sein. Die Wandhöhe MUST der Rohbauhöhe des Geschosses entsprechen, sofern für die Wand keine abweichende Höhe angegeben ist.
+Das System SHALL lotrechte, gerade Wände über Anfangs- und Endpunkt der Achse, Dicke und Art (Außen- oder Innenwand) erfassen. Im Grundriss MUST jeder Winkel möglich sein. Die Wandhöhe MUST der Rohbauhöhe des Geschosses entsprechen, sofern für die Wand keine abweichende Höhe angegeben ist. Eine neue Wand MUST eine Innenwand mit der zuletzt verwendeten Dicke sein, beim ersten Mal 240 mm.
 
 #### Scenario: Wand nachzeichnen
 - **WHEN** der Benutzer auf dem Hintergrund von Ecke zu Ecke klickt und Dicke 240 mm wählt
@@ -26,7 +34,7 @@ Das System SHALL lotrechte, gerade Wände über Anfangs- und Endpunkt der Achse,
 
 #### Scenario: Fang
 - **WHEN** der Benutzer weniger als 20 mm neben einem bestehenden Wandende oder einer Wandachse klickt
-- **THEN** rastet der Punkt dort ein; waagerechte und senkrechte Richtungen im Grundriss werden bevorzugt
+- **THEN** rastet der Punkt dort ein; weicht die Richtung höchstens 5° von waagerecht oder senkrecht ab, wird sie auf diese Richtung gesetzt
 
 #### Scenario: Zeichnen über die Kante
 - **WHEN** der Benutzer im Modus „linke Kante“ eine 240 mm dicke Wand entlang der im Plan sichtbaren Wandkante von (0, 0) nach (4000, 0) zeichnet
@@ -37,7 +45,7 @@ Das System SHALL lotrechte, gerade Wände über Anfangs- und Endpunkt der Achse,
 - **THEN** endet diese Wand in Wandansicht und 3D bei 1100 mm über Rohfußboden
 
 ### Requirement: Maße korrigieren
-Das System SHALL Länge, Dicke, Anfangs- und Endpunkt einer Wand numerisch editierbar machen und eine Wand parallel um einen eingegebenen Betrag verschieben. Eine Längenänderung MUST den Endpunkt entlang der Achse verschieben und den Anfangspunkt festhalten. Angeschlossene Wände MUST verbunden bleiben.
+Das System SHALL Länge, Dicke, Anfangs- und Endpunkt einer Wand numerisch editierbar machen und eine Wand parallel um einen eingegebenen Betrag verschieben. Eine Längenänderung MUST den Endpunkt entlang der Achse verschieben und den Anfangspunkt festhalten. Angeschlossene Wände MUST verbunden bleiben, solange der Anschlusspunkt auf der geänderten Wand liegt; sonst MUST der Anschluss mit einer Meldung gelöst werden.
 
 #### Scenario: Wandlänge korrigieren
 - **WHEN** der Benutzer die Länge einer Wand von 4180 auf 4260 mm ändert
@@ -50,6 +58,18 @@ Das System SHALL Länge, Dicke, Anfangs- und Endpunkt einer Wand numerisch editi
 #### Scenario: T-Anschluss
 - **WHEN** eine Innenwand mit ihrem Endpunkt auf der Achse einer Außenwand endet und die Außenwand um 50 mm parallel verschoben wird
 - **THEN** verlängert oder verkürzt sich die Innenwand so, dass ihr Endpunkt weiter auf der Achse der Außenwand liegt
+
+#### Scenario: T-Anschluss beim Endpunkt verschieben
+- **WHEN** die Innenwand (2000, 3000)–(2000, 0) mit ihrem Endpunkt auf der Achse der Südwand (0, 0)–(4000, 0) endet und der Endpunkt der Südwand nach (4000, 500) verschoben wird
+- **THEN** endet die Innenwand bei (2000, 250) und bleibt senkrecht
+
+#### Scenario: T-Anschluss gelöst
+- **WHEN** in derselben Lage die Südwand auf 1500 mm Länge gekürzt wird
+- **THEN** bleibt die Innenwand unverändert und das System meldet „T-Anschluss gelöst“
+
+#### Scenario: T-Anschluss beim Parallelverschieben gelöst
+- **WHEN** eine schräge Innenwand mit ihrem Endpunkt 10 mm vor dem Ende der Achse einer Außenwand anschließt und die Außenwand so parallel verschoben wird, dass der Schnitt mit der verlängerten Innenwand mehr als 20 mm hinter dem Wandende läge
+- **THEN** bleibt die Innenwand unverändert und das System meldet „T-Anschluss gelöst“
 
 ### Requirement: Räume erkennen
 Das System SHALL einen Raum durch Klick in eine von Wänden umschlossene Fläche anlegen und seine Rohbau-Innenkontur aus den Wänden ableiten. Lücken bis 20 mm MUST als geschlossen gelten.
@@ -71,26 +91,42 @@ Das System SHALL einen Raum durch Klick in eine von Wänden umschlossene Fläche
 - **THEN** gehört sie zum Wohnzimmer und beide Seiten sind Wandansichten des Wohnzimmers
 
 ### Requirement: Raumkontur folgt den Wänden
-Das System SHALL die Kontur eines Raums nach jeder Wandänderung neu ableiten. Ist der Raum danach nicht mehr geschlossen, MUST die bisherige Kontur erhalten bleiben und eine Warnung entstehen.
+Das System SHALL die Kontur eines Raums nach jeder Wandänderung neu ableiten. Ist der Raum danach nicht mehr geschlossen oder fließt er mit einem anderen Raum zusammen, MUST die bisherige Kontur erhalten bleiben und eine Warnung entstehen.
 
 #### Scenario: Wand verschoben
 - **WHEN** eine Wand der Küche um 100 mm verschoben wird
 - **THEN** passt sich die Kontur der Küche an
 
 #### Scenario: Wand gelöscht
-- **WHEN** eine Wand der Küche gelöscht wird
-- **THEN** behält die Küche ihre bisherige Kontur und das System meldet „Raum nicht geschlossen“
+- **WHEN** eine Außenwand der Küche gelöscht wird
+- **THEN** behält die Küche ihre bisherige Kontur und das System meldet „Raum nicht geschlossen: Küche“
+
+#### Scenario: Räume verschmolzen
+- **WHEN** die Trennwand zwischen Küche und Essen gelöscht wird
+- **THEN** behalten beide Räume ihre bisherige Kontur und das System meldet bei der Küche „Raum mit Essen verschmolzen“ und beim Essen „Raum mit Küche verschmolzen“
+
+#### Scenario: Offen hat Vorrang
+- **WHEN** die Trennwand zwischen Küche und Essen und zugleich eine Außenwand der Küche gelöscht werden
+- **THEN** meldet das System für beide Räume nur „Raum nicht geschlossen“
 
 #### Scenario: Raum geteilt
 - **WHEN** eine neue Wand den Raum „Wohnen“ in zwei Teile teilt
 - **THEN** behält „Wohnen“ den Teil, in dem sein ursprünglicher Klickpunkt liegt; der andere Teil ist ohne Raum, bis er angeklickt wird
 
+#### Scenario: Raum neu erkennen
+- **WHEN** der Benutzer für die als offen gemeldete Küche „Raum neu erkennen“ wählt und in eine geschlossene Fläche klickt
+- **THEN** behält die Küche Name, Fußbodenaufbau, Putz, Abhängung und Schrägen und erhält die Kontur der angeklickten Fläche
+
 ### Requirement: Öffnungen
-Das System SHALL Fenster, Türen und Durchgänge in einer Wand mit Abstand vom Wandanfang, Breite, Höhe und Brüstungshöhe ab Rohfußboden in Rohbaumaßen erfassen.
+Das System SHALL Fenster, Türen und Durchgänge in einer Wand mit Abstand vom Wandanfang, Breite, Höhe und Brüstungshöhe ab Rohfußboden in Rohbaumaßen erfassen. Öffnungen, die über das Wandende hinausragen, sich überlappen oder höher als die Wand reichen, MUST das System annehmen und mit einer Warnung melden.
 
 #### Scenario: Fenster setzen
 - **WHEN** der Benutzer ein Fenster 1010 × 1385 mm mit Brüstung 900 mm in eine Wand setzt
 - **THEN** erscheint es im Grundriss, in den Ansichten beider Wandseiten und in 3D
+
+#### Scenario: Fenster über das Wandende
+- **WHEN** der Benutzer ein 1010 mm breites Fenster mit Abstand 3500 mm in eine 4000 mm lange Wand setzt
+- **THEN** wird das Fenster angelegt, am Wandende abgeschnitten und rot umrandet dargestellt, und die Warnungsleiste meldet „Öffnung ungültig: über Wandende“
 
 ### Requirement: Rollladenkasten
 Das System SHALL einem Fenster optional einen Rollladenkasten mit Lage (innen, außen, Aufsatz) und Höhe zuordnen. Der Kasten MUST unmittelbar über der Rohbauöffnung in deren Breite liegen. Innen liegende Kästen und Aufsatzkästen MUST in der Innenansicht, außen liegende in der Außenansicht erscheinen.

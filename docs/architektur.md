@@ -14,6 +14,7 @@ Nicht Ziel: fotorealistisches Rendering, Lichtberechnung (Lux), normative Berech
 |---|---|
 | Sprache, Build | TypeScript (strict), React, Vite |
 | 2D-Editoren | SVG |
+| Polygonoperationen | `clipper-lib` (Vereinigung, Puffer mit Miter-Join, Raumerkennung) |
 | 3D | three.js über react-three-fiber |
 | PDF-Hintergrund | pdf.js |
 | PDF-Export | jsPDF mit svg2pdf.js |
@@ -24,7 +25,7 @@ Nicht Ziel: fotorealistisches Rendering, Lichtberechnung (Lux), normative Berech
 | Tests | Vitest für Modell, Geometrie und Serialisierung, Playwright für einzelne End-to-End-Abläufe |
 | Plattformen | macOS, Windows, Linux; aktuelle Versionen von Chrome, Edge, Firefox, Safari |
 
-Start: `git clone`, `npm install`, `npm start -- <pfad-zum-projektordner>`. Der Server lauscht nur auf `localhost` und öffnet den Browser. Kein Login, keine Cloud.
+Start: `git clone`, `npm install`, `npm start -- <pfad-zum-projektordner>`. Der Server lauscht nur auf `127.0.0.1` und öffnet den Browser. Kein Login, keine Cloud.
 
 ## Grundprinzipien
 
@@ -37,13 +38,13 @@ Start: `git clone`, `npm install`, `npm start -- <pfad-zum-projektordner>`. Der 
 ## Einheiten und Koordinaten
 
 - Alle Längen in Millimetern als Ganzzahl oder Dezimalzahl, Winkel in Grad.
-- **Grundriss:** x nach rechts, y nach oben (Planansicht von oben), Ursprung frei wählbar beim Kalibrieren.
+- **Grundriss:** x nach rechts, y nach oben (Planansicht von oben). Weltursprung ist p1 der ersten Kalibrierung eines Geschosses; die Pläne weiterer Geschosse werden daran ausgerichtet.
 - **Höhe z:** je Geschoss relativ zur Oberkante Rohfußboden des Geschosses; global über `storey.elevationMm`.
 - **Flächenkoordinaten (u, v):** jede Fläche hat ein eigenes 2D-System.
-  - Wandseite: eine Fläche je Wand und Seite über die ganze Wandlänge, unabhängig von Räumen. u entlang der Wandachse von dem Wandende, das für einen Betrachter vor dieser Seite links liegt; v nach oben ab OKFF des Raums, in dessen Abschnitt der Punkt liegt (ohne Raum, z. B. Außenseite: ab Oberkante Rohfußboden). Die Ansichten je Raum sind Ausschnitte dieser Fläche.
-  - Decke: Sicht von unten (Deckenspiegel), u/v in Grundrisskoordinaten gespiegelt an der y-Achse.
-  - Boden: Sicht von oben, u/v = Grundrisskoordinaten.
-  - Dachschräge: u entlang der Traufe, v die Schräge hinauf.
+  - Wandseite: eine Fläche je Wand und Seite über die ganze Wandlänge, unabhängig von Räumen. u = 0 ist die Projektion des Achsendpunkts, der für einen Betrachter vor dieser Seite links liegt; u läuft entlang der Achse, die Länge ist die Achslänge, die Kontur ist an Gehrungen auf den Wandkörper beschnitten. v nach oben ab OKFF des Raums, in dessen Abschnitt der Punkt liegt (ohne Raum, z. B. Außenseite: ab Oberkante Rohfußboden). Die Ansichten je Raum sind Ausschnitte dieser Fläche.
+  - Decke: Sicht von unten (Deckenspiegel), (u, v) = (−x, y).
+  - Boden: Sicht von oben, (u, v) = (x, y).
+  - Dachschräge: u = 0 am linken Ende der Grundlinie aus Sicht vom Raum auf die Schräge, u entlang der Grundlinie; v = 0 auf der Grundlinie, v die Schräge hinauf in wahrer Länge.
 - **Roh oder fertig:** Gebäudeteile (Wände, Öffnungen, Schrägen, Raumkonturen) werden in Rohbaumaßen gespeichert. Geräte und Trassen (ab M2) beziehen sich auf die fertige Oberfläche (OKFF, Putzoberfläche). Ansichten zeigen Höhen über OKFF und fertige Laibungen; Rohbaumaße sind abrufbar.
 
 ## Projektordner und Austausch über Git
@@ -64,21 +65,22 @@ haus-daten/
 
 \* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` über `storeyId`.
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“).
 
 Regeln für deterministisches Schreiben:
 
-- IDs: 8 Zeichen aus `[0-9a-z]`, zufällig, unveränderlich. Jedes Objekt mit Namen trägt ihn direkt nach der ID.
+- IDs: 8 Zeichen aus `[0-9a-z]`, zufällig, unveränderlich, projektweit eindeutig. Jedes Objekt mit Namen trägt ihn direkt nach der ID.
 - Listen sortiert nach ID, nie nach Einfügereihenfolge. So ändert eine Wertänderung genau eine Zeile.
 - Feste Feldreihenfolge je Objekttyp, definiert an einer Stelle im Code.
 - Längen als ganze Millimeter, Winkel auf 0,1°, PDF-Koordinaten auf 0,1 Punkt, Anteile (z. B. Deckkraft) auf zwei Nachkommastellen; gerundet wird bereits beim Setzen eines Werts.
-- Punkte und kurze Tupel einzeilig im Flow-Stil: `{x: 120, y: 3400}`.
+- Punkte und kurze Tupel einzeilig im Flow-Stil ohne Innenabstand: `{x: 120, y: 3400}`. Alles andere im Block-Stil, Einrückung 2, Listeneinträge eingerückt, keine Zeilenumbrüche in langen Zeilen (`yaml`-Optionen `lineWidth: 0`, `flowCollectionPadding: false`, `indent: 2`, `indentSeq: true`).
+- Zahlen: Ganzzahlen ohne `.0`, sonst kürzeste Dezimaldarstellung; `-0` wird `0`.
 - Leere optionale Felder werden weggelassen.
 - Texte immer in Anführungszeichen; LF-Zeilenenden, UTF-8, abschließender Zeilenumbruch.
 - Abgeleitete Werte werden nie gespeichert.
-- Unverändertes Laden und Speichern erzeugt byteweise identische Dateien; nur geänderte Dateien werden geschrieben.
+- Unverändertes Laden und Speichern erzeugt byteweise identische Dateien. Eine Datei wird nur geschrieben, wenn ihre Serialisierung vom zuletzt gelesenen oder geschriebenen Inhalt abweicht; von Hand nicht kanonisch bearbeitete Dateien werden dabei kanonisch umgeschrieben.
 
-Beispiel `geschosse/eg.yaml` (Ausschnitt):
+Beispiel `geschosse/eg.yaml` (Ausschnitt, `devices` ab M2; das verbindliche vollständige M1-Beispiel steht in `openspec/changes/m1-gebaeudemodell/design.md`):
 
 ```yaml
 storey:
@@ -87,8 +89,15 @@ storey:
   slug: "eg"
   elevationMm: 0
   rawHeightMm: 2600
-  defaults: {floorBuildupMm: 120, plasterMm: 15}
-  underlay: {file: "plaene/eg.pdf", page: 1, calibration: {p1: {x: 102.4, y: 88.1}, p2: {x: 512.0, y: 88.1}, distanceMm: 8240}, offset: {x: 0, y: 0}, rotationDeg: 0, opacity: 0.5, visible: true}
+  defaults: {floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0}
+  underlay:
+    file: "plaene/eg.pdf"
+    page: 1
+    calibration: {p1: {x: 102.4, y: 88.1}, p2: {x: 512, y: 88.1}, distanceMm: 8240}
+    offset: {x: 0, y: 0}
+    rotationDeg: 0
+    opacity: 0.5
+    visible: true
 walls:
   - id: "a81kd0x2"
     kind: "exterior"
@@ -104,7 +113,7 @@ devices:
     circuitId: "f12xk9aa"
 ```
 
-Beim Laden prüft die App alle Dateien gegen das Schema und auf Merge-Konfliktmarker und meldet Fehler mit Datei und Zeile. Ändern sich Dateien auf der Platte (z. B. nach `git pull`), bietet die App das Neuladen an.
+Beim Laden prüft die App alle Dateien gegen das Schema (unbekannte Felder sind Fehler), auf Merge-Konfliktmarker, doppelte IDs und eine zu neue `schemaVersion` und meldet Fehler mit Datei und Zeile. Ändern sich Dateien auf der Platte (z. B. nach `git pull`), bietet die App das Neuladen an.
 
 ## Datenmodell
 
@@ -152,7 +161,7 @@ interface Storey {
   underlay?: { file: string; page: number;      // Pfad relativ zum Projektordner
                calibration: { p1: Pt; p2: Pt; distanceMm: number };   // p1/p2 in PDF-Punkten
                offset: Pt; rotationDeg: number; opacity: number; visible: boolean };
-  defaults: { floorBuildupMm: number; plasterMm: number };
+  defaults: { floorBuildupMm: number; plasterMm: number; suspendedMm: number };   // suspendedMm Standard 0
 }
 
 interface Wall {
@@ -165,9 +174,9 @@ interface Wall {
 interface Room {
   id: Id; storeyId: Id; name: string;
   seed: Pt;                                   // Klickpunkt der Raumerkennung
-  polygon: Pt[];                              // Rohbau-Innenkontur, aus Wänden erkannt, bleibt bei offenem Raum erhalten
+  polygon: Pt[];                              // Rohbau-Innenkontur, aus Wänden erkannt, kanonisch (gegen Uhrzeigersinn, Start bei kleinstem y, dann x), bleibt bei offenem oder verschmolzenem Raum erhalten
   floorBuildupMm?: number; plasterMm?: number;  // Standard: storey.defaults
-  suspendedMm?: number;                       // Abhängung unter Rohdecke
+  suspendedMm?: number;                       // Abhängung unter Rohdecke; Standard: storey.defaults
   slopes?: Slope[];                           // Dachschrägen
 }
 // Rohdecke an einem Punkt = min(Rohbauhöhe - Abhängung, alle Schrägenebenen); fertige Decke = Rohdecke - plasterMm
@@ -280,6 +289,7 @@ Ein neues Projekt startet mit einem Standardkatalog (Steckdosen, Schalter, Präs
 | Größe | Berechnung |
 |---|---|
 | Flächen | aus Wänden, Räumen, Decken, Schrägen; Wandseite gekappt durch Deckenhöhe/Schrägen |
+| Raumfläche | fertige Fläche: Rohbaupolygon um die Putzstärke nach innen versetzt |
 | Rohbauhöhe einer Dose | `v + floorBuildupMm` |
 | Leitungslänge | Summe Segmentlängen + Zuschläge je Endpunkt (Gerät/Verteiler) + Verschnitt % |
 | TE-Belegung | Summe `teWidth` je Feld/Reihe gegen `tePerRow` |

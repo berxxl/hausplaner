@@ -18,7 +18,7 @@ Das System SHALL automatisch Flächen ableiten: je Wand ihre zwei Seiten als je 
 - **THEN** bleiben die Wandseiten-Flächen der bestehenden Wände dieselben
 
 ### Requirement: Angrenzung und Außenseite
-Das System SHALL eine Wandseite einem Raum zuordnen, wenn eine Kante der Raumkontur parallel und höchstens 20 mm entfernt an ihr anliegt. Außenseite einer Außenwand MUST die Seite ohne angrenzenden Raum sein; ist das nicht eindeutig, MUST der Benutzer die Außenseite in den Eigenschaften festlegen können.
+Das System SHALL eine Wandseite einem Raum zuordnen, wenn eine Kante der Raumkontur parallel (höchstens 0,5° Abweichung), höchstens 20 mm entfernt und auf mindestens 1 mm Länge an ihr anliegt. Außenseite einer Außenwand MUST die Seite ohne angrenzenden Raum sein; ist das nicht eindeutig, MUST der Benutzer die Außenseite in den Eigenschaften festlegen können.
 
 #### Scenario: Außenwand eines Raums
 - **WHEN** eine Außenwand innen an das Wohnzimmer grenzt
@@ -36,7 +36,7 @@ Das System SHALL Höhen auf einer Wandseite über OKFF des Raums angeben, in des
 - **THEN** liegt der Punkt 1140 mm über Rohfußboden; derselbe Wert im Flur-Abschnitt läge 1100 mm über Rohfußboden
 
 ### Requirement: Benennung der Wandansichten
-Das System SHALL jede Wandansicht nach der Himmelsrichtung benennen, in der die Wand vom Raum aus liegt (8 Richtungen, Nordrichtung in den Projekteinstellungen). Mehrere Ansichten gleicher Richtung in einem Raum MUST durchnummeriert werden.
+Das System SHALL jede Wandansicht nach der Himmelsrichtung benennen, in der die Wand vom Raum aus liegt (8 Richtungen, Nordrichtung in den Projekteinstellungen). Mehrere Ansichten gleicher Richtung in einem Raum MUST durchnummeriert werden, im Uhrzeigersinn um den Raumschwerpunkt ab Nord. Wandseiten ohne Raum MUST nach der Richtung benannt werden, in die sie zeigen: Außenseiten von Außenwänden als „<Richtung> außen“, alle anderen als „Wandseite <Richtung>“.
 
 #### Scenario: Rechteckiger Raum
 - **WHEN** ein rechteckiger Raum achsparallel liegt und Norden +y ist
@@ -44,7 +44,11 @@ Das System SHALL jede Wandansicht nach der Himmelsrichtung benennen, in der die 
 
 #### Scenario: L-förmiger Raum
 - **WHEN** ein L-förmiger Raum zwei Wandabschnitte im Norden hat
-- **THEN** heißen sie „Wand Nord 1“ und „Wand Nord 2“
+- **THEN** heißen sie „Wand Nord 1“ und „Wand Nord 2“, wobei „Wand Nord 1“ der Abschnitt ist, der vom Raumschwerpunkt aus gesehen im Uhrzeigersinn ab Nord zuerst kommt
+
+#### Scenario: Außenseite und Innenwand ohne Raum
+- **WHEN** Norden +y ist, die Südwand eine Außenwand ist und eine Innenwand in Nord-Süd-Richtung noch an keinen Raum grenzt
+- **THEN** heißt die Außenseite der Südwand „Süd außen“ und die Seiten der Innenwand heißen „Wandseite Ost“ und „Wandseite West“
 
 ### Requirement: Wandansicht je Raum
 Das System SHALL für jeden Raum den Abschnitt jeder angrenzenden Wandseite als eigene Ansicht zeigen, so wie ein Betrachter im Raum sie sieht: links und rechts wie im Raum, unten OKFF, oben gekappt durch die fertige Decke und die Schrägen.

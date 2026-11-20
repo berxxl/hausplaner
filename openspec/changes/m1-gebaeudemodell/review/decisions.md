@@ -43,7 +43,7 @@
 
 # Entscheidungen zum Review 2026-11-20 15:22 (--after-fixes, Runde 3)
 
-Status: vom Benutzer alle ACCEPTED, **noch nicht in design.md/specs/tasks.md/architektur.md eingearbeitet**. Nächster Schritt: diese Liste umsetzen, `openspec validate m1-gebaeudemodell --strict`, dann `/openspec-review m1-gebaeudemodell --quick`.
+Status: vom Benutzer alle ACCEPTED, am 2026-11-20 in design.md, specs, tasks.md und docs/architektur.md eingearbeitet. Der offene Punkt zum v-Bezug steht in design.md unter Open Questions und im Workflow-Follow-up von tasks.md, weil es `m2-geraete-und-moebel/design.md` noch nicht gibt.
 
 ## MAJOR
 - F5.1: `suspendedMm` in `storey.defaults` (Reihenfolge floorBuildupMm, plasterMm, suspendedMm; Standard 0); architektur.md anpassen
@@ -80,3 +80,14 @@ Status: vom Benutzer alle ACCEPTED, **noch nicht in design.md/specs/tasks.md/arc
 ## Offene Fragen
 - Wandseite ohne Raum bekommt später einen Raum → v-Bezug wechselt: DEFERRED nach M2 (als offener Punkt in M2 design.md aufnehmen)
 - Migration „Version 0“: nur Testfall; echte Dateien ohne schemaVersion sind ein Ladefehler (siehe F5.3)
+
+# Entscheidungen zum Review 2026-11-20 16:15 (--quick)
+
+Status: vom Benutzer alle ACCEPTED wie vorgeschlagen, eingearbeitet in design.md, specs und tasks.md.
+
+- Q4.1: ACCEPTED: Anschluss lösen (± 20 mm, Meldung, Nachbar unverändert) gilt auch beim Parallelverschieben; Scenario in building-geometry, Test in 6.3
+- Q4.2: ACCEPTED: Gründe „über Wandende“, „überlappt <andere Öffnung>“, „höher als die Wand“; bei mehreren der erste in dieser Reihenfolge
+- Q5.1: ACCEPTED: fehlt `projekt.yaml` und gibt es keine Geschossdatei, gilt der Ordner als leer; Anlegen lässt unbekannte Dateien unberührt
+- Q5.2: ACCEPTED: `room-open` hat Vorrang, `room-merged` nur bei geschlossener Region
+- Q5.3: ACCEPTED: Klick auf `opening-invalid` öffnet die Ansicht des Raums an Seite L (Abschnitt mit der Öffnungsmitte), sonst die ganze Wandseite L
+- Q5.4: ACCEPTED: ungültige Öffnung an der Wandkontur abschneiden und rot umranden

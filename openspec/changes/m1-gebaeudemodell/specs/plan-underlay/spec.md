@@ -7,7 +7,7 @@ Macht vorhandene Architektenpläne im PDF-Format als maßstäblichen Hintergrund
 ## ADDED Requirements
 
 ### Requirement: PDF-Seite als Geschosshintergrund
-Das System SHALL je Geschoss genau eine Seite einer PDF-Datei als Hintergrund des Grundrisses anzeigen können. Vektor-PDFs und gescannte PDFs MUST beide unterstützt werden.
+Das System SHALL je Geschoss genau eine Seite einer PDF-Datei als Hintergrund des Grundrisses anzeigen können. Vektor-PDFs und gescannte PDFs MUST beide unterstützt werden. Eine in der PDF gesetzte Seitendrehung MUST berücksichtigt werden, sodass die Seite so erscheint wie in einem PDF-Betrachter.
 
 #### Scenario: Plan laden
 - **WHEN** der Benutzer im Geschoss „EG“ eine PDF mit mehreren Seiten wählt und Seite 2 auswählt
@@ -29,7 +29,7 @@ Das System SHALL den Maßstab des Hintergrunds aus zwei angeklickten Punkten und
 - **THEN** ändert sich nur der Hintergrund; gezeichnete Wände behalten ihre Maße
 
 ### Requirement: Hintergrund ausrichten
-Das System SHALL den Hintergrund verschieben und um einen vom Benutzer gewählten Punkt drehen können, damit die Pläne aller Geschosse übereinanderliegen.
+Das System SHALL den Hintergrund verschieben und um einen vom Benutzer gewählten Punkt drehen können, damit die Pläne aller Geschosse übereinanderliegen. Der Drehwinkel MUST numerisch auf 0,1° genau eingegeben werden können; positive Werte drehen gegen den Uhrzeigersinn.
 
 #### Scenario: Geschosse deckungsgleich
 - **WHEN** der Benutzer den OG-Plan so verschiebt, dass eine Treppenhausecke über der des EG-Plans liegt, und dann die Wände des OG nachzeichnet
