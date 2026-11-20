@@ -22,7 +22,9 @@ export default defineConfig({
             name: "firefox",
             use: {
               ...devices["Desktop Firefox"],
-              // WebGL ohne GPU (CI unter Linux) per Software-Rendering erlauben
+              // headless unter Linux gibt es kein WebGL; die CI startet Firefox dort mit xvfb
+              headless: process.env.PW_FIREFOX_HEADED !== "1",
+              // WebGL auch mit Software-Rendering (ohne GPU) erlauben
               launchOptions: {
                 firefoxUserPrefs: { "webgl.force-enabled": true, "webgl.disabled": false },
               },

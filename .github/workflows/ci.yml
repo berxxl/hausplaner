@@ -48,7 +48,15 @@ jobs:
       - name: Browser installieren (Chromium)
         if: matrix.os != 'ubuntu-latest'
         run: npx playwright install --with-deps --no-shell chromium
-      - run: npm run e2e
+      # Firefox hat headless unter Linux kein WebGL: dort mit Fenster auf virtuellem X-Server
+      - name: Playwright (ubuntu, Firefox mit xvfb)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a npm run e2e
+        env:
+          PW_FIREFOX_HEADED: "1"
+      - name: Playwright
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

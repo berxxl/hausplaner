@@ -1,7 +1,7 @@
 /** Beobachtung des Projektordners: meldet externe Änderungen an *.yaml per SSE, 300 ms entprellt. */
 import type { ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
-import { relative, sep } from "node:path";
+import { join, relative, sep } from "node:path";
 import { watch, type FSWatcher } from "chokidar";
 import { exists, sha256, type OwnWrites } from "./files.ts";
 
@@ -64,30 +64,38 @@ export class ProjectEvents implements OwnWrites {
     res.on("close", () => this.clients.delete(res));
   }
 
-  /**
-   * Vergleicht den aktuellen Zustand der Datei mit dem zuletzt selbst geschriebenen, statt
-   * einzelne Ereignisse abzuhaken: Beobachter melden je nach System doppelt, verspätet oder
-   * in anderer Reihenfolge (z. B. „add“ erst nach dem eigenen Löschen).
-   */
-  private async onChange(absPath: string): Promise<void> {
+  /** Merkt geänderte *.yaml vor; ob die Änderung fremd ist, entscheidet erst `flush`. */
+  private onChange(absPath: string): void {
     const rel = relative(this.root, absPath).split(sep).join("/");
     if (!rel.endsWith(".yaml") || rel.startsWith("plaene/")) return;
-    let state: string;
-    try {
-      state = sha256(await readFile(absPath, "utf8"));
-    } catch {
-      state = DELETED;
-    }
-    if (state === this.own.get(rel)) return;
     this.pending.add(rel);
     if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.flush(), DEBOUNCE_MS);
+    this.timer = setTimeout(() => void this.flush(), DEBOUNCE_MS);
   }
 
-  private flush(): void {
+  private async state(rel: string): Promise<string> {
+    try {
+      return sha256(await readFile(join(this.root, rel), "utf8"));
+    } catch {
+      return DELETED;
+    }
+  }
+
+  /**
+   * Meldet nach der Entprellung nur Dateien, deren aktueller Zustand vom zuletzt selbst
+   * geschriebenen abweicht. Der Vergleich erst hier statt je Ereignis macht die Filterung
+   * unabhängig davon, ob der Beobachter doppelt, verspätet oder umgeordnet meldet oder ein
+   * Ereignis mitten in einem eigenen Schreibvorgang eintrifft.
+   */
+  private async flush(): Promise<void> {
     this.timer = null;
-    const paths = [...this.pending].sort();
+    const candidates = [...this.pending].sort();
     this.pending = new Set();
+    const paths: string[] = [];
+    for (const rel of candidates) {
+      if ((await this.state(rel)) !== this.own.get(rel)) paths.push(rel);
+    }
+    if (paths.length === 0) return;
     const data = `event: changed\ndata: ${JSON.stringify({ paths })}\n\n`;
     for (const c of this.clients) c.write(data);
   }
