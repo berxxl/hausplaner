@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Language: de
+  All artifacts must be written in de.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Projekt: lokale Web-App zur Haustechnikplanung einer Kernsanierung (Elektro, KNX, Daten, Leerrohr, Kältemittel, Kondensat, Möbel).
+  Datenmodell, Dateiformat (YAML im separaten Git-Repo), Modulschnitt und Technik stehen in docs/architektur.md und sind verbindlich.
+  Stack: TypeScript, React, Vite, SVG (2D), three.js/react-three-fiber (3D), pdf.js, jsPDF+svg2pdf, zod, yaml; lokaler Node-22-Server.
+  Meilensteine als Changes m1 bis m7 (m7 optional), strikt nacheinander.
+  Code-Bezeichner und YAML-Felder Englisch, Oberfläche Deutsch, Maße in mm.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
