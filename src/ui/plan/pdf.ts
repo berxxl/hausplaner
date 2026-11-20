@@ -1,13 +1,15 @@
 /** Laden und Rendern von PDF-Seiten mit pdf.js (nur im Browser). */
-import type { PDFDocumentProxy } from "pdfjs-dist";
+// legacy-Fassung: enthält Polyfills für neue JS-Funktionen (z. B. Map.getOrInsertComputed),
+// die ältere Browser wie Safari noch nicht kennen
+import type { PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-let pdfjs: typeof import("pdfjs-dist") | null = null;
+let pdfjs: typeof import("pdfjs-dist/legacy/build/pdf.mjs") | null = null;
 
 async function lib() {
   if (!pdfjs) {
-    pdfjs = await import("pdfjs-dist");
+    pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
+      "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
       import.meta.url,
     ).toString();
   }
