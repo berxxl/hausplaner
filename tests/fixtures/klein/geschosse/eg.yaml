@@ -1,0 +1,93 @@
+storey:
+  id: "e0g1k2m3"
+  name: "EG"
+  slug: "eg"
+  elevationMm: 0
+  rawHeightMm: 2500
+  defaults: {floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0}
+walls:
+  - id: "0aw1s0ud"
+    kind: "exterior"
+    start: {x: 0, y: 0}
+    end: {x: 8000, y: 0}
+    thicknessMm: 300
+  - id: "0bw2o0st"
+    kind: "exterior"
+    start: {x: 8000, y: 0}
+    end: {x: 8000, y: 6000}
+    thicknessMm: 300
+  - id: "0cw3n0rd"
+    kind: "exterior"
+    start: {x: 8000, y: 6000}
+    end: {x: 0, y: 6000}
+    thicknessMm: 300
+  - id: "0dw4w0st"
+    kind: "exterior"
+    start: {x: 0, y: 6000}
+    end: {x: 0, y: 0}
+    thicknessMm: 300
+  - id: "1aiv0ert"
+    kind: "interior"
+    start: {x: 4000, y: 0}
+    end: {x: 4000, y: 6000}
+    thicknessMm: 120
+  - id: "1bih0wst"
+    kind: "interior"
+    start: {x: 0, y: 3000}
+    end: {x: 4000, y: 3000}
+    thicknessMm: 120
+  - id: "1cih0ost"
+    kind: "interior"
+    start: {x: 4000, y: 3000}
+    end: {x: 8000, y: 3000}
+    thicknessMm: 120
+rooms:
+  - id: "r1kueche"
+    name: "Küche"
+    seed: {x: 2000, y: 1500}
+    polygon:
+      - {x: 150, y: 150}
+      - {x: 3940, y: 150}
+      - {x: 3940, y: 2940}
+      - {x: 150, y: 2940}
+  - id: "r2wohnen"
+    name: "Wohnen"
+    seed: {x: 6000, y: 1500}
+    polygon:
+      - {x: 4060, y: 150}
+      - {x: 7850, y: 150}
+      - {x: 7850, y: 2940}
+      - {x: 4060, y: 2940}
+  - id: "r3bad00a"
+    name: "Bad"
+    floorBuildupMm: 140
+    seed: {x: 2000, y: 4500}
+    polygon:
+      - {x: 150, y: 3060}
+      - {x: 3940, y: 3060}
+      - {x: 3940, y: 5850}
+      - {x: 150, y: 5850}
+  - id: "r4schlaf"
+    name: "Schlafen"
+    seed: {x: 6000, y: 4500}
+    polygon:
+      - {x: 4060, y: 3060}
+      - {x: 7850, y: 3060}
+      - {x: 7850, y: 5850}
+      - {x: 4060, y: 5850}
+openings:
+  - id: "o1fenstr"
+    wallId: "0aw1s0ud"
+    kind: "window"
+    offsetMm: 1495
+    widthMm: 1010
+    heightMm: 1250
+    sillMm: 900
+    shutterBox: {position: "inside", heightMm: 250}
+  - id: "o2tuer00"
+    wallId: "1aiv0ert"
+    kind: "door"
+    offsetMm: 1000
+    widthMm: 885
+    heightMm: 2135
+    sillMm: 0

@@ -184,7 +184,7 @@ interface Slope { id: Id; baseLine: [Pt, Pt]; heightAtBaseMm: number; angleDeg: 
 // heightAtBaseMm: OK Rohfußboden bis Unterseite Rohschräge an der Grundlinie; steigt zur Seite des Raumschwerpunkts
 
 interface Opening {
-  id: Id; wallId: Id; kind: "window" | "door" | "opening";
+  id: Id; storeyId: Id; wallId: Id; kind: "window" | "door" | "opening";   // storeyId beim Laden aus der Datei gesetzt, nicht geschrieben
   offsetMm: number;                           // Abstand Wandanfang bis Rohbauöffnung
   widthMm: number; heightMm: number; sillMm: number;   // Rohbaumaße, Brüstung ab Rohfußboden
   shutterBox?: { position: "inside" | "outside" | "top"; heightMm: number };

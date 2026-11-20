@@ -1,0 +1,60 @@
+storey:
+  id: "k3f9a2qd"
+  name: "DG"
+  slug: "dg"
+  elevationMm: 5600
+  rawHeightMm: 2450
+  defaults: {floorBuildupMm: 100, plasterMm: 15, suspendedMm: 0}
+  underlay:
+    file: "plaene/dg.pdf"
+    page: 1
+    calibration: {p1: {x: 102.4, y: 88.1}, p2: {x: 512, y: 88.1}, distanceMm: 4260}
+    offset: {x: 0, y: 0}
+    rotationDeg: 0
+    opacity: 0.5
+    visible: true
+walls:
+  - id: "1c8e0v5r"
+    kind: "exterior"
+    start: {x: 0, y: 0}
+    end: {x: 4000, y: 0}
+    thicknessMm: 300
+  - id: "4kq9m2xa"
+    kind: "exterior"
+    start: {x: 4000, y: 0}
+    end: {x: 4000, y: 3000}
+    thicknessMm: 300
+  - id: "a81kd0x2"
+    kind: "exterior"
+    start: {x: 4000, y: 3000}
+    end: {x: 0, y: 3000}
+    thicknessMm: 300
+  - id: "t2p7w3nb"
+    kind: "exterior"
+    start: {x: 0, y: 3000}
+    end: {x: 0, y: 0}
+    thicknessMm: 300
+rooms:
+  - id: "m3x8c2pd"
+    name: "Schlafen"
+    plasterMm: 10
+    seed: {x: 2000, y: 1500}
+    polygon:
+      - {x: 150, y: 150}
+      - {x: 3850, y: 150}
+      - {x: 3850, y: 2850}
+      - {x: 150, y: 2850}
+    slopes:
+      - id: "s7m2k4qa"
+        baseLine: [{x: 150, y: 150}, {x: 3850, y: 150}]
+        heightAtBaseMm: 1000
+        angleDeg: 45
+openings:
+  - id: "w5n1b8tz"
+    wallId: "a81kd0x2"
+    kind: "window"
+    offsetMm: 1495
+    widthMm: 1010
+    heightMm: 1385
+    sillMm: 800
+    shutterBox: {position: "top", heightMm: 250}

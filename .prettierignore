@@ -1,0 +1,6 @@
+dist
+node_modules
+openspec
+tests/fixtures
+*.md
+package-lock.json
