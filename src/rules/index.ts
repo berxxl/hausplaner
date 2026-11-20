@@ -1,6 +1,7 @@
 /** Alle Warnungen des Projekts (berechnet, nie gespeichert). Frei von React. */
 import type { Project } from "../model/types";
 import { openingsWithoutWall } from "./openings";
+import { openingWarnings, roomWarnings, slopeWarnings } from "./building";
 
 export type WarningTarget =
   { kind: "room"; id: string } | { kind: "opening"; id: string } | { kind: "none" };
@@ -21,5 +22,6 @@ export function computeWarnings(project: Project): ProjectWarning[] {
     const id = w.key.slice("opening-without-wall:".length);
     warnings.push({ ...w, target: { kind: "none" }, deletable: { kind: "opening", id } });
   }
+  warnings.push(...roomWarnings(project), ...slopeWarnings(project), ...openingWarnings(project));
   return warnings.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }

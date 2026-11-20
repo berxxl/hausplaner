@@ -96,3 +96,63 @@ export function DegField(props: FieldProps<number>) {
     <CommitField suffix="°" {...props} format={degText} parse={parseDeg} inputMode="decimal" />
   );
 }
+
+/** Millimeterfeld, das leer sein darf: leer = Standardwert (als Platzhalter angezeigt). */
+export function OptionalMmField({
+  label,
+  value,
+  fallback,
+  onCommit,
+  min,
+}: {
+  label: string;
+  value: number | undefined;
+  fallback: number;
+  onCommit(value: number | undefined): void;
+  min?: number;
+}) {
+  const id = useId();
+  const [text, setText] = useState(value === undefined ? "" : formatMm(value));
+  const [shown, setShown] = useState(value);
+  const [invalid, setInvalid] = useState(false);
+  if (shown !== value) {
+    setShown(value);
+    setText(value === undefined ? "" : formatMm(value));
+    setInvalid(false);
+  }
+  const commit = () => {
+    if (text.trim() === "") {
+      setInvalid(false);
+      if (value !== undefined) onCommit(undefined);
+      return;
+    }
+    const parsed = parseMm(text);
+    if (parsed === null || (min !== undefined && parsed < min)) {
+      setInvalid(true);
+      setText(value === undefined ? "" : formatMm(value));
+      return;
+    }
+    setInvalid(false);
+    setText(formatMm(parsed));
+    if (parsed !== value) onCommit(parsed);
+  };
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        value={text}
+        placeholder={`${formatMm(fallback)} (Standard)`}
+        inputMode="decimal"
+        aria-invalid={invalid || undefined}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setText(value === undefined ? "" : formatMm(value));
+        }}
+      />
+      <span className="field__suffix">mm</span>
+    </div>
+  );
+}

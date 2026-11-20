@@ -68,7 +68,7 @@ Das System SHALL Länge, Dicke, Anfangs- und Endpunkt einer Wand numerisch editi
 - **THEN** bleibt die Innenwand unverändert und das System meldet „T-Anschluss gelöst“
 
 #### Scenario: T-Anschluss beim Parallelverschieben gelöst
-- **WHEN** eine schräge Innenwand mit ihrem Endpunkt 10 mm vor dem Ende der Achse einer Außenwand anschließt und die Außenwand so parallel verschoben wird, dass der Schnitt mit der verlängerten Innenwand mehr als 20 mm hinter dem Wandende läge
+- **WHEN** eine unter 45° schräge Innenwand mit ihrem Endpunkt 50 mm vor dem Ende der Achse einer Außenwand anschließt und die Außenwand um 100 mm parallel verschoben wird, sodass der Schnitt mit der verlängerten Innenwand mehr als 20 mm hinter dem Wandende läge
 - **THEN** bleibt die Innenwand unverändert und das System meldet „T-Anschluss gelöst“
 
 ### Requirement: Räume erkennen

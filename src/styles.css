@@ -238,13 +238,19 @@ button {
 .plan__svg--move-underlay {
   cursor: move;
 }
-.wall {
+.walls-outline {
   fill: #8e8e93;
   stroke: #1d1d1f;
   stroke-width: 1;
 }
+.wall {
+  fill: transparent;
+  stroke: none;
+}
 .wall--selected {
-  fill: #0071e3;
+  fill: rgb(0 113 227 / 0.75);
+  stroke: #0071e3;
+  stroke-width: 1;
 }
 .room {
   fill: rgb(0 113 227 / 0.06);
@@ -260,4 +266,119 @@ button {
 .checkbox {
   display: block;
   margin: 0.5rem 0;
+}
+.plan__sep {
+  width: 1px;
+  align-self: stretch;
+  background: #d2d2d7;
+  margin: 0 0.25rem;
+}
+.plan__options {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #e5e5ea;
+  background: #fafafa;
+}
+.plan__options .field {
+  display: flex;
+  margin: 0;
+}
+.plan__options .field input {
+  width: 5rem;
+}
+.plan__status {
+  display: flex;
+  gap: 1rem;
+  padding: 0.15rem 0.5rem;
+  color: #6e6e73;
+  font-size: 0.9em;
+  min-height: 1.4em;
+}
+.plan__message {
+  color: #b25000;
+  font-weight: 600;
+}
+.plan__svg--wall,
+.plan__svg--measure,
+.plan__svg--room,
+.plan__svg--opening,
+.plan__svg--slope,
+.plan__svg--redetect-room {
+  cursor: crosshair;
+}
+.grid__major {
+  stroke: #d8d8de;
+  stroke-width: 1;
+}
+.grid__minor {
+  stroke: #efeff3;
+  stroke-width: 1;
+}
+.opening polygon {
+  fill: #fff;
+  stroke: #1d1d1f;
+  stroke-width: 1;
+}
+.opening line {
+  stroke: #1d1d1f;
+  stroke-width: 1;
+}
+.opening--selected polygon {
+  fill: #cfe3ff;
+}
+.opening--invalid polygon {
+  stroke: #c00;
+  stroke-width: 2;
+}
+.wall-preview {
+  stroke: rgb(0 113 227 / 0.4);
+  stroke-linecap: butt;
+}
+.handle {
+  fill: #fff;
+  stroke: #0071e3;
+  stroke-width: 2;
+}
+.open-ends circle {
+  fill: none;
+  stroke: #c00;
+  stroke-width: 2;
+}
+.room-labels text {
+  font-size: 12px;
+  fill: #1d1d1f;
+  pointer-events: none;
+}
+.room-labels__area {
+  fill: #6e6e73;
+  font-size: 11px;
+}
+.measure line {
+  stroke: #c00;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.measure circle {
+  fill: #c00;
+}
+.measure text,
+.dimension {
+  font-size: 12px;
+  fill: #c00;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+.dimension {
+  fill: #0071e3;
+}
+.slope {
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.properties button {
+  margin: 0.25rem 0.25rem 0.25rem 0;
 }

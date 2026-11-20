@@ -5,6 +5,7 @@
 | Ordner | Inhalt |
 |---|---|
 | `klein/` | ein Geschoss „EG“, 8000 × 6000 mm Außenmaß (Achsen), Außenwände 300 mm, Innenwände 120 mm, vier Räume (Küche, Wohnen, Bad mit 140 mm Fußbodenaufbau, Schlafen), ein Fenster mit innen liegendem Rollladenkasten, eine Tür |
+| `leer/` | ein Geschoss „EG“ ohne Bauteile, Ausgangspunkt für Zeichentests |
 | `dg/` | `geschosse/dg.yaml` ist das verbindliche Beispiel aus `openspec/changes/m1-gebaeudemodell/design.md` (Abschnitt „Dateiformat M1“): Raum „Schlafen“ mit Schräge 45° ab 1000 mm an der Südwand (Kniestock), Ost- und Westwand als Giebelwände unter der Schräge, Fenster mit Aufsatzkasten in der Nordwand |
 
 Alle Dateien sind kanonisch geschrieben: Laden und Speichern muss sie byteweise unverändert lassen.

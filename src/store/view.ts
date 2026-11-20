@@ -13,11 +13,28 @@ export interface Selection {
 
 export type EditorKind = "plan" | "surface" | "3d";
 
+export type PlanTool =
+  | "select"
+  | "measure"
+  | "wall"
+  | "room"
+  | "opening"
+  | "slope"
+  | "redetect-room"
+  | "calibrate"
+  | "move-underlay"
+  | "rotate-underlay";
+
 export interface ViewState {
   selection: Selection | null;
   /** Geschoss des Grundrisses und des Baums. */
   activeStoreyId: string | null;
   editor: EditorKind;
+  planTool: PlanTool;
+  /** Raum, auf den sich „Raum neu erkennen“ und „Schräge hinzufügen“ beziehen. */
+  toolRoomId: string | null;
+  /** Dicke der zuletzt gezeichneten Wand (Start 240 mm). */
+  lastThicknessMm: number;
 }
 
 export interface ViewStore extends StoreApi<ViewState> {
@@ -25,6 +42,8 @@ export interface ViewStore extends StoreApi<ViewState> {
   isSelected(kind: SelectableKind, id: string): boolean;
   setActiveStorey(id: string | null): void;
   setEditor(editor: EditorKind): void;
+  setPlanTool(tool: PlanTool, roomId?: string): void;
+  setLastThickness(mm: number): void;
   /** Entfernt eine Auswahl, deren Objekt nicht mehr existiert. */
   prune(exists: (selection: Selection) => boolean): void;
 }
@@ -34,6 +53,9 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     selection: null,
     activeStoreyId: null,
     editor: "plan",
+    planTool: "select",
+    toolRoomId: null,
+    lastThicknessMm: 240,
     ...initial,
   }));
   return Object.assign(store, {
@@ -49,6 +71,12 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setEditor(editor: EditorKind) {
       store.setState({ editor });
+    },
+    setPlanTool(planTool: PlanTool, roomId?: string) {
+      store.setState({ planTool, toolRoomId: roomId ?? null, editor: "plan" });
+    },
+    setLastThickness(lastThicknessMm: number) {
+      store.setState({ lastThicknessMm });
     },
     prune(exists: (selection: Selection) => boolean) {
       const s = store.getState().selection;

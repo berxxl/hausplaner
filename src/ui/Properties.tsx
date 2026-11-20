@@ -3,6 +3,7 @@ import type { ProjectStore } from "../store/history";
 import type { ViewStore } from "../store/view";
 import type { Api } from "../io/api";
 import { StoreyProperties } from "./StoreyProperties";
+import { OpeningProperties, RoomProperties, WallProperties } from "./BuildingProperties";
 
 const KIND_LABELS = {
   storey: "Geschoss",
@@ -12,7 +13,7 @@ const KIND_LABELS = {
   slope: "Schräge",
 } as const;
 
-/** Eigenschaften der Auswahl; die Bearbeitung je Objekttyp folgt in den Abschnitten 5 und 6. */
+/** Eigenschaften der Auswahl. */
 export function Properties({
   store,
   view,
@@ -28,12 +29,18 @@ export function Properties({
   if (selection?.kind === "storey") {
     const storey = project.storeys.find((s) => s.id === selection.id);
     if (storey) body = <StoreyProperties storey={storey} store={store} api={api} />;
-  } else if (selection) {
-    body = (
-      <p>
-        {KIND_LABELS[selection.kind]} {selection.id}
-      </p>
-    );
+  } else if (selection?.kind === "wall") {
+    const wall = project.walls.find((w) => w.id === selection.id);
+    if (wall) body = <WallProperties key={wall.id} wall={wall} project={project} store={store} />;
+  } else if (selection?.kind === "room") {
+    const room = project.rooms.find((r) => r.id === selection.id);
+    if (room)
+      body = (
+        <RoomProperties key={room.id} room={room} project={project} store={store} view={view} />
+      );
+  } else if (selection?.kind === "opening") {
+    const opening = project.openings.find((o) => o.id === selection.id);
+    if (opening) body = <OpeningProperties key={opening.id} opening={opening} store={store} />;
   }
   return (
     <aside aria-label="Eigenschaften" className="properties">

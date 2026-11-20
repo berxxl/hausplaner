@@ -1,0 +1,7 @@
+storey:
+  id: "eg000001"
+  name: "EG"
+  slug: "eg"
+  elevationMm: 0
+  rawHeightMm: 2500
+  defaults: {floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0}
