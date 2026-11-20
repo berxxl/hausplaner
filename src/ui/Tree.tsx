@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { useStore } from "zustand";
+import { addStorey } from "../store/commands";
+import { AddStoreyDialog } from "./AddStoreyDialog";
 import { sortedStoreys } from "../io/project-files";
 import type { ProjectStore } from "../store/history";
 import type { ViewStore } from "../store/view";
@@ -8,6 +11,7 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
   const project = useStore(store, (s) => s.project);
   const selection = useStore(view, (s) => s.selection);
   const storeys = sortedStoreys(project);
+  const [adding, setAdding] = useState(false);
   return (
     <nav aria-label="Strukturbaum" className="tree">
       <ul role="tree" aria-label="Geschosse">
@@ -37,6 +41,21 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
           );
         })}
       </ul>
+      <button type="button" className="tree__add" onClick={() => setAdding(true)}>
+        Geschoss hinzufügen
+      </button>
+      {adding && (
+        <AddStoreyDialog
+          project={project}
+          onClose={() => setAdding(false)}
+          onAdd={(storey) => {
+            store.execute(addStorey(storey));
+            view.select({ kind: "storey", id: storey.id });
+            view.setActiveStorey(storey.id);
+            setAdding(false);
+          }}
+        />
+      )}
     </nav>
   );
 }

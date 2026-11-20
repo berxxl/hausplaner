@@ -27,6 +27,7 @@ export interface SessionState {
 }
 
 export interface Session extends StoreApi<SessionState> {
+  readonly api: Api;
   start(): Promise<void>;
   /** Lädt neu; verwirft ungespeicherte Änderungen und leert die Undo-Historie. */
   reload(): Promise<void>;
@@ -93,6 +94,7 @@ export function createSession(api: Api): Session {
   }
 
   return Object.assign(state, {
+    api,
     async start() {
       stopEvents ??= api.onExternalChange(onExternalChange);
       await load();

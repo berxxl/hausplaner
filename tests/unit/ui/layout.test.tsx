@@ -41,9 +41,8 @@ describe("Layout-Gerüst (4.5)", () => {
     open();
     fireEvent.click(screen.getByRole("treeitem", { name: "EG" }));
     expect(screen.getByRole("treeitem", { name: "EG" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("complementary", { name: "Eigenschaften" })).toHaveTextContent(
-      "Rohbauhöhe2500 mm",
-    );
+    const props = screen.getByRole("complementary", { name: "Eigenschaften" });
+    expect(within(props).getByLabelText("Rohbauhöhe")).toHaveValue("2500");
   });
 
   test("Warnungsleiste: Anzahl, Liste, Aktion „Löschen“ für Öffnung ohne Wand, rückgängig machbar", () => {

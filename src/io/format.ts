@@ -71,7 +71,7 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
     fields: [
       f("file"),
       f("page"),
-      f("calibration", obj("calibration")),
+      f("calibration", obj("calibration"), true),
       f("offset", obj("point")),
       f("rotationDeg"),
       f("opacity"),

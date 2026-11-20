@@ -3,6 +3,8 @@ import { formatDeg, formatMm, parseDeg, parseMm } from "../model/units";
 
 interface FieldProps<T> {
   label: string;
+  /** Kleinster gültiger Wert (nur Zahlenfelder). */
+  min?: number;
   value: T;
   /** Wird bei Enter oder Verlassen des Felds mit einem gültigen, geänderten Wert aufgerufen. */
   onCommit(value: T): void;
@@ -21,6 +23,7 @@ function CommitField<T>({
   format,
   parse,
   inputMode,
+  min,
 }: FieldProps<T> & {
   format(v: T): string;
   parse(s: string): T | null;
@@ -39,7 +42,7 @@ function CommitField<T>({
 
   const commit = () => {
     const parsed = parse(text);
-    if (parsed === null) {
+    if (parsed === null || (typeof parsed === "number" && min !== undefined && parsed < min)) {
       setInvalid(true);
       setText(format(value));
       return;

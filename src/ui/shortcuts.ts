@@ -21,11 +21,7 @@ export function useGlobalShortcuts({ store, onSave }: ShortcutHandlers): void {
         return;
       }
       // Texteingaben behalten ihr eigenes Undo
-      if (
-        e.target instanceof Element &&
-        e.target.closest("input, textarea, [contenteditable=true]")
-      )
-        return;
+      if (isTextInput(e.target)) return;
       const action = historyShortcut(e);
       if (action) {
         e.preventDefault();
@@ -36,4 +32,21 @@ export function useGlobalShortcuts({ store, onSave }: ShortcutHandlers): void {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [store, onSave]);
+}
+
+const NON_TEXT_INPUTS = new Set([
+  "checkbox",
+  "radio",
+  "range",
+  "button",
+  "submit",
+  "reset",
+  "file",
+  "color",
+]);
+
+function isTextInput(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUTS.has(target.type);
+  return !!target.closest("textarea, [contenteditable=true]");
 }

@@ -54,7 +54,7 @@ M1 schreibt nur `projekt.yaml` und `geschosse/<slug>.yaml`. Für jede Datei, die
 | Geschossdatei | `storey`, `walls`, `rooms`, `openings` | je Liste nach `id` | – |
 | `storey` | `id`, `name`, `slug`, `elevationMm`, `rawHeightMm`, `defaults`, `underlay?` | – | `defaults` |
 | `defaults` | `floorBuildupMm`, `plasterMm`, `suspendedMm` | – | ja |
-| `underlay` | `file`, `page`, `calibration`, `offset`, `rotationDeg`, `opacity`, `visible` | – | `calibration`, `offset` |
+| `underlay` | `file`, `page`, `calibration?`, `offset`, `rotationDeg`, `opacity`, `visible` | – | `calibration`, `offset` |
 | `calibration` | `p1`, `p2`, `distanceMm` | – | ja |
 | Punkt (`start`, `end`, `seed`, `offset`, `p1`, `p2`, Polygonpunkt) | `x`, `y` | – | ja |
 | `wall` | `id`, `kind`, `start`, `end`, `thicknessMm`, `rawHeightMm?`, `outsideSide?` | – | `start`, `end` |
@@ -256,7 +256,8 @@ pdf.js rendert die gewählte Seite (`page` ab 1) in ein Canvas mit Auflösung pa
 
 `welt = offset + R(rotationDeg) · s · F · (pdf − p1)` mit `s = distanceMm / |p2 − p1|`, `F = diag(1, −1)` und R als Drehung gegen den Uhrzeigersinn (positive `rotationDeg` drehen gegen den Uhrzeigersinn).
 
-- Erste Kalibrierung eines Geschosses: `offset = (0, 0)`, `rotationDeg = 0`; p1 wird damit Weltursprung.
+- Unkalibriert (nach dem Wählen einer PDF fehlt `calibration`): Anzeige im Maßstab 1:100 mit p1 = (0, 0) und s = 25,4 / 72 · 100 mm je Punkt, `offset` und `rotationDeg` wie gespeichert. Eine neu gewählte PDF setzt `page = 1`, `offset = (0, 0)`, `rotationDeg = 0`, `opacity = 0.5`, `visible = true` und entfernt eine vorhandene Kalibrierung.
+- Erste Kalibrierung eines Geschosses (bisher keine `calibration`): `offset = (0, 0)`, `rotationDeg = 0`; p1 wird damit Weltursprung.
 - Verschieben ändert `offset`.
 - Drehen um einen gewählten Punkt q um Δ (numerisch eingegeben, 0,1°): `rotationDeg += Δ`, `offset = q + R(Δ) · (offset − q)`.
 - Neu kalibrieren: Die Weltposition des neuen p1 unter der alten Transformation wird zum neuen `offset`; `rotationDeg` bleibt.

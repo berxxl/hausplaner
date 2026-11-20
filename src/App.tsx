@@ -44,6 +44,7 @@ export function App({ api = httpApi, session: given }: AppProps) {
           store={phase.store}
           save={phase.save}
           notice={phase.notice}
+          api={session.api}
           onReload={() => void session.reload()}
         />
       );

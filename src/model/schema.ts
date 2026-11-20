@@ -34,7 +34,10 @@ export const StoreyDefaultsSchema = z.strictObject({
 export const UnderlaySchema = z.strictObject({
   file: text,
   page: z.number().int().min(1, "Seiten zählen ab 1"),
-  calibration: z.strictObject({ p1: PdfPointSchema, p2: PdfPointSchema, distanceMm: positiveMm }),
+  /** Fehlt, solange der Plan nicht kalibriert ist (Anzeige dann im Maßstab 1:100). */
+  calibration: z
+    .strictObject({ p1: PdfPointSchema, p2: PdfPointSchema, distanceMm: positiveMm })
+    .optional(),
   offset: PointSchema,
   rotationDeg: deg,
   opacity: z.number().min(0).max(1),

@@ -148,6 +148,7 @@ button {
 .dialog-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 100;
   background: rgb(0 0 0 / 0.3);
   display: grid;
   place-items: center;
@@ -178,4 +179,85 @@ button {
 }
 .field input[aria-invalid="true"] {
   outline: 2px solid #c00;
+}
+.tree__add {
+  margin: 0.25rem 1rem;
+}
+.danger {
+  color: #c00;
+  margin-top: 1rem;
+}
+.hint {
+  color: #6e6e73;
+  font-size: 0.9em;
+}
+.properties h3 {
+  font-size: 0.95rem;
+  margin: 1rem 0 0.25rem;
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.plan__toolbar {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #e5e5ea;
+  background: #fafafa;
+}
+.plan__toolbar [aria-pressed="true"] {
+  background: #0071e3;
+  color: #fff;
+}
+.plan__hint {
+  color: #6e6e73;
+  margin-left: 0.5rem;
+}
+.plan__canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+.plan__svg {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+}
+.plan__svg--select {
+  cursor: grab;
+}
+.plan__svg--calibrate,
+.plan__svg--rotate-underlay {
+  cursor: crosshair;
+}
+.plan__svg--move-underlay {
+  cursor: move;
+}
+.wall {
+  fill: #8e8e93;
+  stroke: #1d1d1f;
+  stroke-width: 1;
+}
+.wall--selected {
+  fill: #0071e3;
+}
+.room {
+  fill: rgb(0 113 227 / 0.06);
+  stroke: none;
+}
+.room--selected {
+  fill: rgb(0 113 227 / 0.2);
+}
+.marker line {
+  stroke: #c00;
+  stroke-width: 2;
+}
+.checkbox {
+  display: block;
+  margin: 0.5rem 0;
 }

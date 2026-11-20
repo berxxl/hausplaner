@@ -1,5 +1,7 @@
 import { useStore } from "zustand";
+import type { ProjectStore } from "../store/history";
 import type { EditorKind, ViewStore } from "../store/view";
+import { PlanView } from "./plan/PlanView";
 
 const TABS: { kind: EditorKind; label: string }[] = [
   { kind: "plan", label: "Grundriss" },
@@ -8,7 +10,7 @@ const TABS: { kind: EditorKind; label: string }[] = [
 ];
 
 /** Editorbereich mit Umschaltung zwischen Grundriss, Flächenansicht und 3D. */
-export function EditorArea({ view }: { view: ViewStore }) {
+export function EditorArea({ store, view }: { store: ProjectStore; view: ViewStore }) {
   const editor = useStore(view, (s) => s.editor);
   const active = TABS.find((t) => t.kind === editor)!;
   return (
@@ -34,7 +36,11 @@ export function EditorArea({ view }: { view: ViewStore }) {
         aria-labelledby={`tab-${active.kind}`}
         className="editor__panel"
       >
-        <p className="placeholder">{active.label}</p>
+        {editor === "plan" ? (
+          <PlanView store={store} view={view} />
+        ) : (
+          <p className="placeholder">{active.label}</p>
+        )}
       </div>
     </main>
   );

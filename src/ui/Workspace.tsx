@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import type { ProjectStore } from "../store/history";
 import type { SaveController } from "../store/save";
+import type { Api } from "../io/api";
 import { createViewStore, type Selection } from "../store/view";
 import type { Project } from "../model/types";
+import { sortedStoreys } from "../io/project-files";
 import { EditorArea } from "./EditorArea";
 import { Properties } from "./Properties";
 import { ProjectSettings } from "./ProjectSettings";
@@ -21,9 +23,11 @@ export interface WorkspaceProps {
   onReload?(): void;
   /** Hinweis beim Öffnen, z. B. nach einer Migration. */
   notice?: string;
+  /** Für das Hochladen von Plänen. */
+  api?: Pick<Api, "putPlan">;
 }
 
-export function Workspace({ store, save, onReload, notice }: WorkspaceProps) {
+export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps) {
   const [showNotice, setShowNotice] = useState(!!notice);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const name = useStore(store, (s) => s.project.name);
@@ -33,7 +37,15 @@ export function Workspace({ store, save, onReload, notice }: WorkspaceProps) {
   );
   // Auswahl verwerfen, wenn ihr Objekt verschwindet (Löschen, Undo)
   useEffect(
-    () => store.subscribe((s) => view.prune((sel) => selectionExists(s.project, sel))),
+    () =>
+      store.subscribe((s) => {
+        view.prune((sel) => selectionExists(s.project, sel));
+        // aktives Geschoss gelöscht: auf das unterste verbleibende wechseln
+        const active = view.getState().activeStoreyId;
+        if (!s.project.storeys.some((x) => x.id === active)) {
+          view.setActiveStorey(sortedStoreys(s.project)[0]?.id ?? null);
+        }
+      }),
     [store, view],
   );
 
@@ -88,8 +100,8 @@ export function Workspace({ store, save, onReload, notice }: WorkspaceProps) {
         )}
       </div>
       <Tree store={store} view={view} />
-      <EditorArea view={view} />
-      <Properties store={store} view={view} />
+      <EditorArea store={store} view={view} />
+      <Properties store={store} view={view} api={api} />
       <WarningBar store={store} view={view} />
       {settingsOpen && <ProjectSettings store={store} onClose={() => setSettingsOpen(false)} />}
       {dialog}

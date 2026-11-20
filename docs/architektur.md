@@ -159,7 +159,7 @@ interface Storey {
   id: Id; name: string; slug: string;          // slug = Dateiname, einmal gebildet, ändert sich nie
   elevationMm: number; rawHeightMm: number;    // OK Rohfußboden bis UK Rohdecke
   underlay?: { file: string; page: number;      // Pfad relativ zum Projektordner
-               calibration: { p1: Pt; p2: Pt; distanceMm: number };   // p1/p2 in PDF-Punkten
+               calibration?: { p1: Pt; p2: Pt; distanceMm: number };  // p1/p2 in PDF-Punkten; fehlt = noch nicht kalibriert (1:100)
                offset: Pt; rotationDeg: number; opacity: number; visible: boolean };
   defaults: { floorBuildupMm: number; plasterMm: number; suspendedMm: number };   // suspendedMm Standard 0
 }

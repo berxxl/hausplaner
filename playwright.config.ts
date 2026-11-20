@@ -4,7 +4,9 @@ const allBrowsers = process.env.PW_ALL_BROWSERS === "1";
 
 export default defineConfig({
   testDir: "tests/e2e",
-  fullyParallel: true,
+  // Alle Tests teilen einen Projektordner
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -22,7 +24,7 @@ export default defineConfig({
       : []),
   ],
   webServer: {
-    command: "npm run dev -- tests/fixtures/klein --port 5173 --strictPort",
+    command: "node tests/e2e/serve.ts --port 5173 --strictPort",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
   },

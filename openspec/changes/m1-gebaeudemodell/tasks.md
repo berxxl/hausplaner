@@ -37,11 +37,11 @@
 
 ## 5. Geschosse und Planhintergrund
 
-- [ ] 5.1 Geschosse anlegen (Vorschlag aus dem höchsten Geschoss: Rohbauhöhe, Standardaufbauten inkl. Abhängung, Höhenlage + Rohbauhöhe + 300 mm), umbenennen (Slug bleibt), Höhen und Standardaufbauten bearbeiten; Reihenfolge nach Höhenlage, bei Gleichstand nach Name; Komponententests: KG/EG/OG-Reihenfolge, Vorschlag 2800 mm, Umbenennen ändert Dateinamen nicht
-- [ ] 5.2 Geschoss löschen mit allen Wänden, Räumen und Öffnungen in einem Befehl; Speichern löscht die Geschossdatei; Unit-Test: Löschen, Speichern (`null` für die Datei), Rückgängig, Speichern (Datei wieder geschrieben)
-- [ ] 5.3 PDF wählen: immer Upload über `PUT /api/raw/plaene/<name>`, gespeichert wird der gelieferte Pfad; Seite wählen (`page` ab 1); Rendern mit pdf.js unter den Bauteilen, Viewport `getViewport({scale: 1})` inkl. Seitenrotation; Playwright-Tests mit beiden Fixture-PDFs (Seite 2 des Vektorplans, gescannter Plan) und erneuter Wahl derselben PDF für ein zweites Geschoss (keine Kopie)
-- [ ] 5.4 Transformation nach Formel in `design.md` in `geometry/`; Kalibrierung über zwei Punkte und Abstand, undo-fähig; Unit-Tests: bemaßte Strecke ergibt 4260 mm, Neu-Kalibrieren hält p1 fest, Wände unverändert, Kalibrierung rückgängig stellt die vorige Kalibrierung her (Spec-Scenario)
-- [ ] 5.5 Hintergrund verschieben, um gewählten Punkt drehen (Δ numerisch auf 0,1°, positiv gegen den Uhrzeigersinn), Deckkraft, ein/aus, nur im Grundriss; alles undo-fähig; Unit-Tests: Drehpunkt bleibt fest, Verschieben ändert nur `offset`, Deckkraft wird auf 0,01 gerundet; Komponententest Ausblenden; Playwright: gescannter Plan um 1,5° gedreht ergibt achsparallele Planwände
+- [x] 5.1 Geschosse anlegen (Vorschlag aus dem höchsten Geschoss: Rohbauhöhe, Standardaufbauten inkl. Abhängung, Höhenlage + Rohbauhöhe + 300 mm), umbenennen (Slug bleibt), Höhen und Standardaufbauten bearbeiten; Reihenfolge nach Höhenlage, bei Gleichstand nach Name; Komponententests: KG/EG/OG-Reihenfolge, Vorschlag 2800 mm, Umbenennen ändert Dateinamen nicht
+- [x] 5.2 Geschoss löschen mit allen Wänden, Räumen und Öffnungen in einem Befehl; Speichern löscht die Geschossdatei; Unit-Test: Löschen, Speichern (`null` für die Datei), Rückgängig, Speichern (Datei wieder geschrieben)
+- [x] 5.3 PDF wählen: immer Upload über `PUT /api/raw/plaene/<name>`, gespeichert wird der gelieferte Pfad; Seite wählen (`page` ab 1); Rendern mit pdf.js unter den Bauteilen, Viewport `getViewport({scale: 1})` inkl. Seitenrotation; Playwright-Tests mit beiden Fixture-PDFs (Seite 2 des Vektorplans, gescannter Plan) und erneuter Wahl derselben PDF für ein zweites Geschoss (keine Kopie)
+- [x] 5.4 Transformation nach Formel in `design.md` in `geometry/`; Kalibrierung über zwei Punkte und Abstand, undo-fähig; Unit-Tests: bemaßte Strecke ergibt 4260 mm, Neu-Kalibrieren hält p1 fest, Wände unverändert, Kalibrierung rückgängig stellt die vorige Kalibrierung her (Spec-Scenario)
+- [x] 5.5 Hintergrund verschieben, um gewählten Punkt drehen (Δ numerisch auf 0,1°, positiv gegen den Uhrzeigersinn), Deckkraft, ein/aus, nur im Grundriss; alles undo-fähig; Unit-Tests: Drehpunkt bleibt fest, Verschieben ändert nur `offset`, Deckkraft wird auf 0,01 gerundet; Komponententest Ausblenden; Playwright: gescannter Plan um 1,5° gedreht ergibt achsparallele Planwände
 
 ## 6. Wände, Räume, Öffnungen
 

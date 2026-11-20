@@ -29,3 +29,54 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
     openings: [],
   };
 }
+
+/** Abstand zwischen Rohdecke des höchsten Geschosses und Rohfußboden des nächsten (design.md „Weiteres Geschoss“). */
+export const CEILING_THICKNESS_MM = 300;
+
+export interface StoreySuggestion {
+  elevationMm: number;
+  rawHeightMm: number;
+  defaults: Storey["defaults"];
+}
+
+/** Vorschlag für ein weiteres Geschoss aus dem höchsten Geschoss (größte Höhenlage). */
+export function suggestNextStorey(project: Project): StoreySuggestion {
+  const highest = [...project.storeys].sort(
+    (a, b) => b.elevationMm - a.elevationMm || b.name.localeCompare(a.name, "de"),
+  )[0];
+  if (!highest) {
+    return {
+      elevationMm: FIRST_STOREY_DEFAULTS.elevationMm,
+      rawHeightMm: FIRST_STOREY_DEFAULTS.rawHeightMm,
+      defaults: { ...FIRST_STOREY_DEFAULTS.defaults },
+    };
+  }
+  return {
+    elevationMm: highest.elevationMm + highest.rawHeightMm + CEILING_THICKNESS_MM,
+    rawHeightMm: highest.rawHeightMm,
+    defaults: { ...highest.defaults },
+  };
+}
+
+/** Neues Geschoss mit einmalig gebildetem, eindeutigem Slug. */
+export function newStorey(project: Project, name: string, values: StoreySuggestion): Storey {
+  const ids = new Set(allIds(project));
+  return {
+    id: newId(ids),
+    name,
+    slug: uniqueSlug(name, new Set(project.storeys.map((s) => s.slug))),
+    elevationMm: values.elevationMm,
+    rawHeightMm: values.rawHeightMm,
+    defaults: { ...values.defaults },
+  };
+}
+
+/** Alle IDs des Projekts (projektweit eindeutig). */
+export function allIds(project: Project): string[] {
+  return [
+    ...project.storeys.map((s) => s.id),
+    ...project.walls.map((w) => w.id),
+    ...project.rooms.flatMap((r) => [r.id, ...(r.slopes ?? []).map((s) => s.id)]),
+    ...project.openings.map((o) => o.id),
+  ];
+}
