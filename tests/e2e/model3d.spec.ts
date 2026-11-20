@@ -3,7 +3,8 @@ import { openProject, worldToPage } from "./helpers";
 
 async function open3d(page: Page) {
   await page.getByRole("tab", { name: "3D" }).click();
-  await expect(page.getByTestId("scene")).toBeVisible();
+  // erstes Laden von three.js kann in der CI dauern
+  await expect(page.getByTestId("scene")).toBeVisible({ timeout: 20000 });
   await page.waitForFunction(() => "__hausplaner3d" in window);
   await page.waitForTimeout(300); // Kamera eingepasst
 }

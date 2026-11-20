@@ -9,6 +9,9 @@ export default defineConfig({
   plugins: [react()],
   // lokale App: three.js (≈ 1 MB) wird erst beim Öffnen der 3D-Ansicht nachgeladen
   build: { chunkSizeWarningLimit: 1500 },
+  // vorab bündeln: sonst entdeckt der Dev-Server sie erst beim Öffnen der 3D-Ansicht bzw. eines Plans
+  // und lädt die Seite neu
+  optimizeDeps: { include: ["three", "@react-three/fiber", "@react-three/drei", "pdfjs-dist"] },
   server: {
     host: "127.0.0.1",
     proxy: apiPort

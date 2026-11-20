@@ -1,0 +1,4 @@
+# LF überall, auch unter Windows: YAML-Fixtures sind Golden Files, Prettier erwartet LF
+* text=auto eol=lf
+*.pdf binary
+*.png binary

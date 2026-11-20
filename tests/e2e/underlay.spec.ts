@@ -87,9 +87,10 @@ test.describe("Kalibrieren und Ausrichten (5.4, 5.5)", () => {
     await saveNow(page);
     const u = (await storeyFile(request, "eg")).storey.underlay!;
     expect(u.calibration!.distanceMm).toBe(4260);
-    expect(Math.abs(u.calibration!.p1.x - 170.1)).toBeLessThan(1.5);
-    expect(Math.abs(u.calibration!.p1.y - 705.8)).toBeLessThan(1.5);
-    expect(Math.abs(u.calibration!.p2.x - 290.8)).toBeLessThan(1.5);
+    // Klickgenauigkeit: 1 Pixel entspricht bei „Alles zeigen“ rund 1,5 PDF-Punkten
+    expect(Math.abs(u.calibration!.p1.x - 170.1)).toBeLessThan(3);
+    expect(Math.abs(u.calibration!.p1.y - 705.8)).toBeLessThan(3);
+    expect(Math.abs(u.calibration!.p2.x - 290.8)).toBeLessThan(3);
     expect(u.offset).toEqual({ x: 0, y: 0 });
     // Rückgängig stellt den unkalibrierten Zustand her
     await page.keyboard.press("ControlOrMeta+z");

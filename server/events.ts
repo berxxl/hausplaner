@@ -74,11 +74,14 @@ export class ProjectEvents implements OwnWrites {
     } else {
       const own = this.ownHashes.get(rel);
       if (own !== undefined) {
+        let content: string;
         try {
-          if (sha256(await readFile(absPath, "utf8")) === own) return;
+          content = await readFile(absPath, "utf8");
         } catch {
-          // Datei inzwischen weg: als Änderung melden
+          // Datei inzwischen wieder weg: die folgende Lösch-Meldung entscheidet
+          return;
         }
+        if (sha256(content) === own) return;
       }
     }
     this.pending.add(rel);
