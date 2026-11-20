@@ -91,4 +91,50 @@ describe("Planhintergrund in den Eigenschaften (5.3–5.5)", () => {
     expect(underlay(store)).toEqual(first);
     expect(section()).toHaveTextContent("Kalibriert über 4260 mm");
   });
+
+  test("Plan aus anderem Geschoss übernehmen: Datei, Kalibrierung, Ausrichtung, nächste Seite", async () => {
+    const { store } = open();
+    const calibrated = calibrate(
+      newUnderlay("plaene/eg.pdf"),
+      { x: 170.1, y: 705.8 },
+      { x: 290.8, y: 705.8 },
+      4260,
+    );
+    act(() => {
+      store.execute(
+        setUnderlay(
+          "e0g1k2m3",
+          { ...calibrated, offset: { x: 100, y: -50 }, rotationDeg: 1.5 },
+          "Kalibrieren",
+        ),
+      );
+      store.execute({
+        label: "Geschoss anlegen",
+        run: (d) =>
+          void d.storeys.push({
+            id: "og000001",
+            name: "OG",
+            slug: "og",
+            elevationMm: 2800,
+            rawHeightMm: 2500,
+            defaults: { floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0 },
+          }),
+      });
+    });
+    fireEvent.click(screen.getByRole("treeitem", { name: "OG" }));
+    const section = screen.getByRole("region", { name: "Planhintergrund" });
+    const adopt = within(section).getByLabelText("Plan aus anderem Geschoss übernehmen");
+    expect(within(adopt).getByRole("option", { name: "EG: eg.pdf, Seite 1" })).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.change(adopt, { target: { value: "e0g1k2m3" } });
+    });
+    const og = store.getState().project.storeys.find((s) => s.id === "og000001")!;
+    expect(og.underlay).toEqual({
+      ...calibrated,
+      offset: { x: 100, y: -50 },
+      rotationDeg: 1.5,
+      page: 2,
+    });
+    expect(store.undoLabel()).toBe("Plan übernehmen");
+  });
 });

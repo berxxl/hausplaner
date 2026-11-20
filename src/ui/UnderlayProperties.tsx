@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "zustand";
 import { newUnderlay } from "../geometry/underlay";
 import type { Api } from "../io/api";
 import { roundFraction } from "../model/rounding";
@@ -24,6 +25,28 @@ export function UnderlayProperties({
   const numPages = usePageCount(underlay?.file);
   const set = (next: Underlay | undefined, label: string) =>
     store.execute(setUnderlay(storey.id, next, label));
+
+  // Pläne anderer Geschosse (gleiche Datei nur einmal, nach Höhenlage)
+  const storeys = useStore(store, (st) => st.project.storeys);
+  const sources = storeys
+    .filter((x) => x.id !== storey.id && x.underlay)
+    .sort((a, b) => a.elevationMm - b.elevationMm)
+    .map((x) => ({ storeyId: x.id, name: x.name, underlay: x.underlay! }));
+
+  /**
+   * Übernimmt Datei, Kalibrierung und Ausrichtung eines anderen Geschosses; Seite = die nächste,
+   * sofern die PDF so viele Seiten hat.
+   */
+  const adopt = async (source: Underlay) => {
+    let page = source.page + 1;
+    try {
+      const doc = await loadPdf(source.file);
+      if (page > doc.numPages) page = source.page;
+    } catch {
+      // Seitenzahl unbekannt (z. B. ohne pdf.js): Vorschlag bleibt
+    }
+    set({ ...source, page }, "Plan übernehmen");
+  };
 
   const choose = async (file: File) => {
     if (!api) return;
@@ -63,6 +86,26 @@ export function UnderlayProperties({
         {underlay ? "Andere PDF wählen …" : "PDF wählen …"}
       </button>
       {error && <p role="alert">Hochladen fehlgeschlagen: {error}</p>}
+      {sources.length > 0 && (
+        <div className="field">
+          <label htmlFor={`adopt-${storey.id}`}>Plan aus anderem Geschoss übernehmen</label>
+          <select
+            id={`adopt-${storey.id}`}
+            value=""
+            onChange={(e) => {
+              const source = sources.find((x) => x.storeyId === e.target.value);
+              if (source) void adopt(source.underlay);
+            }}
+          >
+            <option value="">– Geschoss wählen –</option>
+            {sources.map((x) => (
+              <option key={x.storeyId} value={x.storeyId}>
+                {x.name}: {x.underlay.file.replace(/^plaene\//, "")}, Seite {x.underlay.page}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {underlay && (
         <>
           <div className="field">

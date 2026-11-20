@@ -262,7 +262,7 @@ pdf.js rendert die gewählte Seite (`page` ab 1) in ein Canvas mit Auflösung pa
 - Drehen um einen gewählten Punkt q um Δ (numerisch eingegeben, 0,1°): `rotationDeg += Δ`, `offset = q + R(Δ) · (offset − q)`.
 - Neu kalibrieren: Die Weltposition des neuen p1 unter der alten Transformation wird zum neuen `offset`; `rotationDeg` bleibt.
 
-Eine gewählte PDF wird immer über `PUT /api/raw/plaene/<dateiname>` hochgeladen, auch wenn sie schon im Projektordner liegt (der Browser kennt den Pfad nicht). Der Server erkennt gleiche Inhalte über SHA-256 und liefert dann den vorhandenen Pfad, sonst den neuen Pfad mit Kollisionssuffix; gespeichert wird der gelieferte relative Pfad. Undo entfernt eine hochgeladene Datei nicht.
+Eine gewählte PDF wird immer über `PUT /api/raw/plaene/<dateiname>` hochgeladen, auch wenn sie schon im Projektordner liegt (der Browser kennt den Pfad nicht). Der Server erkennt gleiche Inhalte über SHA-256 und liefert dann den vorhandenen Pfad, sonst den neuen Pfad mit Kollisionssuffix; gespeichert wird der gelieferte relative Pfad. Undo entfernt eine hochgeladene Datei nicht. **Plan aus anderem Geschoss übernehmen** (für PDFs mit einem Geschoss je Seite): übernimmt Datei, Kalibrierung, Verschiebung, Drehung, Deckkraft und Sichtbarkeit des gewählten Geschosses; als Seite wird die nächste vorgeschlagen, sofern die PDF so viele Seiten hat, sonst dieselbe. Danach wird in der Regel nur noch über „Plan verschieben“ ausgerichtet.
 
 ### Oberfläche
 - Auswählbar in M1: Geschoss (im Baum), Wand, Raum, Öffnung, Schräge. Ein Klick auf Decke oder Boden in 3D wählt den Raum.

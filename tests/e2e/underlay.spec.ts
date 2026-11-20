@@ -183,3 +183,53 @@ test.describe("Sichtbarkeit nach dem Wählen (Fehlerbericht)", () => {
     await expect.poll(() => coverage(page)).toBeGreaterThan(0.3);
   });
 });
+
+test("Plan aus anderem Geschoss übernehmen: nächste Seite, Kalibrierung bleibt; letzte Seite bleibt stehen", async ({
+  page,
+  request,
+}) => {
+  await openProject(page, request, "leer");
+  await choosePdf(page, "EG", PDF.vector);
+  await page.getByRole("button", { name: "Alles zeigen" }).click();
+  await page.getByRole("button", { name: "Kalibrieren" }).click();
+  for (const p of [
+    { x: 170.1, y: 705.8 },
+    { x: 290.8, y: 705.8 },
+  ]) {
+    const s = await worldToPage(page, pdfToWorld({ offset: { x: 0, y: 0 }, rotationDeg: 0 }, p));
+    await page.mouse.click(s.x, s.y);
+  }
+  await page
+    .getByRole("dialog", { name: "Kalibrieren" })
+    .getByLabel("Realer Abstand der beiden Punkte")
+    .fill("4260");
+  await page
+    .getByRole("dialog", { name: "Kalibrieren" })
+    .getByRole("button", { name: "OK" })
+    .click();
+
+  for (const name of ["OG", "DG"]) {
+    await page.getByRole("button", { name: "Geschoss hinzufügen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Geschoss hinzufügen" });
+    await dialog.getByLabel("Name").fill(name);
+    await dialog.getByRole("button", { name: "Hinzufügen" }).click();
+  }
+  const props = page.getByRole("complementary", { name: "Eigenschaften" });
+  await page.getByRole("treeitem", { name: "OG" }).locator(":scope > .tree__item").click();
+  await props
+    .getByLabel("Plan aus anderem Geschoss übernehmen")
+    .selectOption({ label: "EG: vektorplan.pdf, Seite 1" });
+  await expect(page.getByTestId("underlay")).toBeAttached();
+  await page.getByRole("treeitem", { name: "DG" }).locator(":scope > .tree__item").click();
+  await props
+    .getByLabel("Plan aus anderem Geschoss übernehmen")
+    .selectOption({ label: "OG: vektorplan.pdf, Seite 2" });
+  await expect(page.getByTestId("underlay")).toBeAttached();
+  await saveNow(page);
+  const eg = (await storeyFile(request, "eg")).storey.underlay!;
+  const og = (await storeyFile(request, "og")).storey.underlay!;
+  const dg = (await storeyFile(request, "dg")).storey.underlay!;
+  expect(og).toEqual({ ...eg, page: 2 });
+  expect(dg).toEqual({ ...eg, page: 2 }); // die PDF hat nur zwei Seiten
+  expect(og.calibration!.distanceMm).toBe(4260);
+});
