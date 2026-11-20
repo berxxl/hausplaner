@@ -7,6 +7,8 @@ const apiPort = process.env.HAUSPLANER_API_PORT;
 
 export default defineConfig({
   plugins: [react()],
+  // lokale App: three.js (≈ 1 MB) wird erst beim Öffnen der 3D-Ansicht nachgeladen
+  build: { chunkSizeWarningLimit: 1500 },
   server: {
     host: "127.0.0.1",
     proxy: apiPort

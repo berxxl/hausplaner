@@ -108,3 +108,19 @@ describe("Raumeigenschaften (6.6)", () => {
     void within;
   });
 });
+
+test("„Parallel verschieben um“ springt nach Enter auf 0 zurück und wirkt beim Verlassen nicht noch einmal", async () => {
+  const { WallProperties } = await import("../../../src/ui/BuildingProperties");
+  const { store } = setup();
+  const p = store.getState().project;
+  render(
+    <WallProperties wall={p.walls.find((w) => w.id === "0bw2o0st")!} project={p} store={store} />,
+  );
+  const field = screen.getByLabelText("Parallel verschieben um (positiv nach links)");
+  fireEvent.change(field, { target: { value: "-200" } });
+  fireEvent.keyDown(field, { key: "Enter" });
+  expect(field).toHaveValue("0");
+  fireEvent.blur(field);
+  expect(store.getState().undoStack.map((e) => e.label)).toEqual(["Wand verschieben"]);
+  expect(store.getState().project.walls.find((w) => w.id === "0bw2o0st")!.start.x).toBe(8200);
+});

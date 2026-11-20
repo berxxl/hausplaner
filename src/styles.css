@@ -448,3 +448,13 @@ button {
   padding: 0.25rem 0.5rem;
   border-top: 1px solid #e5e5ea;
 }
+.model3d {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.model3d__canvas {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}

@@ -5,6 +5,8 @@ interface FieldProps<T> {
   label: string;
   /** Kleinster gültiger Wert (nur Zahlenfelder). */
   min?: number;
+  /** Nach der Übernahme wieder den Ausgangswert zeigen (Aktionsfelder wie „parallel verschieben um“). */
+  resetAfterCommit?: boolean;
   value: T;
   /** Wird bei Enter oder Verlassen des Felds mit einem gültigen, geänderten Wert aufgerufen. */
   onCommit(value: T): void;
@@ -24,6 +26,7 @@ function CommitField<T>({
   parse,
   inputMode,
   min,
+  resetAfterCommit,
 }: FieldProps<T> & {
   format(v: T): string;
   parse(s: string): T | null;
@@ -48,7 +51,7 @@ function CommitField<T>({
       return;
     }
     setInvalid(false);
-    setText(format(parsed));
+    setText(format(resetAfterCommit ? value : parsed));
     if (parsed !== value) onCommit(parsed);
   };
 

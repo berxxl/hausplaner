@@ -86,6 +86,7 @@ export function WallProperties({
       <MmField
         label="Parallel verschieben um (positiv nach links)"
         value={0}
+        resetAfterCommit
         onCommit={(v) => v !== 0 && apply(moveParallel(geoms(), wall.id, v), "Wand verschieben")}
       />
       {wall.kind === "exterior" && (
