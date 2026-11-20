@@ -4,7 +4,7 @@
 
 - [x] 1.1 Vite + React + TypeScript (strict) anlegen, ESLint und Prettier einrichten; `npm run dev` zeigt eine leere Seite
 - [x] 1.2 Vitest und Playwright einrichten; `npm test` und `npm run e2e` laufen je mit einem Beispieltest grün
-- [ ] 1.3 GitHub Actions: Lint, Typecheck und Vitest auf Node 22 unter ubuntu, macos und windows; Playwright mit Chromium auf allen drei, Firefox und WebKit auf ubuntu; Workflow läuft grün
+- [x] 1.3 GitHub Actions: Lint, Typecheck und Vitest auf Node 22 unter ubuntu, macos und windows; Playwright mit Chromium auf allen drei, Firefox und WebKit auf ubuntu; Workflow läuft grün
 - [x] 1.4 Fixtures unter `tests/fixtures/`: kleines Projekt (ein Geschoss, vier Räume), DG-Projekt (Kniestock, Giebel) mit dem verbindlichen Beispiel `geschosse/dg.yaml` aus `design.md`; eingecheckte PDFs: Vektorplan A3, zwei Seiten, 1:100, bemaßte Referenzstrecke 4260 mm, und Scan als Rasterbild von Seite 1 mit 150 dpi, um 1,5° gedreht; Herkunft und Erzeugung in `tests/fixtures/README.md`
 
 ## 2. Datenmodell und Serialisierung
