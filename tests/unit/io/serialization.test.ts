@@ -27,8 +27,8 @@ describe("Aufteilen und Zusammenführen (2.2)", () => {
     );
   });
 
-  test("fremde katalog.yaml wird ignoriert und nie geschrieben", () => {
-    const files = { ...readFixture("klein"), "katalog.yaml": "deviceTypes: []\nunbekannt: 1\n" };
+  test("unbekannte verteiler.yaml wird ignoriert und nie geschrieben", () => {
+    const files = { ...readFixture("klein"), "verteiler.yaml": "boards: []\nunbekannt: 1\n" };
     const out = projectToFiles(load(files));
     expect(Object.keys(out).sort()).toEqual(["geschosse/eg.yaml", "projekt.yaml"]);
   });

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { App } from "../../../src/App";
 import { registerMigration, unregisterMigration } from "../../../src/model/migrations";
-import { readFixture } from "../fixtures";
+import { readFixture, readV1Fixture } from "../fixtures";
 import { mockApi } from "../mock-api";
 
 describe("Startzustände (4.4)", () => {
@@ -22,14 +22,14 @@ describe("Startzustände (4.4)", () => {
 
   test("neuere Schemaversion: Fehlerseite mit Hinweis auf neuere App-Version", async () => {
     const files = readFixture("klein");
-    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 1", "schemaVersion: 9");
+    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 9");
     render(<App api={mockApi(files).api} />);
     expect(await screen.findByRole("list", { name: "Ladefehler" })).toHaveTextContent(
       "Projekt wurde mit neuerer App-Version erstellt",
     );
   });
 
-  test("fehlender Ordner: Anlegen schreibt sofort projekt.yaml und geschosse/eg.yaml mit Standardwerten", async () => {
+  test("fehlender Ordner: Anlegen schreibt sofort projekt.yaml, katalog.yaml und geschosse/eg.yaml mit Standardwerten", async () => {
     const server = mockApi("missing", "haus-daten");
     render(<App api={server.api} />);
     const form = await screen.findByRole("form", { name: "Neues Projekt" });
@@ -38,10 +38,15 @@ describe("Startzustände (4.4)", () => {
     fireEvent.click(within(form).getByRole("button", { name: "Anlegen" }));
     expect(await screen.findByRole("heading", { name: "haus-daten" })).toBeInTheDocument();
     const written = server.files()!;
-    expect(Object.keys(written).sort()).toEqual(["geschosse/eg.yaml", "projekt.yaml"]);
+    expect(Object.keys(written).sort()).toEqual([
+      "geschosse/eg.yaml",
+      "katalog.yaml",
+      "projekt.yaml",
+    ]);
     expect(written["projekt.yaml"]).toBe(
-      'schemaVersion: 1\nname: "haus-daten"\nsettings:\n  northDeg: 0\n',
+      'schemaVersion: 2\nname: "haus-daten"\nsettings:\n  northDeg: 0\n  installZones:\n    horizontalTop: [150, 450]\n    horizontalBottom: [150, 450]\n    verticalFromEdge: [100, 300]\n',
     );
+    expect(written["katalog.yaml"]).toMatch(/- id: "presence-knx"\n {4}name: "Präsenzmelder KNX"/);
     expect(written["geschosse/eg.yaml"]).toMatch(
       /name: "EG"\n {2}slug: "eg"\n {2}elevationMm: 0\n {2}rawHeightMm: 2500\n {2}defaults: \{floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0\}\n$/,
     );
@@ -74,11 +79,11 @@ describe("Startzustände (4.4)", () => {
       ...f,
       "projekt.yaml": { schemaVersion: 1, ...(f["projekt.yaml"] as object) },
     }));
-    const files = readFixture("klein");
+    const files = readV1Fixture("klein");
     files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 1\n", "");
     render(<App api={mockApi(files).api} />);
     expect(await screen.findByRole("region", { name: "Hinweis" })).toHaveTextContent(
-      "Projekt auf Version 1 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 2 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
   });
 });

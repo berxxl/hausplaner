@@ -5,16 +5,26 @@
 import { isMap, isSeq, LineCounter, parseDocument, type Document } from "yaml";
 import type { z } from "zod";
 import {
+  CatalogFileSchema,
   CURRENT_SCHEMA_VERSION,
   ProjectFileSchema,
   StoreyFileSchema,
+  WarningsFileSchema,
+  type CatalogFile,
   type ProjectFile,
   type StoreyFile,
+  type WarningsFile,
 } from "../model/schema";
 import { hasMigration, migrate, migrationNotice, type RawFiles } from "../model/migrations";
 import type { Project } from "../model/types";
 import { filesToProject } from "./project-files";
-import { isKnownFile, PROJECT_FILE, storeySlugFromPath } from "./paths";
+import {
+  CATALOG_FILE,
+  isKnownFile,
+  PROJECT_FILE,
+  storeySlugFromPath,
+  WARNINGS_FILE,
+} from "./paths";
 
 export interface LoadError {
   file: string;
@@ -111,15 +121,23 @@ function issueMessage(issue: z.core.$ZodIssue): string {
   }
 }
 
-function schemaErrors(file: ParsedFile, error: z.ZodError): LoadError[] {
+/** `file` fehlt bei Dateien, die erst eine Migration erzeugt hat (keine Zeilennummern). */
+function schemaErrors(
+  filePath: string,
+  file: ParsedFile | undefined,
+  error: z.ZodError,
+): LoadError[] {
   return error.issues.map((issue) => {
     const path = issue.path.filter((s): s is Segment => typeof s !== "symbol");
     const unknownKey = issue.code === "unrecognized_keys" ? issue.keys[0] : undefined;
-    const line =
-      unknownKey !== undefined ? lineOf(file, [...path, unknownKey], true) : lineOf(file, path);
+    const line = !file
+      ? undefined
+      : unknownKey !== undefined
+        ? lineOf(file, [...path, unknownKey], true)
+        : lineOf(file, path);
     const where = pathText(issue.path);
     return {
-      file: file.path,
+      file: filePath,
       line,
       message: `Schemaverstoß${where ? ` bei ${where}` : ""}: ${issueMessage(issue)}`,
     };
@@ -134,13 +152,22 @@ function storeyFileIds(file: StoreyFile): { id: string; path: Segment[] }[] {
     r.slopes?.forEach((s, j) => ids.push({ id: s.id, path: ["rooms", i, "slopes", j, "id"] }));
   });
   file.openings?.forEach((o, i) => ids.push({ id: o.id, path: ["openings", i, "id"] }));
+  file.devices?.forEach((d, i) => ids.push({ id: d.id, path: ["devices", i, "id"] }));
+  file.furniture?.forEach((f, i) => ids.push({ id: f.id, path: ["furniture", i, "id"] }));
+  return ids;
+}
+
+function catalogFileIds(file: CatalogFile): { id: string; path: Segment[] }[] {
+  const ids: { id: string; path: Segment[] }[] = [];
+  for (const list of ["deviceTypes", "lineTypes", "furnitureTypes"] as const)
+    file[list]?.forEach((t, i) => ids.push({ id: t.id, path: [list, i, "id"] }));
   return ids;
 }
 
 export function loadProject(allFiles: Record<string, string>): LoadResult {
-  // Nur projekt.yaml und geschosse/*.yaml; alles andere wird ignoriert.
+  // Nur bekannte Dateien (projekt.yaml, katalog.yaml, warnungen.yaml, geschosse/*.yaml).
   const paths = Object.keys(allFiles).filter(isKnownFile).sort();
-  const storeyPaths = paths.filter((p) => p !== PROJECT_FILE);
+  const storeyPaths = paths.filter((p) => storeySlugFromPath(p) !== null);
   const hasProjectFile = paths.includes(PROJECT_FILE);
   if (!hasProjectFile && storeyPaths.length === 0) return { status: "empty" };
   if (!hasProjectFile) {
@@ -231,18 +258,48 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
 
   // Schema je Datei
   const projectResult = ProjectFileSchema.safeParse(raw[PROJECT_FILE]);
-  if (!projectResult.success) errors.push(...schemaErrors(projectFile, projectResult.error));
+  if (!projectResult.success)
+    errors.push(...schemaErrors(PROJECT_FILE, projectFile, projectResult.error));
+  let catalogFile: CatalogFile | undefined;
+  if (raw[CATALOG_FILE] !== undefined) {
+    const result = CatalogFileSchema.safeParse(raw[CATALOG_FILE] ?? {});
+    if (result.success) catalogFile = result.data;
+    else errors.push(...schemaErrors(CATALOG_FILE, parsed.get(CATALOG_FILE), result.error));
+  }
+  let warningsFile: WarningsFile | undefined;
+  if (raw[WARNINGS_FILE] !== undefined) {
+    const result = WarningsFileSchema.safeParse(raw[WARNINGS_FILE] ?? {});
+    if (result.success) warningsFile = result.data;
+    else errors.push(...schemaErrors(WARNINGS_FILE, parsed.get(WARNINGS_FILE), result.error));
+  }
   const storeyFiles: { path: string; data: StoreyFile }[] = [];
   for (const path of storeyPaths) {
     const result = StoreyFileSchema.safeParse(raw[path]);
     if (result.success) storeyFiles.push({ path, data: result.data });
-    else errors.push(...schemaErrors(parsed.get(path)!, result.error));
+    else errors.push(...schemaErrors(path, parsed.get(path), result.error));
   }
   if (errors.length > 0) return { status: "error", errors };
 
   // Konsistenz der Dateien
   const slugOwners = new Map<string, string>();
   const idOwners = new Map<string, { file: string; line?: number }>();
+  const checkIds = (path: string, ids: { id: string; path: Segment[] }[]) => {
+    const file = parsed.get(path);
+    for (const { id, path: idPath } of ids) {
+      const line = file ? lineOf(file, idPath) : undefined;
+      const other = idOwners.get(id);
+      if (other) {
+        errors.push({
+          file: path,
+          line,
+          message: `ID „${id}“ ist doppelt (auch in ${other.file}${other.line ? `, Zeile ${other.line}` : ""})`,
+        });
+      } else {
+        idOwners.set(id, { file: path, line });
+      }
+    }
+  };
+  if (catalogFile) checkIds(CATALOG_FILE, catalogFileIds(catalogFile));
   for (const { path, data } of storeyFiles) {
     const file = parsed.get(path)!;
     const fileSlug = storeySlugFromPath(path)!;
@@ -263,19 +320,7 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     } else {
       slugOwners.set(data.storey.slug, path);
     }
-    for (const { id, path: idPath } of storeyFileIds(data)) {
-      const line = lineOf(file, idPath);
-      const other = idOwners.get(id);
-      if (other) {
-        errors.push({
-          file: path,
-          line,
-          message: `ID „${id}“ ist doppelt (auch in ${other.file}${other.line ? `, Zeile ${other.line}` : ""})`,
-        });
-      } else {
-        idOwners.set(id, { file: path, line });
-      }
-    }
+    checkIds(path, storeyFileIds(data));
   }
   if (errors.length > 0) return { status: "error", errors };
 
@@ -284,6 +329,8 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     project: filesToProject(
       projectResult.data as ProjectFile,
       storeyFiles.map((s) => s.data),
+      catalogFile,
+      warningsFile,
     ),
     contents,
     ...(notice ? { notice } : {}),

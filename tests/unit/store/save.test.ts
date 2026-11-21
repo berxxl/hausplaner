@@ -7,7 +7,7 @@ import {
   createSaveController,
   RETRY_INTERVAL_MS,
 } from "../../../src/store/save";
-import { readFixture } from "../fixtures";
+import { readFixture, readV1Fixture } from "../fixtures";
 
 function setup(files = readFixture("klein")) {
   const result = loadProject(files);
@@ -106,12 +106,12 @@ describe("Speichern (4.2)", () => {
     expect(calls[0]).toEqual({ "geschosse/eg.yaml": null });
   });
 
-  test("nach Migration schreibt erst die erste Änderung projekt.yaml mit schemaVersion 1", async () => {
+  test("nach Migration schreibt erst die erste Änderung projekt.yaml mit schemaVersion 2 und katalog.yaml", async () => {
     registerMigration(0, (f) => ({
       ...f,
       "projekt.yaml": { schemaVersion: 1, ...(f["projekt.yaml"] as object) },
     }));
-    const files = readFixture("klein");
+    const files = readV1Fixture("klein");
     files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 1\n", "");
     const { store, calls } = setup(files);
     await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS * 2);
@@ -121,8 +121,12 @@ describe("Speichern (4.2)", () => {
       run: (d) => void (d.storeys[0]!.name = "Erdgeschoss"),
     });
     await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
-    expect(Object.keys(calls[0]!).sort()).toEqual(["geschosse/eg.yaml", "projekt.yaml"]);
-    expect(calls[0]!["projekt.yaml"]).toMatch(/^schemaVersion: 1\n/);
+    expect(Object.keys(calls[0]!).sort()).toEqual([
+      "geschosse/eg.yaml",
+      "katalog.yaml",
+      "projekt.yaml",
+    ]);
+    expect(calls[0]!["projekt.yaml"]).toMatch(/^schemaVersion: 2\n/);
   });
 
   test("Cmd/Strg+S nach Migration schreibt auch ohne Änderung", async () => {
@@ -130,11 +134,11 @@ describe("Speichern (4.2)", () => {
       ...f,
       "projekt.yaml": { schemaVersion: 1, ...(f["projekt.yaml"] as object) },
     }));
-    const files = readFixture("klein");
+    const files = readV1Fixture("klein");
     files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 1\n", "");
     const { save, calls } = setup(files);
     await save.saveNow();
-    expect(Object.keys(calls[0]!)).toEqual(["projekt.yaml"]);
+    expect(Object.keys(calls[0]!).sort()).toEqual(["katalog.yaml", "projekt.yaml"]);
   });
 
   test("externe Änderung pausiert; Cmd/Strg+S schreibt erst nach Bestätigung, danach läuft Autospeichern wieder", async () => {

@@ -97,7 +97,7 @@ test("9.1 Gesamtablauf: neues Projekt bis Neuladen, Projekt danach unverändert"
 
   await saveNow(page);
   const before = await projectFiles(request);
-  expect(Object.keys(before).sort()).toEqual(["geschosse/eg.yaml", "projekt.yaml"]);
+  expect(Object.keys(before).sort()).toEqual(["geschosse/eg.yaml", "katalog.yaml", "projekt.yaml"]);
   expect(before["geschosse/eg.yaml"]).toContain('name: "Wohnen"');
   expect(before["geschosse/eg.yaml"]).toContain("distanceMm: 4260");
 

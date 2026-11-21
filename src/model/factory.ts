@@ -1,5 +1,6 @@
 /** Neue Objekte mit Standardwerten (design.md „Neues Projekt“). */
 import { CURRENT_SCHEMA_VERSION } from "./schema";
+import { DEFAULT_INSTALL_ZONES, defaultCatalog } from "./default-catalog";
 import { newId } from "./ids";
 import { uniqueSlug } from "./slug";
 import type { Project, Storey } from "./types";
@@ -22,11 +23,15 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     name,
-    settings: { northDeg: 0 },
+    settings: { northDeg: 0, installZones: structuredClone(DEFAULT_INSTALL_ZONES) },
+    catalog: defaultCatalog(),
     storeys: [storey],
     walls: [],
     rooms: [],
     openings: [],
+    devices: [],
+    furniture: [],
+    suppressedWarnings: [],
   };
 }
 
@@ -71,12 +76,18 @@ export function newStorey(project: Project, name: string, values: StoreySuggesti
   };
 }
 
-/** Alle IDs des Projekts (projektweit eindeutig). */
+/** Alle IDs des Projekts (projektweit eindeutig), einschließlich Katalog. */
 export function allIds(project: Project): string[] {
+  const { deviceTypes, lineTypes, furnitureTypes } = project.catalog;
   return [
     ...project.storeys.map((s) => s.id),
     ...project.walls.map((w) => w.id),
     ...project.rooms.flatMap((r) => [r.id, ...(r.slopes ?? []).map((s) => s.id)]),
     ...project.openings.map((o) => o.id),
+    ...project.devices.map((d) => d.id),
+    ...project.furniture.map((f) => f.id),
+    ...deviceTypes.map((t) => t.id),
+    ...lineTypes.map((t) => t.id),
+    ...furnitureTypes.map((t) => t.id),
   ];
 }

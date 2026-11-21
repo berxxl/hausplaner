@@ -1,11 +1,16 @@
+import { DEFAULT_INSTALL_ZONES } from "../../../src/model/default-catalog";
 import { createProjectStore, HISTORY_LIMIT, historyShortcut } from "../../../src/store/history";
 import type { Project } from "../../../src/model/types";
 
 function emptyProject(): Project {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: "Test",
-    settings: { northDeg: 0 },
+    settings: { northDeg: 0, installZones: structuredClone(DEFAULT_INSTALL_ZONES) },
+    catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
+    devices: [],
+    furniture: [],
+    suppressedWarnings: [],
     storeys: [],
     walls: [],
     rooms: [],

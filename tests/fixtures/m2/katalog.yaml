@@ -1,0 +1,87 @@
+deviceTypes:
+  - id: "ac-outdoor"
+    name: "Klima-Außengerät"
+    trade: "refrigerant"
+    symbol: "<rect x='10' y='20' width='80' height='60' stroke='currentColor' stroke-width='5' fill='none'/><circle cx='50' cy='50' r='20' stroke='currentColor' stroke-width='5' fill='none'/>"
+    shape3d: {kind: "box", widthMm: 800, heightMm: 550, depthMm: 290}
+    mounting: ["free", "wall"]
+    connects: ["power", "refrigerant"]
+    refrigerant: {minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7}
+  - id: "ceiling-outlet"
+    name: "Deckenauslass"
+    trade: "power"
+    symbol: "<circle cx='50' cy='50' r='30' stroke='currentColor' stroke-width='5' fill='none'/><line x1='29' y1='29' x2='71' y2='71' stroke='currentColor' stroke-width='5' fill='none'/><line x1='71' y1='29' x2='29' y2='71' stroke='currentColor' stroke-width='5' fill='none'/>"
+    shape3d: {kind: "cylinder", widthMm: 80, heightMm: 80, depthMm: 20}
+    mounting: ["ceiling"]
+    connects: ["power"]
+    knx:
+      consumes: "switch"
+    light: {kind: "point", lumen: 1000, colorTempK: 3000}
+  - id: "k7usb2c4"
+    name: "Steckdose USB-C"
+    trade: "power"
+    symbol: "<path d='M20 70 A30 30 0 0 1 80 70' stroke='currentColor' stroke-width='5' fill='none'/><line x1='15' y1='70' x2='85' y2='70' stroke='currentColor' stroke-width='5' fill='none'/><line x1='50' y1='40' x2='50' y2='15' stroke='currentColor' stroke-width='5' fill='none'/>"
+    shape3d: {kind: "box", widthMm: 80, heightMm: 80, depthMm: 10}
+    mounting: ["wall", "floor"]
+    defaultHeightMm: 1050
+    flush: {boxDepthMm: 60}
+    connects: ["power"]
+  - id: "knx-switch-actuator"
+    name: "Schaltaktor"
+    trade: "knx"
+    symbol: "<rect x='10' y='25' width='80' height='50' stroke='currentColor' stroke-width='5' fill='none'/><text x='50' y='60.5' font-size='30' fill='currentColor' text-anchor='middle' font-family='sans-serif'>SA</text>"
+    shape3d: {kind: "box", widthMm: 70, heightMm: 90, depthMm: 70}
+    mounting: ["din-rail"]
+    teWidth: 4
+    connects: ["power", "knx"]
+    knx:
+      provides: {function: "switch", channels: 8}
+  - id: "presence-knx"
+    name: "Präsenzmelder KNX"
+    trade: "knx"
+    symbol: "<circle cx='50' cy='50' r='35' stroke='currentColor' stroke-width='5' fill='none'/><text x='50' y='61.9' font-size='34' fill='currentColor' text-anchor='middle' font-family='sans-serif'>P</text>"
+    shape3d: {kind: "cylinder", widthMm: 100, heightMm: 100, depthMm: 50}
+    mounting: ["ceiling"]
+    connects: ["knx"]
+  - id: "socket"
+    name: "Steckdose"
+    trade: "power"
+    symbol: "<path d='M20 70 A30 30 0 0 1 80 70' stroke='currentColor' stroke-width='5' fill='none'/><line x1='15' y1='70' x2='85' y2='70' stroke='currentColor' stroke-width='5' fill='none'/><line x1='50' y1='40' x2='50' y2='15' stroke='currentColor' stroke-width='5' fill='none'/>"
+    shape3d: {kind: "box", widthMm: 80, heightMm: 80, depthMm: 10}
+    mounting: ["wall", "floor"]
+    defaultHeightMm: 300
+    flush: {boxDepthMm: 60}
+    connects: ["power"]
+  - id: "switch"
+    name: "Schalter"
+    trade: "power"
+    symbol: "<circle cx='38' cy='62' r='15' stroke='currentColor' stroke-width='5' fill='none'/><line x1='49' y1='51' x2='80' y2='20' stroke='currentColor' stroke-width='5' fill='none'/><line x1='80' y1='20' x2='90' y2='30' stroke='currentColor' stroke-width='5' fill='none'/>"
+    shape3d: {kind: "box", widthMm: 80, heightMm: 80, depthMm: 10}
+    mounting: ["wall"]
+    defaultHeightMm: 1050
+    flush: {boxDepthMm: 60}
+    connects: ["power"]
+lineTypes:
+  - id: "knx-bus"
+    name: "KNX J-Y(St)Y 2×2×0,8"
+    trade: "knx"
+    outerDiameterMm: 5
+    color: "#2e7d32"
+  - id: "nym-j-3x1-5"
+    name: "NYM-J 3×1,5"
+    trade: "power"
+    outerDiameterMm: 8
+    color: "#757575"
+furnitureTypes:
+  - id: "kitchen-base"
+    name: "Küchenunterschrank"
+    widthMm: 600
+    depthMm: 600
+    heightMm: 900
+    elevationMm: 0
+  - id: "wardrobe"
+    name: "Kleiderschrank"
+    widthMm: 2000
+    depthMm: 600
+    heightMm: 2200
+    elevationMm: 0

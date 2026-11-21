@@ -18,3 +18,13 @@ export function readFixture(name: string): Record<string, string> {
   walk(dir);
   return files;
 }
+
+/** Fixture als M1-Projekt (Schemaversion 1, ohne Installationszonen) für Migrationstests. */
+export function readV1Fixture(name: string): Record<string, string> {
+  const files = readFixture(name);
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace(
+    "schemaVersion: 2",
+    "schemaVersion: 1",
+  ).replace(/ {2}installZones:\n( {4}.*\n)+/, "");
+  return files;
+}

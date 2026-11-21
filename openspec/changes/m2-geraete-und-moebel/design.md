@@ -72,7 +72,7 @@ Standardhöhen über OKFF (DIN 18015-3 und übliche Praxis): Steckdose, Doppelst
 
 ### Symbole
 - Ein Symbol ist ein SVG-Fragment (Kindelemente ohne äußeres `<svg>`) im Koordinatensystem `viewBox="0 0 100 100"`, y nach unten. `docs/architektur.md` spricht von „0..1 normiert“; das wird auf 0..100 geändert, weil Strichstärken und Text in ganzen Zahlen lesbarer sind.
-- **Erlaubte Elemente:** `path`, `line`, `polyline`, `polygon`, `circle`, `ellipse`, `rect`, `text`, `g`. **Erlaubte Attribute:** Geometrie, `fill`, `stroke`, `stroke-width`, `transform`, `font-size`, `text-anchor`. Alles andere (Skripte, Ereignis-Attribute, `href`, `style`, externe Verweise) wird beim Import entfernt. Gerendert wird über React-Elemente aus dem geparsten, bereinigten Baum, nie über `innerHTML`.
+- **Erlaubte Elemente:** `path`, `line`, `polyline`, `polygon`, `circle`, `ellipse`, `rect`, `text`, `g`. **Erlaubte Attribute:** Geometrie, `fill`, `stroke`, `stroke-width`, `stroke-linecap`, `stroke-linejoin`, `transform`, `font-size`, `font-family`, `text-anchor`; Werte mit `url(`, `javascript:` oder spitzen Klammern werden verworfen. Alles andere (Skripte, Ereignis-Attribute, `href`, `style`, externe Verweise) wird beim Import entfernt. Gerendert wird über React-Elemente aus dem geparsten, bereinigten Baum, nie über `innerHTML`.
 - **Import eines eigenen Symbols:** SVG-Datei wählen; die App übernimmt die Kindelemente, rechnet die `viewBox` der Datei auf 0..100 um (Seitenverhältnis bleibt, zentriert) und speichert das Ergebnis bereinigt in einer Zeile. Ein Symbol, das nach dem Bereinigen leer ist, wird abgelehnt.
 - `currentColor` als Farbe ist erlaubt; die Ansicht setzt dafür die Status- bzw. Warnfarbe.
 

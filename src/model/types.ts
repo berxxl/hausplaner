@@ -1,7 +1,16 @@
-/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1-Teil). */
+/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- und M2-Teil). */
 import type { z } from "zod";
 import type {
+  DevicePlacementSchema,
+  DeviceSchema,
+  DeviceTypeSchema,
+  FurnitureSchema,
+  FurnitureTypeSchema,
+  InstallZonesSchema,
+  LineTypeSchema,
+  MOUNTINGS,
   OpeningSchema,
+  TRADES,
   PointSchema,
   RoomSchema,
   SettingsSchema,
@@ -22,12 +31,34 @@ export type Wall = z.infer<typeof WallSchema> & { storeyId: Id };
 export type Room = z.infer<typeof RoomSchema> & { storeyId: Id };
 export type Opening = z.infer<typeof OpeningSchema> & { storeyId: Id };
 
+export type Trade = (typeof TRADES)[number];
+export type Mounting = (typeof MOUNTINGS)[number];
+export type InstallZones = z.infer<typeof InstallZonesSchema>;
+/** Im Modell ist `connects` immer gesetzt (in der Datei weggelassen, wenn leer). */
+export type DeviceType = Omit<z.infer<typeof DeviceTypeSchema>, "connects"> & { connects: Trade[] };
+export type LineType = z.infer<typeof LineTypeSchema>;
+export type FurnitureType = z.infer<typeof FurnitureTypeSchema>;
+export interface Catalog {
+  deviceTypes: DeviceType[];
+  lineTypes: LineType[];
+  furnitureTypes: FurnitureType[];
+}
+export type DevicePlacement = z.infer<typeof DevicePlacementSchema>;
+/** storeyId: Geschoss der Fläche bzw. bei freier Platzierung das Geschoss; beim Laden gesetzt. */
+export type Device = z.infer<typeof DeviceSchema> & { storeyId: Id };
+export type Furniture = z.infer<typeof FurnitureSchema> & { storeyId: Id };
+
 export interface Project {
   schemaVersion: number;
   name: string;
   settings: Settings;
+  catalog: Catalog;
   storeys: Storey[];
   walls: Wall[];
   rooms: Room[];
   openings: Opening[];
+  devices: Device[];
+  furniture: Furniture[];
+  /** Schlüssel bewusst übergangener Warnungen (warnungen.yaml). */
+  suppressedWarnings: string[];
 }

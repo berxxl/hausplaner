@@ -36,6 +36,16 @@ function fieldNode(value: unknown, kind: FieldKind, inFlow: boolean): unknown {
       for (const item of items) seq.items.push(objectNode(item as Plain, kind.of, seq.flow));
       return seq;
     }
+    case "scalars": {
+      if (!Array.isArray(value)) throw new Error("Liste erwartet");
+      const items = kind.sorted
+        ? [...(value as string[])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+        : value;
+      const seq = new YAMLSeq();
+      seq.flow = inFlow || !!kind.flow;
+      for (const item of items) seq.items.push(scalarNode(item));
+      return seq;
+    }
   }
 }
 

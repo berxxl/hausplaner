@@ -1,4 +1,8 @@
-schemaVersion: 1
+schemaVersion: 2
 name: "Beispielhaus"
 settings:
   northDeg: 0
+  installZones:
+    horizontalTop: [150, 450]
+    horizontalBottom: [150, 450]
+    verticalFromEdge: [100, 300]

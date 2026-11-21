@@ -6,6 +6,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import type { Api } from "../io/api";
 import { loadProject, type LoadError } from "../io/load";
 import { projectToFiles } from "../io/project-files";
+import { CATALOG_FILE } from "../io/paths";
 import type { Project } from "../model/types";
 import { createProjectStore, type ProjectStore } from "../store/history";
 import { createSaveController, type SaveController } from "../store/save";
@@ -40,6 +41,8 @@ export function createSession(api: Api): Session {
   const state = createStore<SessionState>(() => ({ phase: { kind: "loading" } }));
   let stopEvents: (() => void) | null = null;
   let generation = 0;
+  /** Dateien des zuletzt gelesenen Ordners (für „Neues Projekt“ mit vorhandener katalog.yaml). */
+  let listedFiles: Record<string, string> = {};
 
   const closeOpen = () => {
     const phase = state.getState().phase;
@@ -61,6 +64,7 @@ export function createSession(api: Api): Session {
       return;
     }
     closeOpen();
+    listedFiles = listing.status === "ok" ? listing.files : {};
     if (listing.status !== "ok") {
       state.setState({
         phase: { kind: "empty", missing: listing.status === "missing", folder: listing.folder },
@@ -101,7 +105,10 @@ export function createSession(api: Api): Session {
     },
     reload: load,
     async createProject(project: Project) {
-      const results = await api.putFiles(projectToFiles(project));
+      const files = projectToFiles(project);
+      // Eine vorhandene katalog.yaml wird übernommen, nicht überschrieben (design.md M2)
+      if (CATALOG_FILE in listedFiles) delete files[CATALOG_FILE];
+      const results = await api.putFiles(files);
       const failed = Object.entries(results).filter(([, r]) => r !== "ok");
       if (failed.length > 0) {
         throw new Error(
