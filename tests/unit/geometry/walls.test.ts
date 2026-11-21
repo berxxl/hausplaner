@@ -1,5 +1,6 @@
 import {
   axisFromDrawn,
+  chainCorner,
   cornerNeighbors,
   isConnected,
   snapPoint,
@@ -155,5 +156,39 @@ describe("Fang (6.2)", () => {
     expect(s).toMatchObject({ kind: "axis", orthogonal: true });
     expect(s.point.x).toBeCloseTo(1000, 9);
     expect(s.point.y).toBeCloseTo(0, 9);
+  });
+});
+
+describe("Ecken im Wandzug (Kantenmodus)", () => {
+  const a = { x: 0, y: 0 };
+  const b = { x: 4000, y: 0 };
+  const c = { x: 4000, y: 3000 };
+
+  test("Achsen treffen sich im Schnittpunkt statt stumpf zu stoßen", () => {
+    const first = axisFromDrawn(a, b, 240, "left");
+    const second = axisFromDrawn(b, c, 240, "left");
+    expect(first.end).toEqual({ x: 4000, y: -120 });
+    expect(second.start).toEqual({ x: 4120, y: 0 });
+    expect(chainCorner(first, second, b, 480)).toEqual({ x: 4120, y: -120 });
+  });
+
+  test("unterschiedliche Dicken: Schnittpunkt der versetzten Achsen", () => {
+    const first = axisFromDrawn(a, b, 240, "left");
+    const second = axisFromDrawn(b, c, 100, "left");
+    expect(chainCorner(first, second, b, 340)).toEqual({ x: 4050, y: -120 });
+  });
+
+  test("Achsmodus: Ecke bleibt der Klickpunkt", () => {
+    const first = axisFromDrawn(a, b, 240, "axis");
+    const second = axisFromDrawn(b, c, 240, "axis");
+    expect(chainCorner(first, second, b, 480)).toEqual(b);
+  });
+
+  test("gerade Fortsetzung oder sehr spitzer Winkel: keine Anpassung", () => {
+    const first = axisFromDrawn(a, b, 240, "left");
+    expect(chainCorner(first, axisFromDrawn(b, { x: 8000, y: 0 }, 240, "left"), b, 480)).toBeNull();
+    // Rückwärts mit 2° Abweichung: Schnittpunkt läge weit hinter der Ecke
+    const back = axisFromDrawn(b, { x: 0, y: 140 }, 240, "left");
+    expect(chainCorner(first, back, b, 480)).toBeNull();
   });
 });

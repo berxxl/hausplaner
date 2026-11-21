@@ -116,6 +116,33 @@ describe("Räume folgen den Wänden (6.5)", () => {
   });
 });
 
+describe("Wandzug (6.2)", () => {
+  test("addWall legt Enden der Nachbarwände im selben Befehl auf die Ecke; Undo nimmt beides zurück", () => {
+    const store = open();
+    const before = store.getState().project.walls.find((w) => w.id === "0aw1s0ud")!;
+    store.execute(
+      addWall(
+        {
+          id: "newwall1",
+          storeyId: EG,
+          kind: "interior",
+          start: { x: 9000, y: 0 },
+          end: { x: 9000, y: 2000 },
+          thicknessMm: 100,
+        },
+        [{ id: "0aw1s0ud", end: "end", point: { x: 9000, y: 0 } }],
+      ),
+    );
+    const walls = store.getState().project.walls;
+    expect(walls.find((w) => w.id === "0aw1s0ud")!.end).toEqual({ x: 9000, y: 0 });
+    expect(walls.find((w) => w.id === "newwall1")).toBeDefined();
+    expect(store.getState().undoStack).toHaveLength(1);
+    store.undo();
+    expect(store.getState().project.walls.find((w) => w.id === "0aw1s0ud")).toEqual(before);
+    expect(store.getState().project.walls.find((w) => w.id === "newwall1")).toBeUndefined();
+  });
+});
+
 describe("Raum, Öffnung, Schräge (6.6–6.8)", () => {
   test("Raumwerte: undefined = Standard des Geschosses; Raum löschen und rückgängig", () => {
     const store = open();

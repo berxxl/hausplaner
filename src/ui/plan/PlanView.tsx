@@ -22,6 +22,7 @@ import {
 import { moveEndpoint, type WallEditResult } from "../../geometry/wall-edit";
 import {
   axisFromDrawn,
+  chainCorner,
   snapPoint,
   wallBody,
   type DrawMode,
@@ -44,6 +45,7 @@ import {
   deleteWall,
   redetectRoom,
   wallGeoms,
+  type WallJoin,
 } from "../../store/building";
 import { deleteOpening, setUnderlay } from "../../store/commands";
 import type { ProjectStore } from "../../store/history";
@@ -187,6 +189,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   const [camera, setCamera] = useState<Camera | null>(null);
   const [cursor, setCursor] = useState<Vec | null>(null);
   const [wallStart, setWallStart] = useState<Vec | null>(null);
+  /** Laufender Wandzug: vorige und erste Wand, um Ecken auf die Achsschnittpunkte zu legen. */
+  const chain = useRef<{ prevId: string; firstId: string; firstClick: Vec } | null>(null);
   const [drawMode, setDrawMode] = useState<DrawMode>("axis");
   const [wallKind, setWallKind] = useState<Wall["kind"]>("interior");
   const [wallHeight, setWallHeight] = useState<number | null>(null);
@@ -412,26 +416,61 @@ export function PlanView({ store, view }: PlanViewProps) {
         return;
       case "wall": {
         if (!storey) return;
-        const p = snapForWall(world);
+        // Startpunkt des Zugs hat Vorrang: im Kantenmodus läge sonst das versetzte Achsende der
+        // ersten Wand im Fangradius, und der Zug würde nicht als geschlossen erkannt
+        const first = chain.current?.firstClick;
+        const p = first && distance(world, first) <= radius ? first : snapForWall(world);
         if (!wallStart) {
+          chain.current = null;
           setWallStart(p);
           return;
         }
         const axis = axisFromDrawn(wallStart, p, lastThicknessMm, drawMode);
-        const start = { x: roundMm(axis.start.x), y: roundMm(axis.start.y) };
-        const end = { x: roundMm(axis.end.x), y: roundMm(axis.end.y) };
+        const rounded = (v: Vec) => ({ x: roundMm(v.x), y: roundMm(v.y) });
+        let start = rounded(axis.start);
+        let end = rounded(axis.end);
+        const joins: WallJoin[] = [];
+        const c = chain.current;
+        if (c) {
+          // Ecke zur vorigen Wand und beim Schließen des Zugs zur ersten Wand auf den Achsschnittpunkt
+          const prev = walls.find((w) => w.id === c.prevId);
+          const corner =
+            prev && chainCorner(prev, axis, wallStart, prev.thicknessMm + lastThicknessMm);
+          if (prev && corner) {
+            start = rounded(corner);
+            joins.push({ id: prev.id, end: "end", point: start });
+          }
+          const firstWall = c.firstId !== c.prevId && walls.find((w) => w.id === c.firstId);
+          const closing =
+            firstWall &&
+            distance(p, c.firstClick) < 1 &&
+            chainCorner(axis, firstWall, p, firstWall.thicknessMm + lastThicknessMm);
+          if (firstWall && closing) {
+            end = rounded(closing);
+            joins.push({ id: firstWall.id, end: "start", point: end });
+          }
+        }
         if (distance(start, end) >= 1) {
+          const id = newId(new Set(allIds(project)));
           store.execute(
-            addWall({
-              id: newId(new Set(allIds(project))),
-              storeyId: storey.id,
-              kind: wallKind,
-              start,
-              end,
-              thicknessMm: lastThicknessMm,
-              ...(wallHeight ? { rawHeightMm: wallHeight } : {}),
-            }),
+            addWall(
+              {
+                id,
+                storeyId: storey.id,
+                kind: wallKind,
+                start,
+                end,
+                thicknessMm: lastThicknessMm,
+                ...(wallHeight ? { rawHeightMm: wallHeight } : {}),
+              },
+              joins,
+            ),
           );
+          chain.current = {
+            prevId: id,
+            firstId: c?.firstId ?? id,
+            firstClick: c?.firstClick ?? wallStart,
+          };
         }
         setWallStart(p);
         return;

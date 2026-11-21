@@ -41,10 +41,22 @@ export function recomputeRooms(draft: Draft<Project>, storeyId: string): void {
   }
 }
 
-export function addWall(wall: Wall): Command {
+/** Endpunkt einer vorhandenen Wand, der beim Zeichnen auf eine gemeinsame Ecke gelegt wird. */
+export interface WallJoin {
+  id: string;
+  end: "start" | "end";
+  point: { x: number; y: number };
+}
+
+/** Neue Wand; `joins` legt im selben Befehl Enden der Nachbarwände im Zug auf die gemeinsame Ecke. */
+export function addWall(wall: Wall, joins: WallJoin[] = []): Command {
   return {
     label: "Wand zeichnen",
     run(draft) {
+      for (const j of joins) {
+        const w = draft.walls.find((x) => x.id === j.id);
+        if (w) w[j.end] = plainPt(j.point);
+      }
       draft.walls.push(wall);
       recomputeRooms(draft, wall.storeyId);
     },

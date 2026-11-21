@@ -161,6 +161,28 @@ export function axisFromDrawn(
   return { start: add(a, offset), end: add(b, offset) };
 }
 
+/**
+ * Ecke zwischen zwei aufeinanderfolgenden Wänden eines Zugs: Schnittpunkt der Achsen. Im Kantenmodus
+ * sind beide Achsen gegenüber der geklickten Ecke versetzt; ohne Anpassung stießen die Wände nur
+ * stumpf aneinander und gälten nicht als verbunden. null bei (fast) parallelen Achsen oder wenn der
+ * Schnittpunkt weiter als `maxDistMm` von der geklickten Ecke entfernt läge (sehr spitzer Winkel).
+ */
+export function chainCorner(
+  prev: { start: Vec; end: Vec },
+  next: { start: Vec; end: Vec },
+  click: Vec,
+  maxDistMm: number,
+): Vec | null {
+  const x = intersectLines(
+    prev.start,
+    sub(prev.end, prev.start),
+    next.start,
+    sub(next.end, next.start),
+  );
+  if (!x || distance(x, click) > maxDistMm) return null;
+  return x;
+}
+
 export type SnapKind = "endpoint" | "axis" | "orthogonal" | "none";
 
 /**

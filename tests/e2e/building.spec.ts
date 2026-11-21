@@ -23,6 +23,70 @@ async function drawRectangle(page: Page) {
 }
 
 test.describe("Wände, Räume, Öffnungen (6)", () => {
+  test("Zug im Kantenmodus: Ecken liegen auf den Achsschnittpunkten, auch beim Schließen", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "leer");
+    await page.getByRole("button", { name: "Wand", exact: true }).click();
+    const options = page.getByRole("group", { name: "Wandoptionen" });
+    await options.getByLabel("Modus").selectOption({ label: "linke Kante" });
+    await options.getByLabel("Dicke").fill("240");
+    await options.getByLabel("Dicke").press("Enter");
+    for (const [x, y] of [
+      [0, 0],
+      [4000, 0],
+      [4000, 3000],
+      [0, 3000],
+      [0, 0],
+    ] as const)
+      await clickWorld(page, x, y);
+    await page.keyboard.press("Escape");
+    await saveNow(page);
+    const eg = await storeyFile(request, "eg");
+    const axes = eg.walls!.map((w) => [w.start, w.end]);
+    // linke Kante gezeichnet → Wände liegen rechts der Klicklinie, Achsen 120 mm außerhalb
+    expect(axes).toEqual(
+      expect.arrayContaining([
+        [
+          { x: -120, y: -120 },
+          { x: 4120, y: -120 },
+        ],
+        [
+          { x: 4120, y: -120 },
+          { x: 4120, y: 3120 },
+        ],
+        [
+          { x: 4120, y: 3120 },
+          { x: -120, y: 3120 },
+        ],
+        [
+          { x: -120, y: 3120 },
+          { x: -120, y: -120 },
+        ],
+      ]),
+    );
+    expect(axes).toHaveLength(4);
+    // ein Zeichenschritt je Wand, Eckanpassung inklusive
+    await page.keyboard.press("ControlOrMeta+z");
+    await saveNow(page);
+    const undone = await storeyFile(request, "eg");
+    expect(undone.walls).toHaveLength(3);
+    // Undo nimmt auch die Eckanpassungen an erster und dritter Wand zurück
+    expect(undone.walls!.map((w) => [w.start, w.end])).toEqual(
+      expect.arrayContaining([
+        [
+          { x: 0, y: -120 },
+          { x: 4120, y: -120 },
+        ],
+        [
+          { x: 4120, y: 3120 },
+          { x: 0, y: 3120 },
+        ],
+      ]),
+    );
+  });
+
   test("vier Wände zeichnen, Raum anlegen, Fenster setzen, speichern", async ({
     page,
     request,
