@@ -1,5 +1,6 @@
 /** Benannte Befehle mit deutschem Label für das Undo-Menü. */
-import type { Storey, Underlay } from "../model/types";
+import type { InstallZones, Storey, Underlay } from "../model/types";
+import type { Checked } from "./catalog";
 import type { Command } from "./history";
 
 export function deleteOpening(id: string): Command {
@@ -25,6 +26,24 @@ export function setNorthDeg(deg: number): Command {
     label: "Nordrichtung ändern",
     run(draft) {
       draft.settings.northDeg = deg;
+    },
+  };
+}
+
+/** Installationszonen ändern (design.md M2 „Installationszonen“); jeder Bereich muss 0 ≤ a < b erfüllen. */
+export function setInstallZones(zones: InstallZones): Checked {
+  for (const [a, b] of [zones.horizontalTop, zones.horizontalBottom, zones.verticalFromEdge]) {
+    if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || a >= b)
+      return { ok: false, error: "Bereich ungültig: es muss 0 ≤ von < bis gelten" };
+  }
+  const next = structuredClone(zones);
+  return {
+    ok: true,
+    command: {
+      label: "Installationszonen ändern",
+      run(draft) {
+        draft.settings.installZones = structuredClone(next);
+      },
     },
   };
 }

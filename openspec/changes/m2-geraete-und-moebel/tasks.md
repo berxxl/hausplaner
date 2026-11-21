@@ -28,9 +28,9 @@
 
 ## 4. Installationszonen
 
-- [ ] 4.1 `geometry/zones.ts`: waagerechte Zonen (oben entlang der fertigen Deckenkontur, unten über OKFF), senkrechte Zonen an fertigen Raumecken und Laibungen von Türen und Fenstern; Unit-Tests: Wand mit Fenster ergibt zwei waagerechte Zonen und vier senkrechte Zonen (Spec-Scenario), Wand unter Schräge (Spec-Scenario), geänderte Einstellung 200–500 (Spec-Scenario)
-- [ ] 4.2 Zuführung nach `design.md`: Ziel untere oder obere Zone, Hervorhebung außerhalb senkrechter Zonen; Unit-Tests: Schalter 150 mm neben Laibung (nicht hervorgehoben), Schalter mitten auf der Wand (hervorgehoben), Steckdose 300 mm (keine Zuführung) (alle Spec-Scenarios)
-- [ ] 4.3 Overlay und Schalter „Zonen“ und „Zuführungen“ in der Flächenansicht, Zonen in den Projekteinstellungen editierbar (Befehl, Prüfung 0 ≤ a < b); Komponententest: Einblenden, geänderte Einstellung wirkt in allen Wandansichten
+- [x] 4.1 `geometry/zones.ts`: waagerechte Zonen (oben entlang der fertigen Deckenkontur, unten über OKFF), senkrechte Zonen an fertigen Raumecken und Laibungen von Türen und Fenstern; Unit-Tests: Wand mit Fenster ergibt zwei waagerechte Zonen und vier senkrechte Zonen (Spec-Scenario), Wand unter Schräge (Spec-Scenario), geänderte Einstellung 200–500 (Spec-Scenario)
+- [x] 4.2 Zuführung nach `design.md`: Ziel untere oder obere Zone, Hervorhebung außerhalb senkrechter Zonen; Unit-Tests: Schalter 150 mm neben Laibung (nicht hervorgehoben), Schalter mitten auf der Wand (hervorgehoben), Steckdose 300 mm (keine Zuführung) (alle Spec-Scenarios)
+- [x] 4.3 Overlay und Schalter „Zonen“ und „Zuführungen“ in der Flächenansicht, Zonen in den Projekteinstellungen editierbar (Befehl, Prüfung 0 ≤ a < b); Komponententest: Einblenden, geänderte Einstellung wirkt in allen Wandansichten
 
 ## 5. Möbel
 

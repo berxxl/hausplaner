@@ -55,6 +55,10 @@ export interface ViewState {
   surfaceTool: SurfaceTool;
   /** Gerätetyp der Werkzeuge „Gerät“ in Grundriss und Flächenansicht. */
   deviceTypeId: string | null;
+  /** Overlay der Installationszonen in allen Wandansichten (nicht gespeichert). */
+  showZones: boolean;
+  /** Senkrechte Zuführungen der Wandgeräte in allen Wandansichten (nicht gespeichert). */
+  showFeeds: boolean;
 }
 
 export interface ViewStore extends StoreApi<ViewState> {
@@ -74,6 +78,8 @@ export interface ViewStore extends StoreApi<ViewState> {
   selectedDevices(): string[];
   setSurfaceTool(tool: SurfaceTool): void;
   setDeviceType(typeId: string | null): void;
+  setShowZones(show: boolean): void;
+  setShowFeeds(show: boolean): void;
 }
 
 export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
@@ -87,6 +93,8 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     surface: null,
     surfaceTool: "select",
     deviceTypeId: null,
+    showZones: false,
+    showFeeds: false,
     ...initial,
   }));
   return Object.assign(store, {
@@ -120,6 +128,12 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setDeviceType(deviceTypeId: string | null) {
       store.setState({ deviceTypeId });
+    },
+    setShowZones(showZones: boolean) {
+      store.setState({ showZones });
+    },
+    setShowFeeds(showFeeds: boolean) {
+      store.setState({ showFeeds });
     },
     setActiveStorey(id: string | null) {
       store.setState({ activeStoreyId: id });

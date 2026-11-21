@@ -32,6 +32,7 @@ import type { SurfaceTool } from "../../store/view";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
 import { DeviceGlyph } from "../DeviceGlyph";
 import { isTextTarget } from "../shortcuts";
+import { feedFor, viewZones } from "../../geometry/zones";
 
 type Tool = SurfaceTool;
 type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
@@ -55,6 +56,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const target = useStore(view, (s) => s.surface);
   const selection = useStore(view, (s) => s.selection);
   const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
+  const showZones = useStore(view, (s) => s.showZones);
+  const showFeeds = useStore(view, (s) => s.showFeeds);
   const [message, setMessage] = useState<string | null>(null);
   const model = useMemo(() => (target ? surfaceModel(project, target) : null), [project, target]);
 
@@ -257,6 +260,19 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const contourRight = Math.max(...model.contour.map((p) => p.u));
   const selectedOpening =
     selection?.kind === "opening" ? model.openings.find((o) => o.id === selection.id) : undefined;
+  // Installationszonen und Zuführungen nur in Raumansichten einer Wandseite
+  const installZones = project.settings.installZones;
+  const zones = model.roomView ? viewZones(model.roomView, installZones) : null;
+  const roomView = model.roomView;
+  const feeds =
+    roomView && zones && showFeeds
+      ? shownDevices.flatMap(({ device }) => {
+          const p = device.placement;
+          if (p.kind !== "surface") return [];
+          const f = feedFor(roomView, installZones, p.u, p.v, zones);
+          return f ? [{ id: device.id, ...f }] : [];
+        })
+      : [];
   const measureB = measure ? (measure.b ?? (tool === "measure" ? cursor : null)) : null;
 
   return (
@@ -295,6 +311,24 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           <button type="button" aria-pressed={tool === "device"} onClick={() => setTool("device")}>
             Gerät
           </button>
+          {model.roomView && (
+            <>
+              <button
+                type="button"
+                aria-pressed={showZones}
+                onClick={() => view.setShowZones(!showZones)}
+              >
+                Zonen
+              </button>
+              <button
+                type="button"
+                aria-pressed={showFeeds}
+                onClick={() => view.setShowFeeds(!showFeeds)}
+              >
+                Zuführungen
+              </button>
+            </>
+          )}
           {tool === "device" && (
             <DeviceTypePicker
               types={project.catalog.deviceTypes}
@@ -364,6 +398,25 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 )}
               </g>
             ))}
+            {zones && showZones && (
+              <g className="surface__zones" data-testid="install-zones">
+                <polygon data-zone="top" points={zones.top.map((p) => `${p.u},${p.v}`).join(" ")} />
+                <rect
+                  data-zone="bottom"
+                  x={zones.bottom.uFrom}
+                  y={zones.bottom.vFrom}
+                  width={zones.bottom.uTo - zones.bottom.uFrom}
+                  height={zones.bottom.vTo - zones.bottom.vFrom}
+                />
+                {zones.vertical.map((z) => (
+                  <polygon
+                    key={`${z.edge}:${z.openingId ?? ""}`}
+                    data-zone={z.edge}
+                    points={z.polygon.map((p) => `${p.u},${p.v}`).join(" ")}
+                  />
+                ))}
+              </g>
+            )}
             <g data-testid="surface-devices">
               {shownDevices.map(({ device, symbol, rect }) => (
                 <DeviceGlyph
@@ -381,6 +434,25 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 />
               ))}
             </g>
+            {feeds.length > 0 && (
+              <g className="surface__feeds" data-testid="device-feeds">
+                {feeds.map((f) => (
+                  <line
+                    key={f.id}
+                    data-feed={f.id}
+                    data-from={f.from}
+                    className={`surface__feed${f.inZone ? "" : " surface__feed--outside"}`}
+                    x1={f.u}
+                    y1={f.vFrom}
+                    x2={f.u}
+                    y2={f.vTo}
+                    vectorEffect="non-scaling-stroke"
+                  >
+                    {!f.inZone && <title>Zuführung außerhalb der Zonen</title>}
+                  </line>
+                ))}
+              </g>
+            )}
           </g>
           {/* Bemaßung in fertigen Maßen (Raumansicht) bzw. Rohbau */}
           {model.widthMm !== undefined && (

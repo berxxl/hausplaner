@@ -4,6 +4,7 @@ import {
   slopeOutline,
   viewOpenings,
   wallSides,
+  type RoomView,
   type ViewOpening,
 } from "../../geometry/surfaces";
 import { distance, projectOnSegment, type Vec } from "../../geometry/vec";
@@ -28,6 +29,8 @@ export interface SurfaceModel {
   ref: string;
   /** Raumansicht: u-Bereich des Rohbauabschnitts; Geräte außerhalb gehören zu anderen Räumen */
   uRange?: [number, number];
+  /** Raumansicht einer Wandseite (Zonen und Zuführungen) */
+  roomView?: RoomView;
   title: string;
   storeyId: string;
   contour: UV[];
@@ -74,6 +77,7 @@ export function surfaceModel(project: Project, target: SurfaceTarget): SurfaceMo
         kind: target.kind,
         ref: v.ref,
         uRange: [v.section.uFrom, v.section.uTo],
+        roomView: v,
         title: `${room.name} › ${v.name}`,
         storeyId: v.storeyId,
         contour,

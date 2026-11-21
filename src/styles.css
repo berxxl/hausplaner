@@ -434,6 +434,26 @@ button {
   fill: #e5e5ea;
   stroke-dasharray: 4 2;
 }
+.surface__zones {
+  pointer-events: none;
+}
+.surface__zones > * {
+  fill: rgba(52, 199, 89, 0.16);
+  stroke: none;
+}
+.surface__feed {
+  stroke: #8e8e93;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+.surface__feed--outside {
+  stroke: #ff9500;
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+.surface__feeds {
+  pointer-events: none;
+}
 .surface__label {
   font-size: 12px;
   fill: #0066cc;
@@ -537,4 +557,28 @@ button {
   display: flex;
   gap: 0.4rem;
   align-items: center;
+}
+
+.settings__zones {
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+}
+.settings__zone {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+.settings__zone label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.settings__error {
+  color: #c00;
+  margin: 0.25rem 0 0;
 }
