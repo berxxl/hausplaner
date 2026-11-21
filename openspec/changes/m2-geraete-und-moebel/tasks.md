@@ -54,7 +54,7 @@
 
 ## 9. Integration
 
-- [ ] 9.1 Playwright-Ablauf: M1-Projekt öffnen (Migration), Katalogtyp kopieren, Geräte in Wandansicht und Grundriss setzen, Kombination, Möbel davor, Warnung übergehen, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
+- [x] 9.1 Playwright-Ablauf: M1-Projekt öffnen (Migration), Katalogtyp kopieren, Geräte in Wandansicht und Grundriss setzen, Kombination, Möbel davor, Warnung übergehen, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
 - [ ] 9.2 Manuell: banatstrasse10 migrieren, Steckdosen und Schalter im EG setzen, Küchenzeile und Betten stellen; Befunde als Folge-Tasks
 
 ## Workflow follow-up
