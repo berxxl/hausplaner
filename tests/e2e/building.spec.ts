@@ -44,47 +44,45 @@ test.describe("Wände, Räume, Öffnungen (6)", () => {
     await page.keyboard.press("Escape");
     await saveNow(page);
     const eg = await storeyFile(request, "eg");
-    const axes = eg.walls!.map((w) => [w.start, w.end]);
+    type Pt = { x: number; y: number };
+    // Klicks landen je nach Browser einige mm neben den Sollpunkten (Pixelrundung)
+    const near = (a: Pt, b: Pt) => Math.abs(a.x - b.x) <= 15 && Math.abs(a.y - b.y) <= 15;
+    const find = (walls: { start: Pt; end: Pt }[], a: Pt, b: Pt) =>
+      walls.find((w) => near(w.start, a) && near(w.end, b));
+    const walls = eg.walls!;
+    expect(walls).toHaveLength(4);
     // linke Kante gezeichnet → Wände liegen rechts der Klicklinie, Achsen 120 mm außerhalb
-    expect(axes).toEqual(
-      expect.arrayContaining([
-        [
-          { x: -120, y: -120 },
-          { x: 4120, y: -120 },
-        ],
-        [
-          { x: 4120, y: -120 },
-          { x: 4120, y: 3120 },
-        ],
-        [
-          { x: 4120, y: 3120 },
-          { x: -120, y: 3120 },
-        ],
-        [
-          { x: -120, y: 3120 },
-          { x: -120, y: -120 },
-        ],
-      ]),
-    );
-    expect(axes).toHaveLength(4);
+    const corners: [Pt, Pt][] = [
+      [
+        { x: -120, y: -120 },
+        { x: 4120, y: -120 },
+      ],
+      [
+        { x: 4120, y: -120 },
+        { x: 4120, y: 3120 },
+      ],
+      [
+        { x: 4120, y: 3120 },
+        { x: -120, y: 3120 },
+      ],
+      [
+        { x: -120, y: 3120 },
+        { x: -120, y: -120 },
+      ],
+    ];
+    const ordered = corners.map(([a, b]) => find(walls, a, b));
+    for (const w of ordered) expect(w).toBeDefined();
+    // Ecken exakt gemeinsam, auch die schließende zur ersten Wand
+    for (let i = 0; i < 4; i++) expect(ordered[i]!.end).toEqual(ordered[(i + 1) % 4]!.start);
+
     // ein Zeichenschritt je Wand, Eckanpassung inklusive
     await page.keyboard.press("ControlOrMeta+z");
     await saveNow(page);
-    const undone = await storeyFile(request, "eg");
-    expect(undone.walls).toHaveLength(3);
+    const undone = (await storeyFile(request, "eg")).walls!;
+    expect(undone).toHaveLength(3);
     // Undo nimmt auch die Eckanpassungen an erster und dritter Wand zurück
-    expect(undone.walls!.map((w) => [w.start, w.end])).toEqual(
-      expect.arrayContaining([
-        [
-          { x: 0, y: -120 },
-          { x: 4120, y: -120 },
-        ],
-        [
-          { x: 4120, y: 3120 },
-          { x: 0, y: 3120 },
-        ],
-      ]),
-    );
+    expect(find(undone, { x: 0, y: -120 }, { x: 4120, y: -120 })).toBeDefined();
+    expect(find(undone, { x: 4120, y: 3120 }, { x: 0, y: 3120 })).toBeDefined();
   });
 
   test("vier Wände zeichnen, Raum anlegen, Fenster setzen, speichern", async ({

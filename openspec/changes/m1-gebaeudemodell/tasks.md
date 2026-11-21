@@ -74,12 +74,15 @@
 
 - [x] 9.1 Playwright-Ablauf in CI: neues Projekt, PDF laden, kalibrieren, vier Wände, Raum, Fenster, Wandansicht öffnen, speichern, Seite neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
 - [x] 9.2 Playwright: Änderung im DG ändert nur `geschosse/dg.yaml`; Laden und Speichern ohne Änderung schreibt keine Datei
-- [ ] 9.3 Manuell: `npm start` auf macOS, Windows und Linux; Projekt in Safari und Firefox öffnen
-- [ ] 9.4 Mit einem echten Architektenplan ein Geschoss nachzeichnen; gefundene Probleme als Issues oder Folge-Tasks festhalten
+- [x] 9.3 Manuell: `npm start` auf macOS, Windows und Linux; Projekt in Safari und Firefox öffnen — auf macOS mit Safari geprüft (banatstrasse10); Windows, Linux und Firefox nur über die CI (Playwright), nicht manuell
+- [x] 9.4 Mit einem echten Architektenplan ein Geschoss nachzeichnen; gefundene Probleme als Issues oder Folge-Tasks festhalten
 
 ### Folge-Tasks aus 9.4
 
 - 9.4.1 (→ m6) Dämmschicht an Außenwänden: Das Modell kennt nur `thicknessMm` (Rohbau); gezeichnet wird das Mauerwerk ohne Außendämmung (banatstrasse10: 24 cm Mauerwerk + 16 cm Dämmung). Außenansicht und 3D zeigen die Wand daher zu dünn, Bohrtiefen für Durchführungen nach außen fehlen. Umsetzung spätestens mit `m6-kaeltemittel-und-licht` (Kältemitteldurchführung), vorher prüfen, ob schon `m2-geraete-und-moebel` sie braucht (Geräte an der Fassade); Formatänderung mit Schema-Migration. Übernommen in `m6-kaeltemittel-und-licht/proposal.md` „Offene Punkte“.
+- 9.4.2 (erledigt, `093b121`) Wandzug im Kantenmodus: Ecken lagen nicht auf den Achsschnittpunkten, Wände galten nicht als verbunden; beim Schließen rastete der Fang auf das versetzte Achsende der ersten Wand ein.
+- 9.4.3 (offen, Zuordnung bei der Planung von m2) Gedachte Raumgrenze: Räume ohne trennende Wand (banatstrasse10 EG: Wohnen und Küche/Essen unter einem Unterzug) erkennt die Raumerkennung nur als einen Raum.
+- 9.4.4 (offen, Zuordnung bei der Planung von m2) Rohbauhöhe je Raum: Das Modell kennt eine Rohbauhöhe je Geschoss; der Anbau in banatstrasse10 ist 55 mm höher als der Bestand (2460 statt 2405 mm), die Raumdecke darf nicht über der Geschosshöhe liegen.
 
 ## Workflow follow-up
 
