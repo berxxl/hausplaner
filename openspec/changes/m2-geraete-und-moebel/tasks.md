@@ -50,7 +50,7 @@
 
 ## 8. Rohbauhöhe je Raum
 
-- [ ] 8.1 `room.rawHeightMm?` in Schema, Writer und Raumeigenschaften (leer = Geschosswert); Deckenhöhenfunktion, Zonen, Deckengeräte und 3D-Decke verwenden ihn; Unit-Tests: Raum mit 2460 mm im Geschoss mit 2405 mm hat fertige Decke 2445 mm bei 15 mm Putz (Spec-Scenario), obere Zone folgt, Wände unverändert, Feld leer → Geschosswert
+- [x] 8.1 `room.rawHeightMm?` in Schema, Writer und Raumeigenschaften (leer = Geschosswert); Deckenhöhenfunktion, Zonen, Deckengeräte und 3D-Decke verwenden ihn; Unit-Tests: Raum mit 2460 mm im Geschoss mit 2405 mm hat fertige Decke 2445 mm bei 15 mm Putz (Spec-Scenario), obere Zone folgt, Wände unverändert, Feld leer → Geschosswert
 
 ## 9. Integration
 

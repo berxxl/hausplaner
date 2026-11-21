@@ -36,16 +36,16 @@ export interface RoomHeights {
   rawHeightMm: number;
 }
 
-/** Werte des Raums, fehlende aus dem Geschoss. */
+/** Werte des Raums, fehlende aus dem Geschoss (auch die Rohbauhöhe, design.md M2 „Rohbauhöhe je Raum“). */
 export function roomHeights(
-  room: Pick<Room, "floorBuildupMm" | "plasterMm" | "suspendedMm">,
+  room: Pick<Room, "floorBuildupMm" | "plasterMm" | "suspendedMm" | "rawHeightMm">,
   storey: Storey,
 ): RoomHeights {
   return {
     floorBuildupMm: room.floorBuildupMm ?? storey.defaults.floorBuildupMm,
     plasterMm: room.plasterMm ?? storey.defaults.plasterMm,
     suspendedMm: room.suspendedMm ?? storey.defaults.suspendedMm,
-    rawHeightMm: storey.rawHeightMm,
+    rawHeightMm: room.rawHeightMm ?? storey.rawHeightMm,
   };
 }
 

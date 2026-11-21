@@ -147,6 +147,13 @@ export function RoomProperties({
         </p>
       )}
       <OptionalMmField
+        label="Rohbauhöhe"
+        min={1}
+        value={room.rawHeightMm}
+        fallback={storey?.rawHeightMm ?? 0}
+        onCommit={(value) => store.execute(editRoom(room.id, { field: "rawHeightMm", value }))}
+      />
+      <OptionalMmField
         label="Fußbodenaufbau"
         min={0}
         value={room.floorBuildupMm}

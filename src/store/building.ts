@@ -170,10 +170,14 @@ export function redetectRoom(
 
 export type RoomEdit =
   | { field: "name"; value: string }
-  | { field: "floorBuildupMm" | "plasterMm" | "suspendedMm"; value: number | undefined };
+  | {
+      field: "rawHeightMm" | "floorBuildupMm" | "plasterMm" | "suspendedMm";
+      value: number | undefined;
+    };
 
 const ROOM_LABELS: Record<RoomEdit["field"], string> = {
   name: "Raum umbenennen",
+  rawHeightMm: "Rohbauhöhe ändern",
   floorBuildupMm: "Fußbodenaufbau ändern",
   plasterMm: "Putzstärke ändern",
   suspendedMm: "Abhängung ändern",
