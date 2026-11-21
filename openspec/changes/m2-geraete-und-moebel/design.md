@@ -31,7 +31,7 @@ M2 erhöht `schemaVersion` auf 2. Grund: Eine M1-App würde Geschossdateien mit 
 - setzt den Katalog auf den Standardkatalog, wenn `katalog.yaml` fehlt (vorhandene `katalog.yaml` bleibt unverändert),
 - schreibt nichts von selbst; wie in M1 löst erst der nächste Befehl oder Cmd/Strg+S das Schreiben aus, mit dem Hinweis „Projekt auf Version 2 aktualisiert, wird beim nächsten Speichern geschrieben“.
 
-Ein neues Projekt startet direkt in Version 2 mit Standardkatalog und schreibt beim Anlegen `projekt.yaml`, `katalog.yaml` und `geschosse/eg.yaml`. Die Dummy-Migration „0 → 1“ bleibt Testgerüst.
+Ein neues Projekt startet direkt in Version 2 und schreibt beim Anlegen `projekt.yaml`, `geschosse/eg.yaml` und, falls noch keine vorhanden ist, `katalog.yaml` mit dem Standardkatalog. Liegt im leeren Ordner bereits eine `katalog.yaml` (etwa aus einem anderen Projekt kopiert), wird sie geladen und unverändert übernommen; ist sie ungültig, erscheint die Fehlerseite wie bei jedem Ladefehler. Die Dummy-Migration „0 → 1“ bleibt Testgerüst.
 
 ### Dateiformat M2
 M2 schreibt `projekt.yaml`, `katalog.yaml`, `geschosse/<slug>.yaml` und `warnungen.yaml`. Fehlt eine Datei, gilt sie als leer; `warnungen.yaml` wird gelöscht (`null`), wenn keine Warnung übergangen ist, und nur geschrieben, wenn mindestens eine übergangen ist. Unbekannte `*.yaml` werden weiter ignoriert. Neu oder geändert gegenüber M1 (übrige Zeilen der M1-Tabelle gelten unverändert):
@@ -62,7 +62,7 @@ Weitere Regeln:
 `Catalog`, `DeviceType`, `LineType` und `FurnitureType` wie in `docs/architektur.md`. Zusätzlich gilt:
 - **Montagearten und Flächen:** `wall` → Wandseiten; `ceiling` → Decken und Schrägen; `floor` → Böden; `free` → freie Platzierung im Geschoss; `din-rail` → Verteiler (ab M4). Ein Typ ohne platzierbare Montageart erscheint in M2 nicht in der Geräteauswahl.
 - **Bearbeiten:** Ein Katalogfenster listet Geräte-, Leitungs- und Möbeltypen getrennt, Gerätetypen gruppiert nach Gewerk. Anlegen, Kopieren („<Name> Kopie“, neue ID), Ändern und Löschen sind Befehle mit Undo. Löschen wird abgelehnt, solange Geräte bzw. Möbel den Typ verwenden: „Typ wird von <n> Geräten verwendet“ bzw. „… Möbeln“. Leitungstypen sind in M2 nie in Verwendung.
-- **Änderungen am Typ** wirken sofort auf alle Geräte dieses Typs (Symbol, Form, Gewerk). Die Standardhöhe wirkt nur beim Setzen neuer Geräte; bestehende Geräte behalten ihre Höhe.
+- **Änderungen am Typ** wirken sofort auf alle Geräte dieses Typs (Symbol, Form, Gewerk). Die Standardhöhe wirkt nur beim Setzen neuer Geräte; bestehende Geräte behalten ihre Höhe. Eine Montageart, auf der noch Geräte dieses Typs sitzen, kann nicht entfernt werden: „Montageart <Art> wird von <n> Geräten verwendet“.
 - **Formularfelder:** alle Felder des Typs; `knx.consumes` als Auswahl, `knx.provides` als Funktion und Kanalzahl, `light` und `refrigerant` als Zahlenfelder. Pflichtfelder: Name, Gewerk, mindestens eine Montageart, `shape3d` mit positiven Maßen.
 
 ### Standardkatalog
@@ -134,11 +134,14 @@ Alle Warnungen werden wie in M1 berechnet und tragen den stabilen Schlüssel `<r
 | `device-without-type:<deviceId>` | „Gerät mit unbekanntem Typ (<typeId>)“ | nur Eintrag mit Aktion „Löschen“ | nein |
 | `furniture-without-type:<furnitureId>` | „Möbel mit unbekanntem Typ (<typeId>)“ | nur Eintrag mit Aktion „Löschen“ | nein |
 
-„Außerhalb der Fläche“ heißt: Die Gerätemitte liegt außerhalb der Kontur der Fläche (Wandseite: ganze Wandseite in Rohbaumaßen; Decke, Boden, Schräge: Kontur der Fläche).
+„Außerhalb der Fläche“ heißt: Die Gerätemitte liegt außerhalb der Kontur der Fläche (Wandseite: ganze Wandseite in Rohbaumaßen, verglichen mit der Rohbauhöhe des Geräts v + Fußbodenaufbau; Decke, Boden, Schräge: Kontur der Fläche).
 
 - **Übergehen:** Jede übergehbare Warnung (alle M1-Warnungen außer `opening-without-wall` und die oben als nicht übergehbar markierten) hat in der Liste die Aktion „Übergehen“. Übergangene Warnungen zählen nicht zur Anzahl, stehen in einem eigenen aufklappbaren Abschnitt „übergangen (<n>)“ mit der Aktion „Wieder aktivieren“. Beides sind Befehle mit Undo; gespeichert wird in `warnungen.yaml`.
 - **Bereinigen:** Am Ende jedes Befehls entfernt der Store alle übergangenen Schlüssel, zu denen keine Warnung mehr berechnet wird, im selben Befehl. Damit entfällt die Markierung, wenn das Element gelöscht oder der Verstoß behoben wurde; tritt der Verstoß später erneut auf, ist die Warnung wieder offen. Beim Laden wird nicht bereinigt (sonst würde Laden eine Änderung erzeugen).
 - **Übersicht:** Die Warnungsleiste aus M1 wird zur Übersicht mit Spalten Regel (Text), Element und Ort (`<Geschoss> › <Raum> › <Ansicht>`); Sortierung nach Geschoss, dann Raum, dann Text.
+
+### Auswahl
+Geräte und Möbel sind wie die M1-Objekte auswählbar; die Auswahl gilt in Grundriss, Flächenansichten, 3D und Baum gleichzeitig. Mehrfachauswahl gibt es nur für Geräte derselben Fläche (Shift-Klick in Grundriss und Flächenansicht); sie dient dem Kombinieren und gemeinsamen Löschen. Der Baum zeigt in M2 keine Geräte und Möbel.
 
 ### Gewerkfilter
 Schalter je Gewerk (Strom, KNX, Daten, Leerrohr, Kältemittel, Kondensat, Sonstiges) und für Möbel in der Kopfzeile des Editorbereichs. Ansichtszustand im View-Store, nicht gespeichert, beim Start alles sichtbar. Ein Gerät ist sichtbar, wenn das Gewerk seines Typs sichtbar ist. Der Filter gilt gleichzeitig in Grundriss, allen Flächenansichten und 3D; das Gebäude bleibt immer sichtbar. Ausgeblendete Elemente sind nicht anklickbar; eine bestehende Auswahl eines ausgeblendeten Elements wird aufgehoben. Warnungen ausgeblendeter Elemente bleiben in der Übersicht.

@@ -200,7 +200,7 @@ interface Device {
     | { kind: "free"; storeyId: Id; x: number; y: number; z: number };        // z. B. Klima-Außengerät; storeyId nicht geschrieben
   circuitId?: Id;
   knxLineId?: Id;                              // nur Busteilnehmer
-  props: Record<string, unknown>;              // typabhängig, z. B. Leistung
+  props?: Record<string, unknown>;             // typabhängig, z. B. Leistung; ab Bedarf (nicht in M2)
 }
 
 interface Furniture {
