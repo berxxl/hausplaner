@@ -458,3 +458,83 @@ button {
   position: relative;
   min-height: 0;
 }
+
+/* Katalog (M2) */
+.dialog.catalog {
+  max-width: 56rem;
+  width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+.catalog__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.catalog__tabs [aria-selected="true"] {
+  font-weight: 600;
+}
+.catalog__body {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: 1rem;
+  min-height: 0;
+  overflow: hidden;
+}
+.catalog__list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.catalog__list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+}
+.catalog__list li[role="option"] {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+.catalog__list li[aria-selected="true"] {
+  background: #e8f0fe;
+}
+.catalog__group {
+  font-size: 0.8rem;
+  color: #6e6e73;
+  padding: 0.4rem 0.5rem 0.1rem;
+}
+.catalog__actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+.catalog__form {
+  overflow: auto;
+}
+.catalog__error {
+  color: #c62828;
+}
+.field--checks label {
+  margin-right: 0.75rem;
+  white-space: nowrap;
+}
+.field--checks,
+.field--group {
+  display: block;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.type-picker {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}

@@ -12,8 +12,8 @@
 
 ## 2. Katalog bearbeiten
 
-- [ ] 2.1 Befehle „Typ anlegen“, „Typ kopieren“, „Typ ändern“, „Typ löschen“ für Geräte-, Leitungs- und Möbeltypen; Löschen abgelehnt mit „Typ wird von <n> Geräten verwendet“ bzw. „… Möbeln“; Unit-Tests: Kopie erhält neue zufällige ID und Namen „<Name> Kopie“, Löschen eines verwendeten Typs mit 12 Geräten nennt 12 (Spec-Scenario), Undo
-- [ ] 2.2 Katalogfenster (`ui/catalog/`): Listen nach Art, Gerätetypen nach Gewerk, Formular mit allen Feldern und Pflichtfeldprüfung, SVG-Import für Symbole mit Vorschau, Entfernen einer verwendeten Montageart abgelehnt; Komponententests: „Steckdose“ kopieren, „Steckdose USB-C“ mit 1050 mm speichern, steht danach in der Geräteauswahl (Spec-Scenario „Eigener Typ“); zugewiesenes SVG-Symbol erscheint in Grundriss und Flächenansicht (Spec-Scenario „Eigenes Symbol“)
+- [x] 2.1 Befehle „Typ anlegen“, „Typ kopieren“, „Typ ändern“, „Typ löschen“ für Geräte-, Leitungs- und Möbeltypen; Löschen abgelehnt mit „Typ wird von <n> Geräten verwendet“ bzw. „… Möbeln“; Unit-Tests: Kopie erhält neue zufällige ID und Namen „<Name> Kopie“, Löschen eines verwendeten Typs mit 12 Geräten nennt 12 (Spec-Scenario), Undo
+- [x] 2.2 Katalogfenster (`ui/catalog/`): Listen nach Art, Gerätetypen nach Gewerk, Formular mit allen Feldern und Pflichtfeldprüfung, SVG-Import für Symbole mit Vorschau, Entfernen einer verwendeten Montageart abgelehnt; Komponententests: „Steckdose“ kopieren, „Steckdose USB-C“ mit 1050 mm speichern, steht danach in der Geräteauswahl (Spec-Scenario „Eigener Typ“); zugewiesenes SVG-Symbol wird bereinigt übernommen und im Katalog angezeigt (die Darstellung in Grundriss und Flächenansicht prüft Task 3.8)
 
 ## 3. Geräte
 
@@ -24,7 +24,7 @@
 - [ ] 3.5 Eigenschaften: Bezeichnung, Typ, Status, Abstand zur Bezugskante (linke/rechte Raumecke, Laibungen), Höhe über OKFF, Rohbauhöhe; Decke/Boden/Schräge mit Abständen zu den Wänden; frei mit x, y, z; Komponententest: Schalter 1050 mm bei 100 mm Aufbau zeigt Rohbauhöhe 1150 mm (Spec-Scenario „Höhe eingeben“), Bezugskante Laibung
 - [ ] 3.6 Auswahl von Geräten und Möbeln im gemeinsamen Auswahlzustand, Mehrfachauswahl mit Shift nur auf einer Fläche; Playwright: Deckenauslass in 3D anklicken hebt ihn in Grundriss und Deckenspiegel hervor (Spec-Scenario „Gerät in 3D auswählen“)
 - [ ] 3.7 Kombinieren waagerecht/senkrecht mit Abstandsdialog (Standard 71 mm), Mehrfachauswahl mit Shift; Unit-Tests: drei Geräte auf einer Höhe im Abstand 71 mm (Spec-Scenario „Dreifachkombination“), senkrecht, verschiedene Flächen abgelehnt
-- [ ] 3.8 Darstellung in Grundriss, Flächenansicht und 3D nach `design.md` „Darstellung“ inkl. Statusfarben und rotem Rand bei offener Warnung; Unit-Test 3D-Position eines Deckenauslasses; Playwright: Deckenauslass in der Küche erscheint im Deckenspiegel, im Grundriss und in 3D (Spec-Scenario), Status „verlegt“ ändert die Darstellung (Spec-Scenario „Nach dem Verlegen“)
+- [ ] 3.8 Darstellung in Grundriss, Flächenansicht und 3D nach `design.md` „Darstellung“ inkl. Statusfarben und rotem Rand bei offener Warnung; Unit-Test 3D-Position eines Deckenauslasses; Playwright: Deckenauslass in der Küche erscheint im Deckenspiegel, im Grundriss und in 3D (Spec-Scenario), Status „verlegt“ ändert die Darstellung (Spec-Scenario „Nach dem Verlegen“); eigenes SVG-Symbol erscheint in Grundriss und Flächenansicht (Spec-Scenario „Eigenes Symbol“)
 
 ## 4. Installationszonen
 

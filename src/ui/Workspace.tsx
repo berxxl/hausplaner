@@ -9,6 +9,7 @@ import { sortedStoreys } from "../io/project-files";
 import { EditorArea } from "./EditorArea";
 import { Properties } from "./Properties";
 import { ProjectSettings } from "./ProjectSettings";
+import { CatalogDialog } from "./catalog/CatalogDialog";
 import { Tree } from "./Tree";
 import { WarningBar } from "./WarningBar";
 import { useConfirm } from "./useConfirm";
@@ -30,6 +31,7 @@ export interface WorkspaceProps {
 export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps) {
   const [showNotice, setShowNotice] = useState(!!notice);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const name = useStore(store, (s) => s.project.name);
   const { confirm, dialog } = useConfirm();
   const [view] = useState(() =>
@@ -84,7 +86,10 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
       <header className="workspace__header">
         <h1>{name}</h1>
         <SaveStatus save={save} />
-        <button type="button" className="workspace__settings" onClick={() => setSettingsOpen(true)}>
+        <button type="button" className="workspace__settings" onClick={() => setCatalogOpen(true)}>
+          Katalog
+        </button>
+        <button type="button" onClick={() => setSettingsOpen(true)}>
           Projekteinstellungen
         </button>
       </header>
@@ -104,6 +109,7 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
       <Properties store={store} view={view} api={api} />
       <WarningBar store={store} view={view} />
       {settingsOpen && <ProjectSettings store={store} onClose={() => setSettingsOpen(false)} />}
+      {catalogOpen && <CatalogDialog store={store} onClose={() => setCatalogOpen(false)} />}
       {dialog}
     </div>
   );

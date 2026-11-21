@@ -64,3 +64,11 @@ export function parseDeg(input: string): number | null {
   const value = parseDecimal(input.trim().replace(/\s*°$/, ""));
   return value === null ? null : roundDeg(value);
 }
+
+/** Dezimalzahl mit Komma oder Punkt, gerundet auf `decimals` Nachkommastellen; sonst null. */
+export function parseRounded(text: string, decimals: number): number | null {
+  const v = parseDecimal(text);
+  if (v === null) return null;
+  const f = 10 ** decimals;
+  return Math.round(v * f) / f;
+}

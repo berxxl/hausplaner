@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { formatDeg, formatMm, parseDeg, parseMm } from "../model/units";
+import { formatDeg, formatMm, parseDeg, parseMm, parseRounded } from "../model/units";
 
 interface FieldProps<T> {
   label: string;
@@ -156,6 +156,86 @@ export function OptionalMmField({
         }}
       />
       <span className="field__suffix">mm</span>
+    </div>
+  );
+}
+
+const formatDecimal = (v: number) => String(v).replace(".", ",");
+
+/** Zahl ohne Einheit mm (z. B. Lumen, Kanäle, Meter); `decimals` = Nachkommastellen. */
+export function NumberField(props: FieldProps<number> & { decimals?: number }) {
+  const decimals = props.decimals ?? 0;
+  return (
+    <CommitField
+      {...props}
+      format={formatDecimal}
+      parse={(s) => parseRounded(s, decimals)}
+      inputMode="decimal"
+    />
+  );
+}
+
+/** Zahlenfeld, das leer sein darf (leer = nicht gesetzt). */
+export function OptionalNumberField({
+  label,
+  value,
+  onCommit,
+  min,
+  decimals = 0,
+  suffix,
+  placeholder = "–",
+}: {
+  label: string;
+  value: number | undefined;
+  onCommit(value: number | undefined): void;
+  min?: number;
+  decimals?: number;
+  suffix?: string;
+  placeholder?: string;
+}) {
+  const id = useId();
+  const show = (v: number | undefined) => (v === undefined ? "" : formatDecimal(v));
+  const [text, setText] = useState(show(value));
+  const [shown, setShown] = useState(value);
+  const [invalid, setInvalid] = useState(false);
+  if (shown !== value) {
+    setShown(value);
+    setText(show(value));
+    setInvalid(false);
+  }
+  const commit = () => {
+    if (text.trim() === "") {
+      setInvalid(false);
+      if (value !== undefined) onCommit(undefined);
+      return;
+    }
+    const parsed = parseRounded(text, decimals);
+    if (parsed === null || (min !== undefined && parsed < min)) {
+      setInvalid(true);
+      setText(show(value));
+      return;
+    }
+    setInvalid(false);
+    setText(show(parsed));
+    if (parsed !== value) onCommit(parsed);
+  };
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        value={text}
+        placeholder={placeholder}
+        inputMode="decimal"
+        aria-invalid={invalid || undefined}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setText(show(value));
+        }}
+      />
+      {suffix && <span className="field__suffix">{suffix}</span>}
     </div>
   );
 }
