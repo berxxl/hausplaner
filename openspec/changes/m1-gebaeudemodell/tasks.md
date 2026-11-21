@@ -79,7 +79,7 @@
 
 ### Folge-Tasks aus 9.4
 
-- [ ] 9.4.1 Dämmschicht an Außenwänden: Das Modell kennt nur `thicknessMm` (Rohbau); gezeichnet wird das Mauerwerk ohne Außendämmung (banatstrasse10: 24 cm Mauerwerk + 16 cm Dämmung). Außenansicht und 3D zeigen die Wand daher zu dünn, Bohrtiefen für Durchführungen nach außen fehlen. Umsetzung spätestens mit `m6-kaeltemittel-und-licht` (Kältemitteldurchführung), vorher prüfen, ob schon `m2-geraete-und-moebel` sie braucht (Geräte an der Fassade); Formatänderung mit Schema-Migration. Übernommen in `m6-kaeltemittel-und-licht/proposal.md` „Offene Punkte“.
+- 9.4.1 (→ m6) Dämmschicht an Außenwänden: Das Modell kennt nur `thicknessMm` (Rohbau); gezeichnet wird das Mauerwerk ohne Außendämmung (banatstrasse10: 24 cm Mauerwerk + 16 cm Dämmung). Außenansicht und 3D zeigen die Wand daher zu dünn, Bohrtiefen für Durchführungen nach außen fehlen. Umsetzung spätestens mit `m6-kaeltemittel-und-licht` (Kältemitteldurchführung), vorher prüfen, ob schon `m2-geraete-und-moebel` sie braucht (Geräte an der Fassade); Formatänderung mit Schema-Migration. Übernommen in `m6-kaeltemittel-und-licht/proposal.md` „Offene Punkte“.
 
 ## Workflow follow-up
 
