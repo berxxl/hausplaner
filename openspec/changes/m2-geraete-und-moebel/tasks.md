@@ -47,9 +47,9 @@
 
 - [ ] 7.1 Filter im View-Store, Schalter in der Kopfzeile, Wirkung in Grundriss, Flächenansicht und 3D, Auswahl ausgeblendeter Elemente aufheben; Playwright: nur KNX (Spec-Scenario), Möbel ausblenden (Spec-Scenario)
 
-## 8. Rohbauhöhe je Raum (nur nach Zustimmung zu Open Question 1)
+## 8. Rohbauhöhe je Raum
 
-- [ ] 8.1 `room.rawHeightMm?` in Schema, Writer und Eigenschaften; Deckenhöhe, Zonen und 3D-Decke verwenden ihn; Unit-Tests: Raum mit 2460 mm im Geschoss mit 2405 mm, Zone folgt, Wände unverändert
+- [ ] 8.1 `room.rawHeightMm?` in Schema, Writer und Raumeigenschaften (leer = Geschosswert); Deckenhöhenfunktion, Zonen, Deckengeräte und 3D-Decke verwenden ihn; Unit-Tests: Raum mit 2460 mm im Geschoss mit 2405 mm hat fertige Decke 2445 mm bei 15 mm Putz (Spec-Scenario), obere Zone folgt, Wände unverändert, Feld leer → Geschosswert
 
 ## 9. Integration
 

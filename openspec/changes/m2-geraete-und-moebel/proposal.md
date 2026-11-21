@@ -13,6 +13,7 @@ Die Positionen von Dosen, Schaltern, Meldern, Leuchten und Motoren sind die erst
 - Zentrale Warnungen, die bewusst übergangen werden können
 - Gewerkfilter für alle Ansichten
 - Statusfeld geplant / verlegt / geprüft für Geräte
+- Rohbauhöhe je Raum für Gebäude mit unterschiedlich hohen Teilen (z. B. Anbau)
 
 ## Capabilities
 
@@ -27,6 +28,7 @@ Die Positionen von Dosen, Schaltern, Meldern, Leuchten und Motoren sind die erst
 ### Modified Capabilities
 
 - `workspace`: Gewerkfilter für alle Ansichten
+- `building-geometry`: Rohbauhöhe je Raum (Befund aus dem Nachzeichnen in m1)
 
 ## Impact
 

@@ -121,7 +121,7 @@ Offener Punkt aus M1: Bekommt ein Wandabschnitt einen anderen Raum (Raum angeleg
 - **Zuführung** (Schalter „Zuführungen zeigen“): Für jedes Wandgerät, dessen Mitte in keiner waagerechten Zone liegt, zeigt die Ansicht eine senkrechte Linie von der Gerätemitte zur Zone, aus der es zugeführt wird: zur unteren Zone, wenn die Gerätemitte unterhalb deren Unterkante liegt, sonst zur oberen Zone (DIN 18015-3: Schalter und höher liegende Geräte von oben). Liegt die Linie vollständig in einer senkrechten Zone, ist sie grau gestrichelt, sonst orange („Zuführung außerhalb der Zonen“). Das ist eine Darstellung, keine Warnung; eine Zonenwarnung ist in M2 nicht vorgesehen.
 
 ### Rohbauhöhe je Raum
-Befund 9.4.4 aus M1 (Anbau 2460 mm, Bestand 2405 mm im selben Geschoss). Vorschlag: `room.rawHeightMm?` überschreibt `storey.rawHeightMm` für Decke, Deckenhöhe, Zonen und 3D-Decke dieses Raums; Wände behalten ihre eigene Höhe (`wall.rawHeightMm` oder Geschoss). Entscheidung offen, siehe „Open Questions“. Ohne Zustimmung entfällt das Feld und die Zeile in der Formattabelle.
+Befund 9.4.4 aus M1 (Anbau 2460 mm, Bestand 2405 mm im selben Geschoss), entschieden am 2026-11-21: `room.rawHeightMm?` überschreibt `storey.rawHeightMm` für diesen Raum. In der Deckenhöhenfunktion aus M1 tritt sie an die Stelle der Rohbauhöhe des Geschosses (Rohdecke H(p) = min(Rohbauhöhe des Raums − Abhängung, alle Schrägen)); damit folgen fertige Decke, obere Installationszone, Deckengeräte, Wandansichten und die 3D-Decke. Wände behalten ihre eigene Höhe (`wall.rawHeightMm` oder Geschoss) und werden nicht automatisch angepasst; im Anbau setzt der Benutzer die Wandhöhe bei Bedarf selbst. Die Raumeigenschaften zeigen das Feld mit dem Geschosswert als Platzhalter; leer = Geschosswert. Fehlt das Feld in der Datei, gilt wie bisher die Geschosshöhe; eine Migration ist dafür nicht nötig, weil es mit Version 2 eingeführt wird.
 
 ### Warnungen
 Alle Warnungen werden wie in M1 berechnet und tragen den stabilen Schlüssel `<regel>:<objektId>`. Neu in M2:
@@ -164,8 +164,14 @@ Neue reine Module: `geometry/devices.ts` (Fläche → Welt für Geräte, Grundri
 - [Eigene SVG-Symbole als Einfallstor für Skripte] → strikte Positivliste, Rendern nur über React-Elemente, Unit-Tests für bösartige Eingaben
 - [Fassadengeräte sitzen ohne Dämmschicht 16 cm zu weit innen] → bekannt aus m1 9.4.1, Lösung in M6
 
+## Entschieden am 2026-11-21
+
+- Rohbauhöhe je Raum (m1 9.4.4): in M2, siehe „Rohbauhöhe je Raum“.
+- Gedachte Raumgrenze (m1 9.4.3): nicht in M2. Wohnen und Küche/Essen bleiben in banatstrasse10 ein Raum; der Befund bleibt offen für einen späteren Change.
+- Dämmschicht (m1 9.4.1): bleibt in M6.
+- Höhenbezug bei geänderter Raumzuordnung: Rohbauhöhe bleibt; bei geändertem Estrich bleibt die Höhe über OKFF.
+- Übergangene Warnungen werden bereinigt, sobald die Warnung nicht mehr auftritt (Löschen oder Behebung).
+
 ## Open Questions
 
-- **Rohbauhöhe je Raum (m1 9.4.4):** in M2 aufnehmen wie unter „Rohbauhöhe je Raum“ beschrieben, oder verschieben? Vorschlag: aufnehmen, weil Decke, Zonen und Deckengeräte in M2 davon abhängen und der Aufwand klein ist.
-- **Gedachte Raumgrenze (m1 9.4.3):** Wohnen und Küche/Essen ohne trennende Wand bleiben ein Raum. Vorschlag: nicht in M2; Geräte und Möbel funktionieren mit einem gemeinsamen Raum, und eine gedachte Grenze berührt Raumerkennung und Flächen grundlegend.
-- **Dämmschicht für Fassadengeräte (m1 9.4.1):** Vorschlag: bleibt in M6; in M2 gibt es außer dem Klima-Außengerät (frei platziert) kaum Fassadengeräte.
+- Keine.
