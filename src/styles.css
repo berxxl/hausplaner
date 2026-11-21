@@ -259,6 +259,26 @@ button {
   stroke: #0071e3;
   stroke-width: 1;
 }
+.furniture {
+  fill: rgba(175, 130, 80, 0.22);
+  stroke: #8a6a45;
+  stroke-width: 1.2;
+}
+.furniture--selected {
+  fill: rgba(0, 113, 227, 0.18);
+  stroke: #0071e3;
+  stroke-width: 2.5;
+}
+.surface__silhouette {
+  fill: rgba(175, 130, 80, 0.28);
+  stroke: #8a6a45;
+  stroke-width: 1;
+  stroke-dasharray: 6 3;
+}
+.surface__silhouette--selected {
+  fill: rgba(0, 113, 227, 0.2);
+  stroke: #0071e3;
+}
 .room {
   fill: rgb(0 113 227 / 0.06);
   stroke: none;

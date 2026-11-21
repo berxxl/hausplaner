@@ -2,9 +2,13 @@
 import type { Project } from "../model/types";
 import { openingsWithoutWall } from "./openings";
 import { openingWarnings, roomWarnings, slopeWarnings } from "./building";
+import { deviceCoveredWarnings } from "./furniture";
 
 export type WarningTarget =
-  { kind: "room"; id: string } | { kind: "opening"; id: string } | { kind: "none" };
+  | { kind: "room"; id: string }
+  | { kind: "opening"; id: string }
+  | { kind: "device"; id: string }
+  | { kind: "none" };
 
 export interface ProjectWarning {
   /** Stabiler Schlüssel `<regel>:<objektId>`. */
@@ -23,5 +27,6 @@ export function computeWarnings(project: Project): ProjectWarning[] {
     warnings.push({ ...w, target: { kind: "none" }, deletable: { kind: "opening", id } });
   }
   warnings.push(...roomWarnings(project), ...slopeWarnings(project), ...openingWarnings(project));
+  warnings.push(...deviceCoveredWarnings(project));
   return warnings.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }

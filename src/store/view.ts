@@ -36,6 +36,7 @@ export type PlanTool =
   | "slope"
   | "redetect-room"
   | "device"
+  | "furniture"
   | "calibrate"
   | "move-underlay"
   | "rotate-underlay";
@@ -55,6 +56,8 @@ export interface ViewState {
   surfaceTool: SurfaceTool;
   /** Gerätetyp der Werkzeuge „Gerät“ in Grundriss und Flächenansicht. */
   deviceTypeId: string | null;
+  /** Möbeltyp des Werkzeugs „Möbel“ im Grundriss. */
+  furnitureTypeId: string | null;
   /** Overlay der Installationszonen in allen Wandansichten (nicht gespeichert). */
   showZones: boolean;
   /** Senkrechte Zuführungen der Wandgeräte in allen Wandansichten (nicht gespeichert). */
@@ -78,6 +81,7 @@ export interface ViewStore extends StoreApi<ViewState> {
   selectedDevices(): string[];
   setSurfaceTool(tool: SurfaceTool): void;
   setDeviceType(typeId: string | null): void;
+  setFurnitureType(typeId: string | null): void;
   setShowZones(show: boolean): void;
   setShowFeeds(show: boolean): void;
 }
@@ -93,6 +97,7 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     surface: null,
     surfaceTool: "select",
     deviceTypeId: null,
+    furnitureTypeId: null,
     showZones: false,
     showFeeds: false,
     ...initial,
@@ -128,6 +133,9 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setDeviceType(deviceTypeId: string | null) {
       store.setState({ deviceTypeId });
+    },
+    setFurnitureType(furnitureTypeId: string | null) {
+      store.setState({ furnitureTypeId });
     },
     setShowZones(showZones: boolean) {
       store.setState({ showZones });

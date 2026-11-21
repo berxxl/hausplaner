@@ -34,9 +34,9 @@
 
 ## 5. Möbel
 
-- [ ] 5.1 `geometry/furniture.ts`: Grundfläche, Einrasten (≤ 200 mm, ≤ 15°, bündig an fertiger Oberfläche), Silhouette je Wandseite (≤ 100 mm, Überlappung in u); Unit-Tests: Küchenzeile 3000 × 600 × 900 an der Nordwand bündig an der Putzoberfläche (Spec-Scenario), Shift schaltet Einrasten ab, Bett vor der Wand ergibt Silhouette (Spec-Scenario), Möbel 150 mm vor der Wand ergibt keine
-- [ ] 5.2 Befehle „Möbel setzen/verschieben/ändern/löschen“, Drehen um 90° mit R; Werkzeug „Möbel“ im Grundriss, Eigenschaften mit allen Maßen; Darstellung in Grundriss, Wandansicht (halbtransparent) und 3D; Playwright: Hängeschrank mit 1450 mm schwebt in Wandansicht und 3D (Spec-Scenario)
-- [ ] 5.3 Regel `device-covered` in `rules/furniture.ts`; Unit-Tests: Steckdose hinter Kleiderschrank meldet „Gerät durch Möbel verdeckt“ (Spec-Scenario), Steckdose 150 mm über der Arbeitsplatte meldet nichts (Spec-Scenario), Verschieben neben den Schrank lässt die Warnung verschwinden (Spec-Scenario „Warnung verschwindet“)
+- [x] 5.1 `geometry/furniture.ts`: Grundfläche, Einrasten (≤ 200 mm, ≤ 15°, bündig an fertiger Oberfläche), Silhouette je Wandseite (≤ 100 mm, Überlappung in u); Unit-Tests: Küchenzeile 3000 × 600 × 900 an der Nordwand bündig an der Putzoberfläche (Spec-Scenario), Shift schaltet Einrasten ab, Bett vor der Wand ergibt Silhouette (Spec-Scenario), Möbel 150 mm vor der Wand ergibt keine
+- [x] 5.2 Befehle „Möbel setzen/verschieben/ändern/löschen“, Drehen um 90° mit R; Werkzeug „Möbel“ im Grundriss, Eigenschaften mit allen Maßen; Darstellung in Grundriss, Wandansicht (halbtransparent) und 3D; Playwright: Hängeschrank mit 1450 mm schwebt in Wandansicht und 3D (Spec-Scenario)
+- [x] 5.3 Regel `device-covered` in `rules/furniture.ts`; Unit-Tests: Steckdose hinter Kleiderschrank meldet „Gerät durch Möbel verdeckt“ (Spec-Scenario), Steckdose 150 mm über der Arbeitsplatte meldet nichts (Spec-Scenario), Verschieben neben den Schrank lässt die Warnung verschwinden (Spec-Scenario „Warnung verschwindet“)
 
 ## 6. Warnungen
 

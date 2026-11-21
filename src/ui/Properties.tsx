@@ -4,6 +4,7 @@ import type { ViewStore } from "../store/view";
 import type { Api } from "../io/api";
 import { StoreyProperties } from "./StoreyProperties";
 import { DeviceProperties } from "./DeviceProperties";
+import { FurnitureProperties } from "./FurnitureProperties";
 import { OpeningProperties, RoomProperties, WallProperties } from "./BuildingProperties";
 
 const KIND_LABELS = {
@@ -50,6 +51,12 @@ export function Properties({
         ids={selection.ids ?? [selection.id]}
       />
     );
+  } else if (selection?.kind === "furniture") {
+    const f = project.furniture.find((x) => x.id === selection.id);
+    if (f)
+      body = (
+        <FurnitureProperties key={f.id} furniture={f} project={project} store={store} view={view} />
+      );
   } else if (selection?.kind === "opening") {
     const opening = project.openings.find((o) => o.id === selection.id);
     if (opening) body = <OpeningProperties key={opening.id} opening={opening} store={store} />;

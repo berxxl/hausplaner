@@ -33,6 +33,8 @@ import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
 import { DeviceGlyph } from "../DeviceGlyph";
 import { isTextTarget } from "../shortcuts";
 import { feedFor, viewZones } from "../../geometry/zones";
+import { sectionSilhouettes } from "../../geometry/furniture";
+import { warnedIds } from "../derived";
 
 type Tool = SurfaceTool;
 type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
@@ -163,6 +165,9 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       },
     ];
   });
+  // Möbel vor dieser Raumansicht als halbtransparente Silhouette (design.md M2 „Möbel“)
+  const silhouettes = model.roomView ? sectionSilhouettes(project, model.roomView) : [];
+  const warned = warnedIds(project);
   const snap = (p: Vec): Vec => {
     let best: Vec | null = null;
     for (const q of snapPoints(model).map(pt))
@@ -223,8 +228,14 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       e.currentTarget.setPointerCapture?.(e.pointerId);
       return;
     }
-    const o = hitOpening(world);
-    if (o) view.select({ kind: "opening", id: o.id });
+    const sil = [...silhouettes]
+      .reverse()
+      .find(
+        (x) => world.x >= x.uFrom && world.x <= x.uTo && world.y >= x.vFrom && world.y <= x.vTo,
+      );
+    const o = sil ? undefined : hitOpening(world);
+    if (sil) view.select({ kind: "furniture", id: sil.furnitureId });
+    else if (o) view.select({ kind: "opening", id: o.id });
     drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
@@ -398,6 +409,22 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 )}
               </g>
             ))}
+            {silhouettes.length > 0 && (
+              <g data-testid="surface-furniture">
+                {silhouettes.map((x) => (
+                  <rect
+                    key={x.furnitureId}
+                    data-furniture={x.furnitureId}
+                    className={`surface__silhouette${selection?.kind === "furniture" && selection.id === x.furnitureId ? " surface__silhouette--selected" : ""}`}
+                    x={x.uFrom}
+                    y={x.vFrom}
+                    width={x.uTo - x.uFrom}
+                    height={x.vTo - x.vFrom}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </g>
+            )}
             {zones && showZones && (
               <g className="surface__zones" data-testid="install-zones">
                 <polygon data-zone="top" points={zones.top.map((p) => `${p.u},${p.v}`).join(" ")} />
@@ -427,6 +454,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                   y={(rect.vMin + rect.vMax) / 2}
                   width={rect.uMax - rect.uMin}
                   height={rect.vMax - rect.vMin}
+                  warned={warned.has(device.id)}
                   selected={
                     selection?.kind === "device" &&
                     (selection.ids ?? [selection.id]).includes(device.id)

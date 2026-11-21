@@ -121,7 +121,7 @@ devices:
     label: "USB-C Schlafen"
     typeId: "k7usb2c4"
     status: "planned"
-    placement: {kind: "surface", surface: "wall:0cw3n0rd:L", u: 1500, v: 300, rotationDeg: 0}
+    placement: {kind: "surface", surface: "wall:0cw3n0rd:L", u: 6500, v: 300, rotationDeg: 0}
 furniture:
   - id: "f1schrnk"
     typeId: "wardrobe"

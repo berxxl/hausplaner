@@ -34,7 +34,6 @@ import { allIds } from "../../model/factory";
 import { newId } from "../../model/ids";
 import { roundMm } from "../../model/rounding";
 import type { Storey, Wall } from "../../model/types";
-import { computeWarnings } from "../../rules";
 import {
   addOpening,
   addRoom,
@@ -76,7 +75,15 @@ import { renderScaleFor, useUnderlayImage } from "./useUnderlayImage";
 import { PLAN_SYMBOL_MM, planPlacement, planSymbol } from "../../geometry/devices";
 import { sideU, wallSides } from "../../geometry/surfaces";
 import { surfaceKind } from "../../model/devices";
-import type { Device } from "../../model/types";
+import type { Device, Furniture } from "../../model/types";
+import { footprint, snapFurniture } from "../../geometry/furniture";
+import {
+  addFurniture,
+  deleteFurniture,
+  moveFurniture,
+  rotateFurniture90,
+} from "../../store/furniture";
+import { warnedIds, warningsOf } from "../derived";
 import { dependentDeviceCount } from "../../store/building";
 import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
@@ -92,6 +99,7 @@ const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "room", label: "Raum" },
   { tool: "opening", label: "Öffnung" },
   { tool: "device", label: "Gerät" },
+  { tool: "furniture", label: "Möbel" },
 ];
 
 const PLAN_TOOLS: { tool: PlanTool; label: string }[] = [
@@ -109,6 +117,8 @@ const HINTS: Record<PlanTool, string> = {
   slope: "Zwei Punkte der Grundlinie anklicken (Ecken des Raums rasten ein).",
   "redetect-room": "In die Fläche klicken, die der Raum künftig einnehmen soll.",
   device: "Gerätetyp wählen und klicken; jeder Klick setzt ein Gerät. Esc beendet.",
+  furniture:
+    "Möbeltyp wählen und klicken; rastet an Wänden ein (Shift: frei). R dreht um 90°. Esc beendet.",
   calibrate: "Ersten Punkt einer bemaßten Strecke im Plan anklicken.",
   "move-underlay": "Plan mit der Maus an die richtige Stelle ziehen.",
   "rotate-underlay": "Drehpunkt im Plan anklicken.",
@@ -122,7 +132,8 @@ type Drag =
   | { kind: "pan"; last: Vec }
   | { kind: "move-underlay"; startWorld: Vec }
   | { kind: "endpoint"; wallId: string; end: WallEnd; result: WallEditResult | null }
-  | { kind: "device"; deviceId: string };
+  | { kind: "device"; deviceId: string }
+  | { kind: "furniture"; furnitureId: string; offset: Vec };
 
 type Pending =
   | { kind: "distance"; p1: Vec; p2: Vec }
@@ -156,6 +167,7 @@ export function PlanView({ store, view }: PlanViewProps) {
   const activeStoreyId = useStore(view, (s) => s.activeStoreyId);
   const selection = useStore(view, (s) => s.selection);
   const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
+  const furnitureTypeId = useStore(view, (s) => s.furnitureTypeId);
   const { confirm, dialog: confirmDialog } = useConfirm();
   const tool = useStore(view, (s) => s.planTool);
   const toolRoomId = useStore(view, (s) => s.toolRoomId);
@@ -180,6 +192,11 @@ export function PlanView({ store, view }: PlanViewProps) {
         .filter((x): x is { device: Device; at: NonNullable<typeof x.at> } => x.at !== null),
     [project, storeyDevices],
   );
+  const storeyFurniture = useMemo(
+    () => project.furniture.filter((f) => f.storeyId === activeStoreyId),
+    [project.furniture, activeStoreyId],
+  );
+  const warned = useMemo(() => warnedIds(project), [project]);
   const rooms = useMemo(
     () => project.rooms.filter((r) => r.storeyId === activeStoreyId),
     [project.rooms, activeStoreyId],
@@ -191,7 +208,7 @@ export function PlanView({ store, view }: PlanViewProps) {
   const invalidOpenings = useMemo(
     () =>
       new Set(
-        computeWarnings(project)
+        warningsOf(project)
           .filter((w) => w.key.startsWith("opening-invalid:"))
           .map((w) => w.key.split(":")[1]!),
       ),
@@ -346,6 +363,7 @@ export function PlanView({ store, view }: PlanViewProps) {
     else if (sel.kind === "room") store.execute(deleteRoom(sel.id));
     else if (sel.kind === "opening") store.execute(deleteOpening(sel.id));
     else if (sel.kind === "device") store.execute(deleteDevices(view.selectedDevices()));
+    else if (sel.kind === "furniture") store.execute(deleteFurniture([sel.id]));
   };
 
   useEffect(() => {
@@ -362,6 +380,13 @@ export function PlanView({ store, view }: PlanViewProps) {
       } else if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
         void deleteSelection();
+      } else if ((e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const sel = view.getState().selection;
+        const f = sel?.kind === "furniture" && project.furniture.find((x) => x.id === sel.id);
+        if (f) {
+          e.preventDefault();
+          store.execute(rotateFurniture90(f.id, f.rotationDeg));
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -389,6 +414,8 @@ export function PlanView({ store, view }: PlanViewProps) {
         ({ at }) =>
           Math.abs(p.x - at.x) <= PLAN_SYMBOL_MM / 2 && Math.abs(p.y - at.y) <= PLAN_SYMBOL_MM / 2,
       )?.device;
+  const hitFurniture = (p: Vec) =>
+    [...storeyFurniture].reverse().find((f) => pointInPolygon(p, footprint(f)));
   const hitRoom = (p: Vec) =>
     rooms.find((r) => r.polygon.length >= 3 && pointInPolygon(p, r.polygon));
   const hitHandle = (p: Vec): { wallId: string; end: WallEnd } | null => {
@@ -460,6 +487,18 @@ export function PlanView({ store, view }: PlanViewProps) {
           }
           return;
         }
+        const furniture = hitFurniture(world);
+        if (furniture) {
+          view.select({ kind: "furniture", id: furniture.id });
+          store.begin("Möbel verschieben");
+          drag.current = {
+            kind: "furniture",
+            furnitureId: furniture.id,
+            offset: sub(world, { x: furniture.x, y: furniture.y }),
+          };
+          capture();
+          return;
+        }
         const opening = hitOpening(world);
         const wall = opening ? undefined : hitWall(world);
         const room = opening || wall ? undefined : hitRoom(world);
@@ -498,6 +537,35 @@ export function PlanView({ store, view }: PlanViewProps) {
           }),
         );
         view.select({ kind: "device", id });
+        return;
+      }
+      case "furniture": {
+        if (!storey) return;
+        const type = project.catalog.furnitureTypes.find((t) => t.id === furnitureTypeId);
+        if (!type) {
+          setMessage("Zuerst einen Möbeltyp wählen.");
+          return;
+        }
+        const pose = {
+          x: Math.round(world.x),
+          y: Math.round(world.y),
+          rotationDeg: 0,
+          widthMm: type.widthMm,
+          depthMm: type.depthMm,
+        };
+        const snapped = e.shiftKey ? null : snapFurniture(project, storey.id, pose);
+        const id = newId(new Set(allIds(project)));
+        const f: Furniture = {
+          id,
+          typeId: type.id,
+          ...pose,
+          ...snapped,
+          heightMm: type.heightMm,
+          elevationMm: type.elevationMm,
+          storeyId: storey.id,
+        };
+        store.execute(addFurniture(f));
+        view.select({ kind: "furniture", id });
         return;
       }
       case "wall": {
@@ -690,6 +758,21 @@ export function PlanView({ store, view }: PlanViewProps) {
         const u = Math.round(Math.min(side.uMax, Math.max(side.uMin, sideU(side, world))));
         store.preview(moveDevice(d.deviceId, { ...p, u }).run);
       }
+    } else if (d.kind === "furniture" && storey) {
+      const base = store.getState().transaction?.base;
+      const f = base?.furniture.find((x) => x.id === d.furnitureId);
+      if (!base || !f) return;
+      const c = sub(world, d.offset);
+      const pose = { ...f, x: Math.round(c.x), y: Math.round(c.y) };
+      // Shift beim Ziehen schaltet das Einrasten ab
+      const snapped = e.shiftKey ? null : snapFurniture(base, storey.id, pose);
+      store.preview(
+        moveFurniture(d.furnitureId, {
+          x: snapped?.x ?? pose.x,
+          y: snapped?.y ?? pose.y,
+          rotationDeg: snapped?.rotationDeg ?? pose.rotationDeg,
+        }).run,
+      );
     } else if (d.kind === "endpoint" && storey) {
       const base = store.getState().transaction?.base;
       if (!base) return;
@@ -707,7 +790,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   const onPointerUp = () => {
     const d = drag.current;
     drag.current = null;
-    if (d?.kind === "move-underlay" || d?.kind === "device") store.commit();
+    if (d?.kind === "move-underlay" || d?.kind === "device" || d?.kind === "furniture")
+      store.commit();
     if (d?.kind === "endpoint") {
       store.commit();
       if (d.result && d.result.released.length > 0) setMessage("T-Anschluss gelöst.");
@@ -762,6 +846,26 @@ export function PlanView({ store, view }: PlanViewProps) {
             value={deviceTypeId}
             onChange={(id) => view.setDeviceType(id)}
           />
+        </div>
+      )}
+      {tool === "furniture" && (
+        <div role="group" aria-label="Möbeloptionen" className="plan__options">
+          <label>
+            Möbeltyp{" "}
+            <select
+              value={furnitureTypeId ?? ""}
+              onChange={(e) => view.setFurnitureType(e.target.value || null)}
+            >
+              <option value="">– wählen –</option>
+              {[...project.catalog.furnitureTypes]
+                .sort((a, b) => a.name.localeCompare(b.name, "de"))
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+            </select>
+          </label>
         </div>
       )}
       {tool === "wall" && (
@@ -849,6 +953,24 @@ export function PlanView({ store, view }: PlanViewProps) {
               selection={selection}
               invalid={invalidOpenings}
             />
+            <g data-testid="plan-furniture">
+              {storeyFurniture.map((f) => (
+                <polygon
+                  key={f.id}
+                  data-furniture={f.id}
+                  className={`furniture${selection?.kind === "furniture" && selection.id === f.id ? " furniture--selected" : ""}`}
+                  points={footprint(f)
+                    .map((q) => `${q.x},${q.y}`)
+                    .join(" ")}
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>
+                    {project.catalog.furnitureTypes.find((t) => t.id === f.typeId)?.name ??
+                      f.typeId}
+                  </title>
+                </polygon>
+              ))}
+            </g>
             <g data-testid="plan-devices">
               {deviceSymbols.map(({ device, at }) => (
                 <DeviceGlyph
@@ -862,6 +984,7 @@ export function PlanView({ store, view }: PlanViewProps) {
                   width={PLAN_SYMBOL_MM}
                   height={PLAN_SYMBOL_MM}
                   dashed={at.frame === "ceiling"}
+                  warned={warned.has(device.id)}
                   selected={
                     !!(
                       selection?.kind === "device" &&

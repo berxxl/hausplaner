@@ -11,9 +11,11 @@ import {
   type WallSolid,
 } from "../../geometry/model3d";
 import { sortedStoreys } from "../../io/project-files";
-import type { Device, Project } from "../../model/types";
+import type { Device, Furniture, Project } from "../../model/types";
 import { deviceWorld } from "../../geometry/devices";
-import { STATUS_COLORS } from "../labels";
+import { furnitureBaseZ } from "../../geometry/furniture";
+import { STATUS_COLORS, WARNING_COLOR } from "../labels";
+import { warnedIds } from "../derived";
 import type { ProjectStore } from "../../store/history";
 import type { Selection, ViewStore } from "../../store/view";
 
@@ -89,10 +91,19 @@ interface SceneDevice {
   at: { x: number; y: number; z: number };
 }
 
+interface SceneFurniture {
+  furniture: Furniture;
+  geometry: THREE.BufferGeometry;
+  matrix: THREE.Matrix4;
+  /** Mitte der Unterseite in Welt-mm (z global) für Tests */
+  at: { x: number; y: number; z: number };
+}
+
 interface SceneData {
   walls: { solid: WallSolid; geometry: THREE.BufferGeometry }[];
   polys: { poly: PlanarPolygon; geometry: THREE.BufferGeometry }[];
   devices: SceneDevice[];
+  furniture: SceneFurniture[];
   bounds: THREE.Box3;
 }
 
@@ -123,10 +134,21 @@ function deviceMesh(project: Project, device: Device, elevationMm: number): Scen
   return { device, geometry, matrix, at: { x: w.x, y: w.y, z: w.z + elevationMm } };
 }
 
+/** Möbel als Quader: Unterseite auf OKFF + Höhe über OKFF, gedreht um die Senkrechte. */
+function furnitureMesh(project: Project, f: Furniture, elevationMm: number): SceneFurniture {
+  const geometry = new THREE.BoxGeometry(f.widthMm * M, f.heightMm * M, f.depthMm * M);
+  const z = furnitureBaseZ(project, f) + elevationMm;
+  const matrix = new THREE.Matrix4()
+    .makeRotationY((f.rotationDeg * Math.PI) / 180)
+    .setPosition(toThree(f.x, f.y, z + f.heightMm / 2));
+  return { furniture: f, geometry, matrix, at: { x: f.x, y: f.y, z } };
+}
+
 function buildScene(project: Project, upTo: string | null): SceneData {
   const walls: SceneData["walls"] = [];
   const polys: SceneData["polys"] = [];
   const devices: SceneDevice[] = [];
+  const furniture: SceneFurniture[] = [];
   const bounds = new THREE.Box3();
   for (const storey of visibleStoreys(project, upTo)) {
     for (const solid of wallSolids(project, storey.id)) {
@@ -143,8 +165,10 @@ function buildScene(project: Project, upTo: string | null): SceneData {
       const mesh = deviceMesh(project, device, storey.elevationMm);
       if (mesh) devices.push(mesh);
     }
+    for (const f of project.furniture.filter((x) => x.storeyId === storey.id))
+      furniture.push(furnitureMesh(project, f, storey.elevationMm));
   }
-  return { walls, polys, devices, bounds };
+  return { walls, polys, devices, furniture, bounds };
 }
 
 /** Testhilfe: Projektion eines Weltpunkts (mm) auf Seitenkoordinaten. */
@@ -192,6 +216,7 @@ const COLORS = {
   floor: "#d9c9a8",
   ceiling: "#f2f2f7",
   slope: "#e5d7c2",
+  furniture: "#b08458",
   selected: "#0071e3",
 };
 
@@ -206,6 +231,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     () => () => {
       scene.walls.forEach((w) => w.geometry.dispose());
       scene.devices.forEach((d) => d.geometry.dispose());
+      scene.furniture.forEach((f) => f.geometry.dispose());
     },
     [scene],
   );
@@ -230,6 +256,14 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     )
     .sort()
     .join(";");
+  const furnitureSummary = scene.furniture
+    .map(
+      ({ furniture: f, at }) =>
+        `${f.id}:${Math.round(at.x)},${Math.round(at.y)},${Math.round(at.z)}`,
+    )
+    .sort()
+    .join(";");
+  const warned = warnedIds(project);
 
   return (
     <div className="model3d">
@@ -259,6 +293,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
         data-testid="scene"
         data-walls={summary}
         data-devices={deviceSummary}
+        data-furniture={furnitureSummary}
         data-storeys={visibleStoreys(project, upTo)
           .map((s) => s.name)
           .sort()
@@ -310,8 +345,25 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
                 color={
                   isSel(selection, "device", device.id)
                     ? COLORS.selected
-                    : STATUS_COLORS[device.status]
+                    : warned.has(device.id)
+                      ? WARNING_COLOR
+                      : STATUS_COLORS[device.status]
                 }
+              />
+            </mesh>
+          ))}
+          {scene.furniture.map(({ furniture: f, geometry, matrix }) => (
+            <mesh
+              key={f.id}
+              geometry={geometry}
+              matrix={matrix}
+              matrixAutoUpdate={false}
+              onClick={pick({ kind: "furniture", id: f.id })}
+            >
+              <meshStandardMaterial
+                color={isSel(selection, "furniture", f.id) ? COLORS.selected : COLORS.furniture}
+                transparent
+                opacity={0.75}
               />
             </mesh>
           ))}
