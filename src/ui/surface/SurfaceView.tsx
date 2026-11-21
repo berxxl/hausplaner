@@ -23,8 +23,18 @@ import {
   type Viewport,
 } from "../plan/camera";
 import { snapPoints, surfaceModel, type SurfaceModel } from "./model";
+import { frontRect, viewPlacement, wallDeviceBuildup } from "../../geometry/devices";
+import { allIds } from "../../model/factory";
+import { newId } from "../../model/ids";
+import type { Device, DevicePlacement } from "../../model/types";
+import { addDevice, deleteDevices, placementStorey } from "../../store/devices";
+import type { SurfaceTool } from "../../store/view";
+import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
+import { DeviceGlyph } from "../DeviceGlyph";
+import { isTextTarget } from "../shortcuts";
 
-type Tool = "select" | "measure";
+type Tool = SurfaceTool;
+type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
 
 const pt = (p: { u: number; v: number }): Vec => ({ x: p.u, y: p.v });
 
@@ -44,6 +54,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const project = useStore(store, (s) => s.project);
   const target = useStore(view, (s) => s.surface);
   const selection = useStore(view, (s) => s.selection);
+  const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
+  const [message, setMessage] = useState<string | null>(null);
   const model = useMemo(() => (target ? surfaceModel(project, target) : null), [project, target]);
 
   const hasModel = model !== null;
@@ -53,7 +65,28 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const [tool, setTool] = useState<Tool>("select");
   const [measure, setMeasure] = useState<{ a: Vec; b: Vec | null } | null>(null);
   const [cursor, setCursor] = useState<Vec | null>(null);
-  const drag = useRef<{ last: Vec } | null>(null);
+  const drag = useRef<
+    | { kind: "pan"; last: Vec }
+    | { kind: "device"; id: string; start: Vec; base: SurfacePlacement }
+    | null
+  >(null);
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
+  // Entf löscht ausgewählte Geräte auch in der Flächenansicht
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isTextTarget(e.target)) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && view.selectedDevices().length > 0) {
+        e.preventDefault();
+        store.execute(deleteDevices(view.selectedDevices()));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [store, view]);
 
   useLayoutEffect(() => {
     const el = container.current;
@@ -111,6 +144,22 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     const r = container.current?.getBoundingClientRect();
     return screenToWorld(cam, vp, { x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0) });
   };
+  // Geräte dieser Fläche; ganze Wandseite zeigt Rohbauhöhen (v + Fußbodenaufbau)
+  const shownDevices = project.devices.flatMap((device) => {
+    const p = device.placement;
+    if (p.kind !== "surface" || p.surface !== model.ref) return [];
+    if (model.uRange && (p.u < model.uRange[0] || p.u > model.uRange[1])) return [];
+    const type = project.catalog.deviceTypes.find((t) => t.id === device.typeId);
+    const dv = model.kind === "wall-side" ? wallDeviceBuildup(project, device) : 0;
+    const r = frontRect(device, type)!;
+    return [
+      {
+        device,
+        symbol: type?.symbol ?? "",
+        rect: { uMin: r.uMin, uMax: r.uMax, vMin: r.vMin + dv, vMax: r.vMax + dv },
+      },
+    ];
+  });
   const snap = (p: Vec): Vec => {
     let best: Vec | null = null;
     for (const q of snapPoints(model).map(pt))
@@ -123,6 +172,36 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       (o) => p.x >= o.raw.uFrom && p.x <= o.raw.uTo && p.y >= o.raw.vFrom && p.y <= o.raw.vTo,
     );
 
+  const hitDevice = (p: Vec) =>
+    [...shownDevices].reverse().find(({ rect }) => {
+      return p.x >= rect.uMin && p.x <= rect.uMax && p.y >= rect.vMin && p.y <= rect.vMax;
+    })?.device;
+
+  const placeDevice = (world: Vec) => {
+    const type = project.catalog.deviceTypes.find((t) => t.id === deviceTypeId);
+    if (!type) return setMessage("Zuerst einen Gerätetyp wählen.");
+    const r = viewPlacement(type, model.ref, world.x, world.y);
+    if (!r.ok) return setMessage(r.error);
+    let placement = r.placement;
+    // Ganze Wandseite zeigt Rohbauhöhen: ohne Standardhöhe auf OKFF des Abschnitts umrechnen
+    if (model.kind === "wall-side" && placement.kind === "surface" && !type.defaultHeightMm) {
+      const probe = { placement, storeyId: model.storeyId } as Device;
+      placement = { ...placement, v: placement.v - wallDeviceBuildup(project, probe) };
+    }
+    const id = newId(new Set(allIds(project)));
+    store.execute(
+      addDevice({
+        id,
+        label: type.name,
+        typeId: type.id,
+        status: "planned",
+        placement,
+        storeyId: placementStorey(project, placement, model.storeyId),
+      }),
+    );
+    view.select({ kind: "device", id });
+  };
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return;
     const world = toWorld(e);
@@ -131,20 +210,44 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       setMeasure((m) => (!m || m.b ? { a: p, b: null } : { a: m.a, b: p }));
       return;
     }
+    if (tool === "device") return placeDevice(world);
+    const device = hitDevice(world);
+    if (device && device.placement.kind === "surface") {
+      if (e.shiftKey) return view.toggleDevice(device.id);
+      view.select({ kind: "device", id: device.id });
+      store.begin("Gerät verschieben");
+      drag.current = { kind: "device", id: device.id, start: world, base: device.placement };
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      return;
+    }
     const o = hitOpening(world);
     if (o) view.select({ kind: "opening", id: o.id });
-    drag.current = { last: { x: e.clientX, y: e.clientY } };
+    drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (tool === "measure") setCursor(snap(toWorld(e)));
     const d = drag.current;
     if (!d) return;
+    if (d.kind === "device") {
+      const w = toWorld(e);
+      const u = Math.round(d.base.u + w.x - d.start.x);
+      const v = Math.round(d.base.v + w.y - d.start.y);
+      store.preview((draft) => {
+        const x = draft.devices.find((y) => y.id === d.id);
+        if (x?.placement.kind === "surface") {
+          x.placement.u = u;
+          x.placement.v = v;
+        }
+      });
+      return;
+    }
     const delta = { x: e.clientX - d.last.x, y: e.clientY - d.last.y };
     d.last = { x: e.clientX, y: e.clientY };
     setCamera((c) => panBy(c ?? cam, delta));
   };
   const onPointerUp = () => {
+    if (drag.current?.kind === "device") store.commit();
     drag.current = null;
   };
 
@@ -189,7 +292,22 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           >
             Messen
           </button>
+          <button type="button" aria-pressed={tool === "device"} onClick={() => setTool("device")}>
+            Gerät
+          </button>
+          {tool === "device" && (
+            <DeviceTypePicker
+              types={project.catalog.deviceTypes}
+              value={deviceTypeId}
+              onChange={(id) => view.setDeviceType(id)}
+            />
+          )}
         </div>
+        {message && (
+          <span role="status" aria-label="Meldung" className="plan__message">
+            {message}
+          </span>
+        )}
         <span className="hint">
           {model.finished
             ? "Fertige Maße über OKFF"
@@ -207,7 +325,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           data-cx={cam.cx}
           data-cy={cam.cy}
           data-zoom={cam.zoom}
-          className={`plan__svg plan__svg--${tool === "measure" ? "measure" : "select"}`}
+          className={`plan__svg plan__svg--${tool === "select" ? "select" : "measure"}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -246,6 +364,23 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 )}
               </g>
             ))}
+            <g data-testid="surface-devices">
+              {shownDevices.map(({ device, symbol, rect }) => (
+                <DeviceGlyph
+                  key={device.id}
+                  device={device}
+                  symbol={symbol}
+                  x={(rect.uMin + rect.uMax) / 2}
+                  y={(rect.vMin + rect.vMax) / 2}
+                  width={rect.uMax - rect.uMin}
+                  height={rect.vMax - rect.vMin}
+                  selected={
+                    selection?.kind === "device" &&
+                    (selection.ids ?? [selection.id]).includes(device.id)
+                  }
+                />
+              ))}
+            </g>
           </g>
           {/* Bemaßung in fertigen Maßen (Raumansicht) bzw. Rohbau */}
           {model.widthMm !== undefined && (

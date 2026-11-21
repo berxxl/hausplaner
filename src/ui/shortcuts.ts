@@ -50,3 +50,15 @@ function isTextInput(target: EventTarget | null): boolean {
   if (target instanceof HTMLInputElement) return !NON_TEXT_INPUTS.has(target.type);
   return !!target.closest("textarea, [contenteditable=true]");
 }
+
+/** Tastendruck in einem Eingabefeld: Kürzel der Ansichten nicht auslösen. */
+export function isTextTarget(t: EventTarget | null): boolean {
+  return (
+    t instanceof HTMLElement &&
+    (t.isContentEditable ||
+      t.tagName === "TEXTAREA" ||
+      (t.tagName === "INPUT" &&
+        !["checkbox", "radio", "range", "button"].includes((t as HTMLInputElement).type)) ||
+      t.tagName === "SELECT")
+  );
+}

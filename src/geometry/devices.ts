@@ -307,3 +307,26 @@ export function viewPlacement(
     },
   };
 }
+
+/** Kantenlänge eines Gerätesymbols im Grundriss (design.md M2 „Darstellung“). */
+export const PLAN_SYMBOL_MM = 250;
+
+export type PlanFrame = "wall" | "ceiling" | "floor" | "free";
+
+/** Mittelpunkt des Grundrisssymbols und Rahmenart; Wandgeräte nach innen vor die Oberfläche versetzt. */
+export function planSymbol(
+  project: Project,
+  device: Device,
+): { x: number; y: number; frame: PlanFrame } | null {
+  const w = deviceWorld(project, device);
+  if (!w) return null;
+  if (device.placement.kind === "free") return { x: w.x, y: w.y, frame: "free" };
+  const kind = surfaceKind(device.placement.surface);
+  if (kind === "wall")
+    return {
+      x: w.x + (w.normal.x * PLAN_SYMBOL_MM) / 2,
+      y: w.y + (w.normal.y * PLAN_SYMBOL_MM) / 2,
+      frame: "wall",
+    };
+  return { x: w.x, y: w.y, frame: kind === "floor" ? "floor" : "ceiling" };
+}

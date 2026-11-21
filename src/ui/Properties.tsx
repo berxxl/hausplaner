@@ -3,6 +3,7 @@ import type { ProjectStore } from "../store/history";
 import type { ViewStore } from "../store/view";
 import type { Api } from "../io/api";
 import { StoreyProperties } from "./StoreyProperties";
+import { DeviceProperties } from "./DeviceProperties";
 import { OpeningProperties, RoomProperties, WallProperties } from "./BuildingProperties";
 
 const KIND_LABELS = {
@@ -11,6 +12,8 @@ const KIND_LABELS = {
   room: "Raum",
   opening: "Öffnung",
   slope: "Schräge",
+  device: "Gerät",
+  furniture: "Möbel",
 } as const;
 
 /** Eigenschaften der Auswahl. */
@@ -38,6 +41,15 @@ export function Properties({
       body = (
         <RoomProperties key={room.id} room={room} project={project} store={store} view={view} />
       );
+  } else if (selection?.kind === "device") {
+    body = (
+      <DeviceProperties
+        project={project}
+        store={store}
+        view={view}
+        ids={selection.ids ?? [selection.id]}
+      />
+    );
   } else if (selection?.kind === "opening") {
     const opening = project.openings.find((o) => o.id === selection.id);
     if (opening) body = <OpeningProperties key={opening.id} opening={opening} store={store} />;

@@ -73,6 +73,16 @@ import {
   WallsLayer,
 } from "./layers";
 import { renderScaleFor, useUnderlayImage } from "./useUnderlayImage";
+import { PLAN_SYMBOL_MM, planPlacement, planSymbol } from "../../geometry/devices";
+import { sideU, wallSides } from "../../geometry/surfaces";
+import { surfaceKind } from "../../model/devices";
+import type { Device } from "../../model/types";
+import { dependentDeviceCount } from "../../store/building";
+import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
+import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
+import { DeviceGlyph } from "../DeviceGlyph";
+import { useConfirm } from "../useConfirm";
+import { isTextTarget } from "../shortcuts";
 import { surfaceAt } from "./navigate";
 
 const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
@@ -81,6 +91,7 @@ const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "wall", label: "Wand" },
   { tool: "room", label: "Raum" },
   { tool: "opening", label: "Öffnung" },
+  { tool: "device", label: "Gerät" },
 ];
 
 const PLAN_TOOLS: { tool: PlanTool; label: string }[] = [
@@ -97,6 +108,7 @@ const HINTS: Record<PlanTool, string> = {
   opening: "Auf eine Wand klicken.",
   slope: "Zwei Punkte der Grundlinie anklicken (Ecken des Raums rasten ein).",
   "redetect-room": "In die Fläche klicken, die der Raum künftig einnehmen soll.",
+  device: "Gerätetyp wählen und klicken; jeder Klick setzt ein Gerät. Esc beendet.",
   calibrate: "Ersten Punkt einer bemaßten Strecke im Plan anklicken.",
   "move-underlay": "Plan mit der Maus an die richtige Stelle ziehen.",
   "rotate-underlay": "Drehpunkt im Plan anklicken.",
@@ -109,7 +121,8 @@ const HANDLE_PX = 8;
 type Drag =
   | { kind: "pan"; last: Vec }
   | { kind: "move-underlay"; startWorld: Vec }
-  | { kind: "endpoint"; wallId: string; end: WallEnd; result: WallEditResult | null };
+  | { kind: "endpoint"; wallId: string; end: WallEnd; result: WallEditResult | null }
+  | { kind: "device"; deviceId: string };
 
 type Pending =
   | { kind: "distance"; p1: Vec; p2: Vec }
@@ -132,17 +145,6 @@ function initialCamera(vp: Viewport, storey: Storey | undefined, walls: readonly
   return fitBounds(vp, { x: 0, y: 0 }, { x: 10000, y: 8000 });
 }
 
-function isTextTarget(t: EventTarget | null): boolean {
-  return (
-    t instanceof HTMLElement &&
-    (t.isContentEditable ||
-      t.tagName === "TEXTAREA" ||
-      (t.tagName === "INPUT" &&
-        !["checkbox", "radio", "range", "button"].includes((t as HTMLInputElement).type)) ||
-      t.tagName === "SELECT")
-  );
-}
-
 export interface PlanViewProps {
   store: ProjectStore;
   view: ViewStore;
@@ -153,6 +155,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   const project = useStore(store, (s) => s.project);
   const activeStoreyId = useStore(view, (s) => s.activeStoreyId);
   const selection = useStore(view, (s) => s.selection);
+  const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const tool = useStore(view, (s) => s.planTool);
   const toolRoomId = useStore(view, (s) => s.toolRoomId);
   const lastThicknessMm = useStore(view, (s) => s.lastThicknessMm);
@@ -164,6 +168,17 @@ export function PlanView({ store, view }: PlanViewProps) {
   const geoms = useMemo(
     () => (activeStoreyId ? wallGeoms(project, activeStoreyId) : []),
     [project, activeStoreyId],
+  );
+  const storeyDevices = useMemo(
+    () => project.devices.filter((d) => d.storeyId === activeStoreyId),
+    [project.devices, activeStoreyId],
+  );
+  const deviceSymbols = useMemo(
+    () =>
+      storeyDevices
+        .map((d) => ({ device: d, at: planSymbol(project, d) }))
+        .filter((x): x is { device: Device; at: NonNullable<typeof x.at> } => x.at !== null),
+    [project, storeyDevices],
   );
   const rooms = useMemo(
     () => project.rooms.filter((r) => r.storeyId === activeStoreyId),
@@ -312,12 +327,25 @@ export function PlanView({ store, view }: PlanViewProps) {
     return () => el.removeEventListener("wheel", onWheel);
   }, [cam, vp]);
 
-  const deleteSelection = () => {
+  /** Löschen der Auswahl; mitgelöschte Geräte werden vorher bestätigt (design.md M2). */
+  const deleteSelection = async () => {
     const sel = view.getState().selection;
     if (!sel) return;
+    if (sel.kind === "wall" || sel.kind === "room") {
+      const n = dependentDeviceCount(project, sel.kind, sel.id);
+      if (n > 0) {
+        const ok = await confirm({
+          title: sel.kind === "wall" ? "Wand löschen?" : "Raum löschen?",
+          message: `${n} ${n === 1 ? "Gerät wird" : "Geräte werden"} mitgelöscht.`,
+          confirmLabel: "Löschen",
+        });
+        if (!ok) return;
+      }
+    }
     if (sel.kind === "wall") store.execute(deleteWall(sel.id));
     else if (sel.kind === "room") store.execute(deleteRoom(sel.id));
     else if (sel.kind === "opening") store.execute(deleteOpening(sel.id));
+    else if (sel.kind === "device") store.execute(deleteDevices(view.selectedDevices()));
   };
 
   useEffect(() => {
@@ -333,7 +361,7 @@ export function PlanView({ store, view }: PlanViewProps) {
         else view.select(null);
       } else if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        deleteSelection();
+        void deleteSelection();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -354,6 +382,13 @@ export function PlanView({ store, view }: PlanViewProps) {
       const w = geoms.find((x) => x.id === o.wallId);
       return w && pointInPolygon(p, openingFootprint(w, o));
     });
+  const hitDevice = (p: Vec) =>
+    [...deviceSymbols]
+      .reverse()
+      .find(
+        ({ at }) =>
+          Math.abs(p.x - at.x) <= PLAN_SYMBOL_MM / 2 && Math.abs(p.y - at.y) <= PLAN_SYMBOL_MM / 2,
+      )?.device;
   const hitRoom = (p: Vec) =>
     rooms.find((r) => r.polygon.length >= 3 && pointInPolygon(p, r.polygon));
   const hitHandle = (p: Vec): { wallId: string; end: WallEnd } | null => {
@@ -400,6 +435,31 @@ export function PlanView({ store, view }: PlanViewProps) {
           capture();
           return;
         }
+        const device = hitDevice(world);
+        if (device) {
+          if (e.shiftKey) {
+            const current = view.selectedDevices();
+            const first = project.devices.find((d) => d.id === current[0]);
+            const sameSurface =
+              !first ||
+              (first.placement.kind === "surface" &&
+                device.placement.kind === "surface" &&
+                first.placement.surface === device.placement.surface);
+            if (sameSurface) view.toggleDevice(device.id);
+            else setMessage("Mehrfachauswahl nur für Geräte derselben Fläche.");
+            return;
+          }
+          view.select({ kind: "device", id: device.id });
+          // Ziehen nur für freie Geräte und entlang der Wand (design.md M2 „Geräte platzieren“)
+          const draggable =
+            device.placement.kind === "free" || surfaceKind(device.placement.surface) === "wall";
+          if (draggable) {
+            store.begin("Gerät verschieben");
+            drag.current = { kind: "device", deviceId: device.id };
+            capture();
+          }
+          return;
+        }
         const opening = hitOpening(world);
         const wall = opening ? undefined : hitWall(world);
         const room = opening || wall ? undefined : hitRoom(world);
@@ -414,6 +474,32 @@ export function PlanView({ store, view }: PlanViewProps) {
       case "measure":
         setMeasure((m) => (!m || m.b ? { a: world, b: null } : { a: m.a, b: world }));
         return;
+      case "device": {
+        if (!storey) return;
+        const type = project.catalog.deviceTypes.find((t) => t.id === deviceTypeId);
+        if (!type) {
+          setMessage("Zuerst einen Gerätetyp wählen.");
+          return;
+        }
+        const r = planPlacement(project, storey.id, type, world);
+        if (!r.ok) {
+          setMessage(r.error);
+          return;
+        }
+        const id = newId(new Set(allIds(project)));
+        store.execute(
+          addDevice({
+            id,
+            label: type.name,
+            typeId: type.id,
+            status: "planned",
+            placement: r.placement,
+            storeyId: placementStorey(project, r.placement, storey.id),
+          }),
+        );
+        view.select({ kind: "device", id });
+        return;
+      }
       case "wall": {
         if (!storey) return;
         // Startpunkt des Zugs hat Vorrang: im Kantenmodus läge sonst das versetzte Achsende der
@@ -585,6 +671,25 @@ export function PlanView({ store, view }: PlanViewProps) {
         const s = draft.storeys.find((x) => x.id === storey.id);
         if (s) s.underlay = moved;
       });
+    } else if (d.kind === "device" && storey) {
+      const base = store.getState().transaction?.base;
+      const device = base?.devices.find((x) => x.id === d.deviceId);
+      if (!base || !device) return;
+      const p = device.placement;
+      if (p.kind === "free") {
+        store.preview((draft) => {
+          const x = draft.devices.find((y) => y.id === d.deviceId);
+          if (x?.placement.kind === "free") {
+            x.placement.x = Math.round(world.x);
+            x.placement.y = Math.round(world.y);
+          }
+        });
+      } else {
+        const side = wallSides(base, storey.id).find((sd) => sd.ref === p.surface);
+        if (!side) return;
+        const u = Math.round(Math.min(side.uMax, Math.max(side.uMin, sideU(side, world))));
+        store.preview(moveDevice(d.deviceId, { ...p, u }).run);
+      }
     } else if (d.kind === "endpoint" && storey) {
       const base = store.getState().transaction?.base;
       if (!base) return;
@@ -602,7 +707,7 @@ export function PlanView({ store, view }: PlanViewProps) {
   const onPointerUp = () => {
     const d = drag.current;
     drag.current = null;
-    if (d?.kind === "move-underlay") store.commit();
+    if (d?.kind === "move-underlay" || d?.kind === "device") store.commit();
     if (d?.kind === "endpoint") {
       store.commit();
       if (d.result && d.result.released.length > 0) setMessage("T-Anschluss gelöst.");
@@ -650,6 +755,15 @@ export function PlanView({ store, view }: PlanViewProps) {
           Alles zeigen
         </button>
       </div>
+      {tool === "device" && (
+        <div role="group" aria-label="Geräteoptionen" className="plan__options">
+          <DeviceTypePicker
+            types={project.catalog.deviceTypes}
+            value={deviceTypeId}
+            onChange={(id) => view.setDeviceType(id)}
+          />
+        </div>
+      )}
       {tool === "wall" && (
         <div role="group" aria-label="Wandoptionen" className="plan__options">
           <label>
@@ -735,6 +849,28 @@ export function PlanView({ store, view }: PlanViewProps) {
               selection={selection}
               invalid={invalidOpenings}
             />
+            <g data-testid="plan-devices">
+              {deviceSymbols.map(({ device, at }) => (
+                <DeviceGlyph
+                  key={device.id}
+                  device={device}
+                  symbol={
+                    project.catalog.deviceTypes.find((t) => t.id === device.typeId)?.symbol ?? ""
+                  }
+                  x={at.x}
+                  y={at.y}
+                  width={PLAN_SYMBOL_MM}
+                  height={PLAN_SYMBOL_MM}
+                  dashed={at.frame === "ceiling"}
+                  selected={
+                    !!(
+                      selection?.kind === "device" &&
+                      (selection.ids ?? [selection.id]).includes(device.id)
+                    )
+                  }
+                />
+              ))}
+            </g>
             {preview && (
               <line
                 className="wall-preview"
@@ -778,6 +914,7 @@ export function PlanView({ store, view }: PlanViewProps) {
           {selectedWall && <WallLength wall={selectedWall} cam={cam} vp={vp} />}
         </svg>
       </div>
+      {confirmDialog}
       {pending?.kind === "distance" && underlay && storey && (
         <NumberPrompt
           title="Kalibrieren"

@@ -20,3 +20,18 @@ export const KNX_FUNCTION_LABELS = {
 } as const;
 
 export const LIGHT_KIND_LABELS = { spot: "Spot", point: "Punkt", area: "Fläche" } as const;
+
+/** Farben der Gerätestatus (design.md M2 „Darstellung“). */
+export const STATUS_COLORS = {
+  planned: "#8e8e93",
+  installed: "#0071e3",
+  verified: "#2e7d32",
+} as const;
+
+export const STATUS_LABELS = {
+  planned: "geplant",
+  installed: "verlegt",
+  verified: "geprüft",
+} as const;
+
+export const WARNING_COLOR = "#d70015";

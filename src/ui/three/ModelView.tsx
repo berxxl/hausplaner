@@ -11,7 +11,9 @@ import {
   type WallSolid,
 } from "../../geometry/model3d";
 import { sortedStoreys } from "../../io/project-files";
-import type { Project } from "../../model/types";
+import type { Device, Project } from "../../model/types";
+import { deviceWorld } from "../../geometry/devices";
+import { STATUS_COLORS } from "../labels";
 import type { ProjectStore } from "../../store/history";
 import type { Selection, ViewStore } from "../../store/view";
 
@@ -79,15 +81,52 @@ function polygonGeometry(poly: PlanarPolygon, elevationMm: number): THREE.Buffer
   return geo;
 }
 
+interface SceneDevice {
+  device: Device;
+  geometry: THREE.BufferGeometry;
+  matrix: THREE.Matrix4;
+  /** Mittelpunkt auf der Oberfläche in Welt-mm (z global) für Tests */
+  at: { x: number; y: number; z: number };
+}
+
 interface SceneData {
   walls: { solid: WallSolid; geometry: THREE.BufferGeometry }[];
   polys: { poly: PlanarPolygon; geometry: THREE.BufferGeometry }[];
+  devices: SceneDevice[];
   bounds: THREE.Box3;
+}
+
+/** 3D-Form eines Geräts: Rückseite auf der Oberfläche, Tiefe entlang der Normalen (design.md M2). */
+function deviceMesh(project: Project, device: Device, elevationMm: number): SceneDevice | null {
+  const w = deviceWorld(project, device);
+  if (!w) return null;
+  const type = project.catalog.deviceTypes.find((t) => t.id === device.typeId);
+  const shape = type?.shape3d ?? { kind: "box", widthMm: 80, heightMm: 80, depthMm: 20 };
+  const geometry =
+    shape.kind === "cylinder"
+      ? new THREE.CylinderGeometry(
+          shape.widthMm * M * 0.5,
+          shape.widthMm * M * 0.5,
+          shape.depthMm * M,
+          24,
+        ).rotateX(Math.PI / 2)
+      : new THREE.BoxGeometry(shape.widthMm * M, shape.heightMm * M, shape.depthMm * M);
+  // Basis: z = Normale, y = oben (Wand: global oben, Decke/Boden: Welt +y), x = y × z
+  const zAxis = new THREE.Vector3(w.normal.x, w.normal.z, -w.normal.y).normalize();
+  const up = Math.abs(zAxis.y) > 0.9 ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+  const xAxis = new THREE.Vector3().crossVectors(up, zAxis).normalize();
+  const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
+  const center = toThree(w.x, w.y, w.z + elevationMm).add(
+    zAxis.clone().multiplyScalar((shape.depthMm * M) / 2),
+  );
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis).setPosition(center);
+  return { device, geometry, matrix, at: { x: w.x, y: w.y, z: w.z + elevationMm } };
 }
 
 function buildScene(project: Project, upTo: string | null): SceneData {
   const walls: SceneData["walls"] = [];
   const polys: SceneData["polys"] = [];
+  const devices: SceneDevice[] = [];
   const bounds = new THREE.Box3();
   for (const storey of visibleStoreys(project, upTo)) {
     for (const solid of wallSolids(project, storey.id)) {
@@ -100,8 +139,12 @@ function buildScene(project: Project, upTo: string | null): SceneData {
       for (const poly of roomPolygons(room, storey))
         polys.push({ poly, geometry: polygonGeometry(poly, storey.elevationMm) });
     }
+    for (const device of project.devices.filter((d) => d.storeyId === storey.id)) {
+      const mesh = deviceMesh(project, device, storey.elevationMm);
+      if (mesh) devices.push(mesh);
+    }
   }
-  return { walls, polys, bounds };
+  return { walls, polys, devices, bounds };
 }
 
 /** Testhilfe: Projektion eines Weltpunkts (mm) auf Seitenkoordinaten. */
@@ -159,10 +202,16 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
   const [upTo, setUpTo] = useState<string | null>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const scene = useMemo(() => buildScene(project, upTo), [project, upTo]);
-  useEffect(() => () => scene.walls.forEach((w) => w.geometry.dispose()), [scene]);
+  useEffect(
+    () => () => {
+      scene.walls.forEach((w) => w.geometry.dispose());
+      scene.devices.forEach((d) => d.geometry.dispose());
+    },
+    [scene],
+  );
 
   const isSel = (s: Selection | null, kind: Selection["kind"], id: string) =>
-    s?.kind === kind && s.id === id;
+    s?.kind === kind && (s.id === id || !!s.ids?.includes(id));
   const pick = (sel: Selection) => (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     view.select(sel);
@@ -172,6 +221,13 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     : scene.bounds.getCenter(new THREE.Vector3());
   const summary = scene.walls
     .map(({ solid: w }) => `${w.wallId}:${Math.round(w.start.x)},${Math.round(w.start.y)}`)
+    .sort()
+    .join(";");
+  const deviceSummary = scene.devices
+    .map(
+      ({ device, at }) =>
+        `${device.id}:${Math.round(at.x)},${Math.round(at.y)},${Math.round(at.z)}`,
+    )
     .sort()
     .join(";");
 
@@ -202,6 +258,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
         className="model3d__canvas"
         data-testid="scene"
         data-walls={summary}
+        data-devices={deviceSummary}
         data-storeys={visibleStoreys(project, upTo)
           .map((s) => s.name)
           .sort()
@@ -238,6 +295,23 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
               <meshStandardMaterial
                 color={isSel(selection, "room", poly.roomId) ? COLORS.selected : COLORS[poly.kind]}
                 side={THREE.FrontSide}
+              />
+            </mesh>
+          ))}
+          {scene.devices.map(({ device, geometry, matrix }) => (
+            <mesh
+              key={device.id}
+              geometry={geometry}
+              matrix={matrix}
+              matrixAutoUpdate={false}
+              onClick={pick({ kind: "device", id: device.id })}
+            >
+              <meshStandardMaterial
+                color={
+                  isSel(selection, "device", device.id)
+                    ? COLORS.selected
+                    : STATUS_COLORS[device.status]
+                }
               />
             </mesh>
           ))}

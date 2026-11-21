@@ -127,5 +127,9 @@ function selectionExists(project: Project, sel: Selection): boolean {
       return project.openings.some((x) => x.id === sel.id);
     case "slope":
       return project.rooms.some((r) => r.slopes?.some((x) => x.id === sel.id));
+    case "device":
+      return (sel.ids ?? [sel.id]).every((id) => project.devices.some((x) => x.id === id));
+    case "furniture":
+      return project.furniture.some((x) => x.id === sel.id);
   }
 }

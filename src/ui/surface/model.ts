@@ -24,6 +24,10 @@ export interface EdgeLabel {
 
 export interface SurfaceModel {
   kind: SurfaceTarget["kind"];
+  /** SurfaceRef der gezeigten Fläche (Geräte darauf) */
+  ref: string;
+  /** Raumansicht: u-Bereich des Rohbauabschnitts; Geräte außerhalb gehören zu anderen Räumen */
+  uRange?: [number, number];
   title: string;
   storeyId: string;
   contour: UV[];
@@ -68,6 +72,8 @@ export function surfaceModel(project: Project, target: SurfaceTarget): SurfaceMo
       nav.push({ rel: "floor", label: "Boden", target: { kind: "floor", roomId: room.id } });
       return {
         kind: target.kind,
+        ref: v.ref,
+        uRange: [v.section.uFrom, v.section.uTo],
         title: `${room.name} › ${v.name}`,
         storeyId: v.storeyId,
         contour,
@@ -87,6 +93,7 @@ export function surfaceModel(project: Project, target: SurfaceTarget): SurfaceMo
       const outside = free?.outside ?? false;
       return {
         kind: target.kind,
+        ref: target.ref,
         title: free?.name ?? "Wandseite",
         storeyId: wall.storeyId,
         contour: [
@@ -119,6 +126,7 @@ export function surfaceModel(project: Project, target: SurfaceTarget): SurfaceMo
         }));
       return {
         kind: target.kind,
+        ref: `${mirror ? "ceiling" : "floor"}:${room.id}`,
         title: `${room.name} › ${mirror ? "Decke" : "Boden"}`,
         storeyId: room.storeyId,
         contour: room.polygon.map((p) => toUV(p, mirror)),
@@ -160,6 +168,7 @@ export function surfaceModel(project: Project, target: SurfaceTarget): SurfaceMo
       const index = (room.slopes ?? []).indexOf(slope) + 1;
       return {
         kind: target.kind,
+        ref: `slope:${room.id}:${slope.id}`,
         title: `${room.name} › Schräge ${index}`,
         storeyId: room.storeyId,
         contour: outline.map((p) => frame.toUV(p)),

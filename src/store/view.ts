@@ -4,12 +4,18 @@
  */
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-export type SelectableKind = "storey" | "wall" | "room" | "opening" | "slope";
+export type SelectableKind =
+  "storey" | "wall" | "room" | "opening" | "slope" | "device" | "furniture";
 
 export interface Selection {
   kind: SelectableKind;
   id: string;
+  /** Mehrfachauswahl von Geräten derselben Fläche (enthält `id`), design.md M2 „Auswahl“. */
+  ids?: string[];
 }
+
+/** Werkzeug der Flächenansicht. */
+export type SurfaceTool = "select" | "measure" | "device";
 
 export type EditorKind = "plan" | "surface" | "3d";
 
@@ -29,6 +35,7 @@ export type PlanTool =
   | "opening"
   | "slope"
   | "redetect-room"
+  | "device"
   | "calibrate"
   | "move-underlay"
   | "rotate-underlay";
@@ -45,6 +52,9 @@ export interface ViewState {
   lastThicknessMm: number;
   /** Offene Fläche im Editor „Fläche“. */
   surface: SurfaceTarget | null;
+  surfaceTool: SurfaceTool;
+  /** Gerätetyp der Werkzeuge „Gerät“ in Grundriss und Flächenansicht. */
+  deviceTypeId: string | null;
 }
 
 export interface ViewStore extends StoreApi<ViewState> {
@@ -58,6 +68,12 @@ export interface ViewStore extends StoreApi<ViewState> {
   openSurface(target: SurfaceTarget, storeyId?: string): void;
   /** Entfernt eine Auswahl, deren Objekt nicht mehr existiert. */
   prune(exists: (selection: Selection) => boolean): void;
+  /** Shift-Klick auf ein Gerät: hinzufügen oder entfernen (nur Geräte derselben Fläche, prüft der Aufrufer). */
+  toggleDevice(id: string): void;
+  /** Alle ausgewählten Geräte (leer, wenn keine Geräte ausgewählt sind). */
+  selectedDevices(): string[];
+  setSurfaceTool(tool: SurfaceTool): void;
+  setDeviceType(typeId: string | null): void;
 }
 
 export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
@@ -69,6 +85,8 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     toolRoomId: null,
     lastThicknessMm: 240,
     surface: null,
+    surfaceTool: "select",
+    deviceTypeId: null,
     ...initial,
   }));
   return Object.assign(store, {
@@ -77,7 +95,31 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     isSelected(kind: SelectableKind, id: string) {
       const s = store.getState().selection;
-      return s?.kind === kind && s.id === id;
+      return s?.kind === kind && (s.id === id || !!s.ids?.includes(id));
+    },
+    toggleDevice(id: string) {
+      const s = store.getState().selection;
+      if (s?.kind !== "device") return store.setState({ selection: { kind: "device", id } });
+      const ids = s.ids ?? [s.id];
+      const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+      if (next.length === 0) return store.setState({ selection: null });
+      store.setState({
+        selection: {
+          kind: "device",
+          id: next[0]!,
+          ...(next.length > 1 ? { ids: next } : {}),
+        },
+      });
+    },
+    selectedDevices() {
+      const s = store.getState().selection;
+      return s?.kind === "device" ? (s.ids ?? [s.id]) : [];
+    },
+    setSurfaceTool(surfaceTool: SurfaceTool) {
+      store.setState({ surfaceTool });
+    },
+    setDeviceType(deviceTypeId: string | null) {
+      store.setState({ deviceTypeId });
     },
     setActiveStorey(id: string | null) {
       store.setState({ activeStoreyId: id });
