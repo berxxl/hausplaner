@@ -58,3 +58,18 @@ Das System SHALL Geräte relativ zu ihrer Fläche speichern, sodass sie beim Än
 #### Scenario: Wand gekürzt
 - **WHEN** eine Wand so gekürzt wird, dass eine Dose außerhalb liegt
 - **THEN** meldet das System eine Warnung für diese Dose
+
+#### Scenario: Wand gelöscht
+- **WHEN** der Benutzer eine Wand mit zwei Steckdosen löscht
+- **THEN** werden die Steckdosen im selben Schritt mitgelöscht, und Rückgängig stellt Wand und Steckdosen wieder her
+
+### Requirement: Höhenbezug bei geänderter Raumzuordnung
+Das System SHALL die Rohbauhöhe eines Wandgeräts erhalten, wenn sich der Raum ändert, zu dem sein Wandabschnitt gehört. Ändert sich nur der Fußbodenaufbau eines Raums, MUST die Höhe über OKFF erhalten bleiben.
+
+#### Scenario: Raum nachträglich angelegt
+- **WHEN** eine Dose auf einer Wandseite ohne Raum in 400 mm über Rohfußboden sitzt und der Benutzer dort einen Raum mit 100 mm Fußbodenaufbau anlegt
+- **THEN** sitzt die Dose in 300 mm über OKFF und weiterhin in 400 mm Rohbauhöhe
+
+#### Scenario: Estrich geändert
+- **WHEN** der Benutzer den Fußbodenaufbau eines Raums von 100 auf 140 mm ändert, in dem ein Schalter in 1050 mm über OKFF sitzt
+- **THEN** bleibt der Schalter in 1050 mm über OKFF, und seine Rohbauhöhe wird 1190 mm

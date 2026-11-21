@@ -63,13 +63,13 @@ haus-daten/
   plaene/<datei>.pdf    Architektenpläne, von storey.underlay.file referenziert
 ```
 
-\* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` über `storeyId`.
+\* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` in der Datei ihres Geschosses (`storeyId` wird wie bei Wänden beim Laden gesetzt, nicht geschrieben).
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“).
 
 Regeln für deterministisches Schreiben:
 
-- IDs: 8 Zeichen aus `[0-9a-z]`, zufällig, unveränderlich, projektweit eindeutig. Jedes Objekt mit Namen trägt ihn direkt nach der ID.
+- IDs: 8 Zeichen aus `[0-9a-z]`, zufällig, unveränderlich, projektweit eindeutig. Ausnahme: Typen des Standardkatalogs haben feste, lesbare IDs aus `[a-z0-9-]` (z. B. `socket-double`), damit `typeId` lesbar ist. Jedes Objekt mit Namen trägt ihn direkt nach der ID.
 - Listen sortiert nach ID, nie nach Einfügereihenfolge. So ändert eine Wertänderung genau eine Zeile.
 - Feste Feldreihenfolge je Objekttyp, definiert an einer Stelle im Code.
 - Längen als ganze Millimeter, Winkel auf 0,1°, PDF-Koordinaten auf 0,1 Punkt, Anteile (z. B. Deckkraft) auf zwei Nachkommastellen; gerundet wird bereits beim Setzen eines Werts.
@@ -80,7 +80,7 @@ Regeln für deterministisches Schreiben:
 - Abgeleitete Werte werden nie gespeichert.
 - Unverändertes Laden und Speichern erzeugt byteweise identische Dateien. Eine Datei wird nur geschrieben, wenn ihre Serialisierung vom zuletzt gelesenen oder geschriebenen Inhalt abweicht; von Hand nicht kanonisch bearbeitete Dateien werden dabei kanonisch umgeschrieben.
 
-Beispiel `geschosse/eg.yaml` (Ausschnitt, `devices` ab M2; das verbindliche vollständige M1-Beispiel steht in `openspec/changes/m1-gebaeudemodell/design.md`):
+Beispiel `geschosse/eg.yaml` (Ausschnitt, `devices` ab M2; das verbindliche vollständige M1-Beispiel steht in `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`):
 
 ```yaml
 storey:
@@ -197,7 +197,7 @@ interface Device {
   placement:
     | { kind: "surface"; surface: SurfaceRef; u: number; v: number; rotationDeg: number }
     | { kind: "board"; boardId: Id; fieldId: Id; row: number; slot: number }   // Reiheneinbau
-    | { kind: "free"; storeyId: Id; x: number; y: number; z: number };        // z. B. Klima-Außengerät
+    | { kind: "free"; storeyId: Id; x: number; y: number; z: number };        // z. B. Klima-Außengerät; storeyId nicht geschrieben
   circuitId?: Id;
   knxLineId?: Id;                              // nur Busteilnehmer
   props: Record<string, unknown>;              // typabhängig, z. B. Leistung
@@ -265,7 +265,7 @@ interface LineType {
 
 interface DeviceType {
   id: Id; name: string; trade: Trade;
-  symbol: string;                              // SVG-Fragment, 0..1 normiert, DIN-EN-60617-nah
+  symbol: string;                              // SVG-Fragment im Raster viewBox 0 0 100 100, DIN-EN-60617-nah
   shape3d: { kind: "box" | "cylinder"; widthMm: number; heightMm: number; depthMm: number };
   mounting: ("wall" | "ceiling" | "floor" | "din-rail" | "free")[];
   defaultHeightMm?: number;                    // ab OKFF

@@ -25,8 +25,16 @@ Das System SHALL die Grenzwerte der Zonen in den Projekteinstellungen änderbar 
 - **THEN** zeigen alle Wandansichten die geänderte Zone
 
 ### Requirement: Senkrechte Zuführung andeuten
-Das System SHALL zu einem Wandgerät außerhalb jeder Zone auf Wunsch die senkrechte Linie zur nächsten waagerechten Zone anzeigen, über die es zuzuführen ist.
+Das System SHALL zu jedem Wandgerät, das in keiner waagerechten Zone liegt, auf Wunsch die senkrechte Linie zu der waagerechten Zone anzeigen, aus der es zuzuführen ist: zur unteren Zone, wenn das Gerät unterhalb von ihr liegt, sonst zur oberen. Verläuft die Linie nicht vollständig in einer senkrechten Zone, MUST sie hervorgehoben werden.
 
 #### Scenario: Schalter neben Tür
-- **WHEN** ein Schalter 150 mm neben der Türlaibung in 1050 mm Höhe sitzt
-- **THEN** zeigt das System die senkrechte Zuführung von der oberen Zone zum Schalter
+- **WHEN** ein Schalter 150 mm neben der Türlaibung in 1050 mm Höhe sitzt und Zuführungen eingeblendet sind
+- **THEN** zeigt das System die senkrechte Zuführung von der oberen Zone zum Schalter, nicht hervorgehoben, weil sie in der senkrechten Zone neben der Laibung liegt
+
+#### Scenario: Schalter mitten auf der Wand
+- **WHEN** ein Schalter 1000 mm von jeder Ecke und Laibung entfernt in 1050 mm Höhe sitzt und Zuführungen eingeblendet sind
+- **THEN** zeigt das System die Zuführung von der oberen Zone hervorgehoben als außerhalb der Zonen
+
+#### Scenario: Steckdose in der unteren Zone
+- **WHEN** eine Steckdose in 300 mm Höhe sitzt
+- **THEN** zeigt das System keine Zuführung, weil sie in der unteren waagerechten Zone liegt
