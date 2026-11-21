@@ -16,7 +16,7 @@ Nicht Ziel: fotorealistisches Rendering, Lichtberechnung (Lux), normative Berech
 | 2D-Editoren | SVG |
 | Polygonoperationen | `clipper-lib` (Vereinigung, Puffer mit Miter-Join, Raumerkennung) |
 | 3D | three.js über react-three-fiber |
-| PDF-Hintergrund | pdf.js |
+| PDF-Hintergrund | pdf.js, Legacy-Build (läuft auch in älteren Safari-Versionen) |
 | PDF-Export | jsPDF mit svg2pdf.js |
 | Zustand | ein zentraler Store (z. B. Zustand) mit Undo/Redo über Snapshots oder Patches (immer) |
 | Laufzeit | Node 22 LTS; Bun soll funktionieren, wird aber nicht eigens getestet |

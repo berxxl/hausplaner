@@ -37,7 +37,7 @@ Leeres Repository. Datenmodell, Dateiformat, Modulschnitt und Technik sind in `d
 Es gibt keinen Endpunkt zum Auflisten von Dateien. Fehlerantworten haben den Body `{"error":{"code":"<code>","message":"<text>"}}` mit 400 (ungültiger Pfad), 403 (außerhalb des Projektordners), 404, 500. Jede Datei wird über eine temporäre Datei im selben Ordner und `rename` geschrieben, also je Datei atomar. Schlägt eine Datei fehl, meldet die Antwort das für diese Datei; der Client zeigt den Speicherstand „Fehler“.
 
 ### Eigene Schreibvorgänge von externen Änderungen unterscheiden
-Der Server merkt sich je Datei den SHA-256 des zuletzt selbst geschriebenen Inhalts. Meldet chokidar eine Änderung mit genau diesem Hash, wird sie nicht als extern gemeldet.
+Der Server merkt sich je Datei den zuletzt selbst hergestellten Zustand: SHA-256 des geschriebenen Inhalts oder „gelöscht“. chokidar-Meldungen werden nur gesammelt; erst nach der Entprellung vergleicht der Server den aktuellen Zustand jeder gesammelten Datei mit dem eigenen und meldet nur Abweichungen. So spielen doppelte, verspätete oder umgeordnete Meldungen der Dateibeobachtung keine Rolle.
 
 ### Neues Projekt
 „Leer“ heißt: keine `*.yaml` im Projektordner (`.git/`, README und andere Dateien zählen nicht). Der Client behandelt den Ordner außerdem als leer, wenn `projekt.yaml` fehlt und keine Geschossdatei vorhanden ist, auch wenn andere `*.yaml` (z. B. `katalog.yaml`) dort liegen. Das Anlegen lässt diese Dateien unberührt. Fehlt der Ordner, wird er erst angelegt, wenn der Benutzer im Browser zustimmt (über `PUT /api/files`). Nach der Zustimmung werden `projekt.yaml` und `geschosse/eg.yaml` sofort geschrieben. Standardwerte: Projektname = Ordnername, `northDeg` 0, erstes Geschoss „EG“ mit Höhenlage 0, Rohbauhöhe 2500 mm, Fußbodenaufbau 120 mm, Putz 15 mm, Abhängung 0 mm.
@@ -190,7 +190,7 @@ Abhängige Änderungen gehören zum selben Befehl und damit zum selben Patch: Di
 - Öffnung, Schräge: nur das Objekt
 
 ### Wände
-Die Achse ist die Mittellinie. Zeichenmodi: Achse, linke Kante, rechte Kante (bezogen auf die Zeichenrichtung); bei Kantenmodus wird die geklickte Linie um die halbe Dicke zur Achse versetzt. Eine neue Wand ist eine Innenwand mit der zuletzt verwendeten Dicke (beim Start 240 mm). Beim Zeichnen wird auf die orthogonale Richtung gefangen, wenn sie höchstens 5° abweicht.
+Die Achse ist die Mittellinie. Zeichenmodi: Achse, linke Kante, rechte Kante (bezogen auf die Zeichenrichtung); bei Kantenmodus wird die geklickte Linie um die halbe Dicke zur Achse versetzt. In einem Wandzug legt jedes weitere Segment das Ende der vorigen Wand und den eigenen Anfang auf den Schnittpunkt der beiden Achsen (nicht bei paralleler Fortsetzung oder wenn der Schnittpunkt weiter als die Summe beider Dicken von der geklickten Ecke entfernt läge); endet der Zug am Startpunkt, gilt dasselbe für die erste Wand. Die Anpassung gehört zum Befehl „Wand zeichnen“ der neuen Wand. Der Startpunkt des Zugs hat beim Fang Vorrang, damit das versetzte Achsende der ersten Wand das Schließen nicht verhindert. Eine neue Wand ist eine Innenwand mit der zuletzt verwendeten Dicke (beim Start 240 mm). Beim Zeichnen wird auf die orthogonale Richtung gefangen, wenn sie höchstens 5° abweicht.
 
 Anschlüsse werden vor jeder Änderung aus der Geometrie bestimmt, nicht gespeichert: Eckanschluss = Endpunkte ≤ 20 mm auseinander, T-Anschluss = Endpunkt ≤ 20 mm von einer fremden Achse. **Kollinear** sind zwei Wände mit gemeinsamem Endpunkt (Eckanschluss), die höchstens 0,5° voneinander abweichen und deren Achsen höchstens 20 mm voneinander entfernt liegen; die Beziehung ist transitiv (eine Kette kollinearer Wände).
 - **Endpunkt verschieben** (auch Längenänderung, die den Endpunkt `end` bewegt): Wände mit Eckanschluss an diesem Endpunkt erhalten denselben neuen Endpunkt, ihr anderes Ende bleibt. Wände mit T-Anschluss an die bewegte Wand behalten ihre Richtung; ihr angeschlossener Endpunkt wird auf den Schnitt ihrer Achse mit der neuen Achse gesetzt. Liegt dieser Schnitt außerhalb der neuen Achse (Toleranz ± 20 mm), wird der Anschluss gelöst, die angeschlossene Wand bleibt unverändert und eine Meldung „T-Anschluss gelöst“ wird angezeigt (keine gespeicherte Warnung). Ein T-Anschluss des bewegten Endpunkts selbst an eine fremde Achse darf sich lösen.
@@ -261,6 +261,7 @@ pdf.js rendert die gewählte Seite (`page` ab 1) in ein Canvas mit Auflösung pa
 - Verschieben ändert `offset`.
 - Drehen um einen gewählten Punkt q um Δ (numerisch eingegeben, 0,1°): `rotationDeg += Δ`, `offset = q + R(Δ) · (offset − q)`.
 - Neu kalibrieren: Die Weltposition des neuen p1 unter der alten Transformation wird zum neuen `offset`; `rotationDeg` bleibt.
+- Nach dem Wählen einer PDF oder Seite passt der Grundriss die Ansicht auf Plan und Wände ein.
 
 Eine gewählte PDF wird immer über `PUT /api/raw/plaene/<dateiname>` hochgeladen, auch wenn sie schon im Projektordner liegt (der Browser kennt den Pfad nicht). Der Server erkennt gleiche Inhalte über SHA-256 und liefert dann den vorhandenen Pfad, sonst den neuen Pfad mit Kollisionssuffix; gespeichert wird der gelieferte relative Pfad. Undo entfernt eine hochgeladene Datei nicht. **Plan aus anderem Geschoss übernehmen** (für PDFs mit einem Geschoss je Seite): übernimmt Datei, Kalibrierung, Verschiebung, Drehung, Deckkraft und Sichtbarkeit des gewählten Geschosses; als Seite wird die nächste vorgeschlagen, sofern die PDF so viele Seiten hat, sonst dieselbe. Danach wird in der Regel nur noch über „Plan verschieben“ ausgerichtet.
 
@@ -273,7 +274,7 @@ Eine gewählte PDF wird immer über `PUT /api/raw/plaene/<dateiname>` hochgelade
 - Doppelklick im Grundriss neben einer Wandseite außerhalb aller Räume öffnet die ganze Wandseite.
 
 ### 3D aus denselben Daten
-Die 3D-Ansicht extrudiert Wandkörper, kappt sie wie oben beschrieben und schneidet Öffnungen aus; Decken, Böden und Schrägen werden aus Polygonen und Deckenhöhenfunktion trianguliert. Geschosse werden nach `elevationMm` gestapelt. Keine eigene 3D-Datenhaltung.
+Die 3D-Ansicht extrudiert Wandkörper, kappt sie wie oben beschrieben und schneidet Öffnungen aus; Decken, Böden und Schrägen werden aus Polygonen und Deckenhöhenfunktion trianguliert. Geschosse werden nach `elevationMm` gestapelt. Keine eigene 3D-Datenhaltung. Die Szene wird nur bei Änderungen neu gezeichnet (keine Dauerschleife, die ohne GPU den Browser blockiert). Steht kein WebGL zur Verfügung, zeigt die Ansicht eine Meldung statt eines leeren Bereichs.
 
 ### Tests und Fixtures
 Testdaten liegen unter `tests/fixtures/`: zwei Projektordner (klein: ein Geschoss mit vier Räumen; DG mit Kniestock und Giebel) und zwei eingecheckte PDFs:
