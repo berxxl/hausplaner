@@ -46,7 +46,7 @@
 
 ## 7. Gewerkfilter
 
-- [ ] 7.1 Filter im View-Store, Schalter in der Kopfzeile, Wirkung in Grundriss, Flächenansicht und 3D, Auswahl ausgeblendeter Elemente aufheben; Playwright: nur KNX (Spec-Scenario), Möbel ausblenden (Spec-Scenario)
+- [x] 7.1 Filter im View-Store, Schalter in der Kopfzeile, Wirkung in Grundriss, Flächenansicht und 3D, Auswahl ausgeblendeter Elemente aufheben; Playwright: nur KNX (Spec-Scenario), Möbel ausblenden (Spec-Scenario)
 
 ## 8. Rohbauhöhe je Raum
 

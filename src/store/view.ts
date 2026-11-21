@@ -3,6 +3,7 @@
  * Kein Teil des Projektmodells, daher nicht im Undo.
  */
 import { createStore, type StoreApi } from "zustand/vanilla";
+import type { Trade } from "../model/types";
 
 export type SelectableKind =
   "storey" | "wall" | "room" | "opening" | "slope" | "device" | "furniture";
@@ -58,6 +59,10 @@ export interface ViewState {
   deviceTypeId: string | null;
   /** Möbeltyp des Werkzeugs „Möbel“ im Grundriss. */
   furnitureTypeId: string | null;
+  /** Gewerkfilter: ausgeblendete Gewerke (design.md M2 „Gewerkfilter“, nicht gespeichert). */
+  hiddenTrades: Trade[];
+  /** Kategorie Möbel ausgeblendet. */
+  furnitureHidden: boolean;
   /** Overlay der Installationszonen in allen Wandansichten (nicht gespeichert). */
   showZones: boolean;
   /** Senkrechte Zuführungen der Wandgeräte in allen Wandansichten (nicht gespeichert). */
@@ -82,6 +87,8 @@ export interface ViewStore extends StoreApi<ViewState> {
   setSurfaceTool(tool: SurfaceTool): void;
   setDeviceType(typeId: string | null): void;
   setFurnitureType(typeId: string | null): void;
+  setTradeHidden(trade: Trade, hidden: boolean): void;
+  setFurnitureHidden(hidden: boolean): void;
   setShowZones(show: boolean): void;
   setShowFeeds(show: boolean): void;
 }
@@ -98,6 +105,8 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     surfaceTool: "select",
     deviceTypeId: null,
     furnitureTypeId: null,
+    hiddenTrades: [],
+    furnitureHidden: false,
     showZones: false,
     showFeeds: false,
     ...initial,
@@ -136,6 +145,13 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setFurnitureType(furnitureTypeId: string | null) {
       store.setState({ furnitureTypeId });
+    },
+    setTradeHidden(trade: Trade, hidden: boolean) {
+      const rest = store.getState().hiddenTrades.filter((t) => t !== trade);
+      store.setState({ hiddenTrades: hidden ? [...rest, trade] : rest });
+    },
+    setFurnitureHidden(furnitureHidden: boolean) {
+      store.setState({ furnitureHidden });
     },
     setShowZones(showZones: boolean) {
       store.setState({ showZones });

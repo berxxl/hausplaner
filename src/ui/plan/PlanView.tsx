@@ -84,6 +84,7 @@ import {
   rotateFurniture90,
 } from "../../store/furniture";
 import { warnedIds, warningsOf } from "../derived";
+import { isDeviceVisible } from "../filter";
 import { dependentDeviceCount } from "../../store/building";
 import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
@@ -168,6 +169,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   const selection = useStore(view, (s) => s.selection);
   const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
   const furnitureTypeId = useStore(view, (s) => s.furnitureTypeId);
+  const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
+  const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
   const { confirm, dialog: confirmDialog } = useConfirm();
   const tool = useStore(view, (s) => s.planTool);
   const toolRoomId = useStore(view, (s) => s.toolRoomId);
@@ -182,8 +185,13 @@ export function PlanView({ store, view }: PlanViewProps) {
     [project, activeStoreyId],
   );
   const storeyDevices = useMemo(
-    () => project.devices.filter((d) => d.storeyId === activeStoreyId),
-    [project.devices, activeStoreyId],
+    () =>
+      project.devices.filter(
+        (d) =>
+          d.storeyId === activeStoreyId &&
+          isDeviceVisible(project, { hiddenTrades, furnitureHidden }, d),
+      ),
+    [project, activeStoreyId, hiddenTrades, furnitureHidden],
   );
   const deviceSymbols = useMemo(
     () =>
@@ -193,8 +201,8 @@ export function PlanView({ store, view }: PlanViewProps) {
     [project, storeyDevices],
   );
   const storeyFurniture = useMemo(
-    () => project.furniture.filter((f) => f.storeyId === activeStoreyId),
-    [project.furniture, activeStoreyId],
+    () => (furnitureHidden ? [] : project.furniture.filter((f) => f.storeyId === activeStoreyId)),
+    [project.furniture, activeStoreyId, furnitureHidden],
   );
   const warned = useMemo(() => warnedIds(project), [project]);
   const rooms = useMemo(

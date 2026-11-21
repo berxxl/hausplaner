@@ -91,11 +91,29 @@ button {
   flex-direction: column;
   min-width: 0;
 }
+.editor__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #d2d2d7;
+}
 .editor__tabs {
   display: flex;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid #d2d2d7;
+}
+.editor__filter {
+  display: flex;
+  gap: 0.15rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.editor__filter button {
+  font-size: 0.8rem;
+}
+.editor__filter [aria-pressed="false"] {
+  opacity: 0.45;
+  text-decoration: line-through;
 }
 .editor__tabs [aria-selected="true"] {
   font-weight: 600;

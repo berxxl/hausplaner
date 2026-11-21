@@ -5,6 +5,7 @@ import { PlanView } from "./plan/PlanView";
 import { SurfaceView } from "./surface/SurfaceView";
 import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { TradeFilter } from "./TradeFilter";
 
 // three.js nur laden, wenn die 3D-Ansicht geöffnet wird
 const ModelView = lazy(() => import("./three/ModelView").then((m) => ({ default: m.ModelView })));
@@ -21,20 +22,23 @@ export function EditorArea({ store, view }: { store: ProjectStore; view: ViewSto
   const active = TABS.find((t) => t.kind === editor)!;
   return (
     <main aria-label="Editor" className="editor">
-      <div role="tablist" aria-label="Ansicht" className="editor__tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab.kind}
-            type="button"
-            role="tab"
-            id={`tab-${tab.kind}`}
-            aria-selected={tab.kind === editor}
-            aria-controls="editor-panel"
-            onClick={() => view.setEditor(tab.kind)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="editor__head">
+        <div role="tablist" aria-label="Ansicht" className="editor__tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.kind}
+              type="button"
+              role="tab"
+              id={`tab-${tab.kind}`}
+              aria-selected={tab.kind === editor}
+              aria-controls="editor-panel"
+              onClick={() => view.setEditor(tab.kind)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <TradeFilter store={store} view={view} />
       </div>
       <div
         role="tabpanel"

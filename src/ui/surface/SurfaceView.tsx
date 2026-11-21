@@ -35,6 +35,7 @@ import { isTextTarget } from "../shortcuts";
 import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { warnedIds } from "../derived";
+import { isDeviceVisible } from "../filter";
 
 type Tool = SurfaceTool;
 type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
@@ -60,6 +61,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
   const showZones = useStore(view, (s) => s.showZones);
   const showFeeds = useStore(view, (s) => s.showFeeds);
+  const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
+  const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
   const [message, setMessage] = useState<string | null>(null);
   const model = useMemo(() => (target ? surfaceModel(project, target) : null), [project, target]);
 
@@ -153,6 +156,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const shownDevices = project.devices.flatMap((device) => {
     const p = device.placement;
     if (p.kind !== "surface" || p.surface !== model.ref) return [];
+    if (!isDeviceVisible(project, { hiddenTrades, furnitureHidden }, device)) return [];
     if (model.uRange && (p.u < model.uRange[0] || p.u > model.uRange[1])) return [];
     const type = project.catalog.deviceTypes.find((t) => t.id === device.typeId);
     const dv = model.kind === "wall-side" ? wallDeviceBuildup(project, device) : 0;
@@ -166,7 +170,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     ];
   });
   // Möbel vor dieser Raumansicht als halbtransparente Silhouette (design.md M2 „Möbel“)
-  const silhouettes = model.roomView ? sectionSilhouettes(project, model.roomView) : [];
+  const silhouettes =
+    model.roomView && !furnitureHidden ? sectionSilhouettes(project, model.roomView) : [];
   const warned = warnedIds(project);
   const snap = (p: Vec): Vec => {
     let best: Vec | null = null;

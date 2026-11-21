@@ -16,6 +16,7 @@ import { deviceWorld } from "../../geometry/devices";
 import { furnitureBaseZ } from "../../geometry/furniture";
 import { STATUS_COLORS, WARNING_COLOR } from "../labels";
 import { warnedIds } from "../derived";
+import { isDeviceVisible } from "../filter";
 import type { ProjectStore } from "../../store/history";
 import type { Selection, ViewStore } from "../../store/view";
 
@@ -227,6 +228,13 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
   const [upTo, setUpTo] = useState<string | null>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const scene = useMemo(() => buildScene(project, upTo), [project, upTo]);
+  const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
+  const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
+  // Gewerkfilter: das Gebäude bleibt immer sichtbar
+  const devices = scene.devices.filter((d) =>
+    isDeviceVisible(project, { hiddenTrades, furnitureHidden }, d.device),
+  );
+  const furniture = furnitureHidden ? [] : scene.furniture;
   useEffect(
     () => () => {
       scene.walls.forEach((w) => w.geometry.dispose());
@@ -249,14 +257,14 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     .map(({ solid: w }) => `${w.wallId}:${Math.round(w.start.x)},${Math.round(w.start.y)}`)
     .sort()
     .join(";");
-  const deviceSummary = scene.devices
+  const deviceSummary = devices
     .map(
       ({ device, at }) =>
         `${device.id}:${Math.round(at.x)},${Math.round(at.y)},${Math.round(at.z)}`,
     )
     .sort()
     .join(";");
-  const furnitureSummary = scene.furniture
+  const furnitureSummary = furniture
     .map(
       ({ furniture: f, at }) =>
         `${f.id}:${Math.round(at.x)},${Math.round(at.y)},${Math.round(at.z)}`,
@@ -333,7 +341,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
               />
             </mesh>
           ))}
-          {scene.devices.map(({ device, geometry, matrix }) => (
+          {devices.map(({ device, geometry, matrix }) => (
             <mesh
               key={device.id}
               geometry={geometry}
@@ -352,7 +360,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
               />
             </mesh>
           ))}
-          {scene.furniture.map(({ furniture: f, geometry, matrix }) => (
+          {furniture.map(({ furniture: f, geometry, matrix }) => (
             <mesh
               key={f.id}
               geometry={geometry}
