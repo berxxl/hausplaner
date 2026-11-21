@@ -24,3 +24,7 @@ Fehler bei Kältemittel- und Kondensatleitungen (zu lang, Kondensat ohne Gefäll
 ## Impact
 
 Neue Regeln in `rules/`; erweiterte 3D-Ansicht. Kältemittel und Kondensat sind bereits als Leitungstypen vorhanden. Setzt `m5-plan-export` voraus.
+
+## Offene Punkte
+
+- Dämmschicht an Außenwänden (aus m1, Task 9.4.1): Wände haben bisher nur eine Rohbaudicke ohne Außendämmung. Für Kältemittel- und Kondensatdurchführungen nach außen wird die Gesamttiefe gebraucht; Außenansicht und 3D sollen die Dämmung zeigen. Vorher prüfen, ob schon m2 (Geräte an der Fassade) die Schicht braucht. Formatänderung mit Schema-Migration.

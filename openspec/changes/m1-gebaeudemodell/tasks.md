@@ -77,6 +77,10 @@
 - [ ] 9.3 Manuell: `npm start` auf macOS, Windows und Linux; Projekt in Safari und Firefox öffnen
 - [ ] 9.4 Mit einem echten Architektenplan ein Geschoss nachzeichnen; gefundene Probleme als Issues oder Folge-Tasks festhalten
 
+### Folge-Tasks aus 9.4
+
+- [ ] 9.4.1 Dämmschicht an Außenwänden: Das Modell kennt nur `thicknessMm` (Rohbau); gezeichnet wird das Mauerwerk ohne Außendämmung (banatstrasse10: 24 cm Mauerwerk + 16 cm Dämmung). Außenansicht und 3D zeigen die Wand daher zu dünn, Bohrtiefen für Durchführungen nach außen fehlen. Umsetzung spätestens mit `m6-kaeltemittel-und-licht` (Kältemitteldurchführung), vorher prüfen, ob schon `m2-geraete-und-moebel` sie braucht (Geräte an der Fassade); Formatänderung mit Schema-Migration. Übernommen in `m6-kaeltemittel-und-licht/proposal.md` „Offene Punkte“.
+
 ## Workflow follow-up
 
 - `/openspec-review m1-gebaeudemodell --quick` nach Einarbeitung von Runde 3, vor Beginn der Umsetzung
