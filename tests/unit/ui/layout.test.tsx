@@ -55,7 +55,7 @@ describe("Layout-Gerüst (4.5)", () => {
     const bar = screen.getByRole("contentinfo", { name: "Warnungen" });
     const toggle = within(bar).getByRole("button", { name: "1 Warnung" });
     fireEvent.click(toggle);
-    const list = within(bar).getByRole("list", { name: "Warnungsliste" });
+    const list = within(bar).getByRole("table", { name: "Warnungsliste" });
     expect(list).toHaveTextContent("Öffnung ohne Wand (zzzzzzzz)");
     fireEvent.click(
       within(list).getByRole("button", { name: "Löschen: Öffnung ohne Wand (zzzzzzzz)" }),

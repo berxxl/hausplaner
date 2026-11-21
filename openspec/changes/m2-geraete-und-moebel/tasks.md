@@ -40,9 +40,9 @@
 
 ## 6. Warnungen
 
-- [ ] 6.1 Regeln `device-off-surface`, `device-without-surface`, `device-without-type`, `furniture-without-type` in `rules/devices.ts`; Unit-Tests: Wand gekürzt, Dose außerhalb (Spec-Scenario), Verweise ins Leere mit Aktion „Löschen“ und nicht übergehbar (Spec-Scenario „Nicht übergehbar“)
-- [ ] 6.2 Übergehen und Wieder aktivieren als Befehle, `warnungen.yaml`, Bereinigen am Ende jedes Befehls im selben Patch; Unit-Tests: Übergehen zählt nicht mehr als offen (Spec-Scenario), Element gelöscht entfernt Markierung (Spec-Scenario), Erneut verletzt (Spec-Scenario), Undo stellt Markierung her, Laden bereinigt nicht
-- [ ] 6.3 Warnungsübersicht mit Regel, Element, Ort, Abschnitt „übergangen“, Klickziele nach Tabelle; Komponententest: Klick öffnet die Ansicht und wählt das Element (Spec-Scenario „Zur Ursache springen“)
+- [x] 6.1 Regeln `device-off-surface`, `device-without-surface`, `device-without-type`, `furniture-without-type` in `rules/devices.ts`; Unit-Tests: Wand gekürzt, Dose außerhalb (Spec-Scenario), Verweise ins Leere mit Aktion „Löschen“ und nicht übergehbar (Spec-Scenario „Nicht übergehbar“)
+- [x] 6.2 Übergehen und Wieder aktivieren als Befehle, `warnungen.yaml`, Bereinigen am Ende jedes Befehls im selben Patch; Unit-Tests: Übergehen zählt nicht mehr als offen (Spec-Scenario), Element gelöscht entfernt Markierung (Spec-Scenario), Erneut verletzt (Spec-Scenario), Undo stellt Markierung her, Laden bereinigt nicht
+- [x] 6.3 Warnungsübersicht mit Regel, Element, Ort, Abschnitt „übergangen“, Klickziele nach Tabelle; Komponententest: Klick öffnet die Ansicht und wählt das Element (Spec-Scenario „Zur Ursache springen“)
 
 ## 7. Gewerkfilter
 

@@ -125,11 +125,33 @@ button {
   background: #fff;
   padding: 0.25rem 1rem;
 }
-.warning-bar__list {
-  margin: 0.25rem 0;
-  padding-left: 1.25rem;
+.warning-bar__panel {
   max-height: 30vh;
   overflow: auto;
+  margin: 0.25rem 0;
+}
+.warning-bar__table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+.warning-bar__table th {
+  text-align: left;
+  font-weight: 600;
+  color: #6e6e73;
+  border-bottom: 1px solid #e5e5ea;
+}
+.warning-bar__table th,
+.warning-bar__table td {
+  padding: 0.15rem 0.5rem 0.15rem 0;
+  vertical-align: top;
+}
+.warning-bar__actions {
+  white-space: nowrap;
+  text-align: right;
+}
+.warning-bar__actions button + button {
+  margin-left: 0.25rem;
 }
 .link {
   background: none;
@@ -601,4 +623,13 @@ button {
 .settings__error {
   color: #c00;
   margin: 0.25rem 0 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
