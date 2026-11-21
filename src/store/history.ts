@@ -5,6 +5,7 @@
 import { applyPatches, enablePatches, produceWithPatches, type Draft, type Patch } from "immer";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { Project } from "../model/types";
+import { normalizeAfterCommand } from "./normalize";
 
 enablePatches();
 
@@ -56,6 +57,14 @@ export interface ProjectStore extends StoreApi<ProjectState> {
   reset(project: Project): void;
 }
 
+/** Hängt die Nachbearbeitung an ein Rezept an, damit sie im selben Patch landet. */
+function withNormalize(base: Project, recipe: (draft: Draft<Project>) => void) {
+  return (draft: Draft<Project>) => {
+    recipe(draft);
+    normalizeAfterCommand(base, draft);
+  };
+}
+
 export function createProjectStore(project: Project): ProjectStore {
   const store = createStore<ProjectState>(() => ({
     project,
@@ -80,7 +89,10 @@ export function createProjectStore(project: Project): ProjectStore {
   const execute = (command: Command) => {
     const s = store.getState();
     if (s.transaction) throw new Error("Befehl während eines Ziehvorgangs");
-    const [next, patches, inverse] = produceWithPatches(s.project, command.run);
+    const [next, patches, inverse] = produceWithPatches(
+      s.project,
+      withNormalize(s.project, command.run),
+    );
     if (patches.length === 0) return;
     push({ label: command.label, patches, inverse }, next);
   };
@@ -121,7 +133,7 @@ export function createProjectStore(project: Project): ProjectStore {
     preview(recipe: (draft: Draft<Project>) => void) {
       const t = store.getState().transaction;
       if (!t) throw new Error("Kein Ziehvorgang");
-      const [next] = produceWithPatches(t.base, recipe);
+      const [next] = produceWithPatches(t.base, withNormalize(t.base, recipe));
       store.setState({ project: next, transaction: { ...t, recipe } });
     },
     commit() {
@@ -131,7 +143,7 @@ export function createProjectStore(project: Project): ProjectStore {
         store.setState({ project: t.base, transaction: null });
         return;
       }
-      const [next, patches, inverse] = produceWithPatches(t.base, t.recipe);
+      const [next, patches, inverse] = produceWithPatches(t.base, withNormalize(t.base, t.recipe));
       if (patches.length === 0) {
         store.setState({ project: t.base, transaction: null });
         return;

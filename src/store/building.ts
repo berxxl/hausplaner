@@ -11,6 +11,25 @@ import type { Command } from "./history";
 
 const plainPt = (p: { x: number; y: number }) => ({ x: p.x, y: p.y });
 
+/**
+ * Liegt das Gerät auf einer Fläche der Wand (beide Seiten) bzw. des Raums (Decke, Boden, Schrägen)?
+ * Grundlage für das Mitlöschen (design.md M2 „Geräte platzieren“).
+ */
+export function onSurfaceOf(
+  device: { placement: Project["devices"][number]["placement"] },
+  owner: "wall" | "room",
+  id: string,
+): boolean {
+  if (device.placement.kind !== "surface") return false;
+  const [kind, ownerId] = device.placement.surface.split(":");
+  return ownerId === id && (owner === "wall" ? kind === "wall" : kind !== "wall");
+}
+
+/** Anzahl der Geräte, die mit der Wand bzw. dem Raum gelöscht würden. */
+export function dependentDeviceCount(project: Project, owner: "wall" | "room", id: string) {
+  return project.devices.filter((d) => onSurfaceOf(d, owner, id)).length;
+}
+
 export function wallGeoms(project: Project | Draft<Project>, storeyId: string): WallGeom[] {
   return project.walls
     .filter((w) => w.storeyId === storeyId)
@@ -117,6 +136,7 @@ export function deleteWall(id: string): Command {
       if (!w) return;
       draft.walls = draft.walls.filter((x) => x.id !== id);
       draft.openings = draft.openings.filter((o) => o.wallId !== id);
+      draft.devices = draft.devices.filter((d) => !onSurfaceOf(d, "wall", id));
       recomputeRooms(draft, w.storeyId);
     },
   };
@@ -179,6 +199,7 @@ export function deleteRoom(id: string): Command {
     label: "Raum löschen",
     run(draft) {
       draft.rooms = draft.rooms.filter((r) => r.id !== id);
+      draft.devices = draft.devices.filter((d) => !onSurfaceOf(d, "room", id));
     },
   };
 }
@@ -252,6 +273,10 @@ export function deleteSlope(roomId: string, slopeId: string): Command {
       if (!r?.slopes) return;
       r.slopes = r.slopes.filter((s) => s.id !== slopeId);
       if (r.slopes.length === 0) delete r.slopes;
+      const ref = `slope:${roomId}:${slopeId}`;
+      draft.devices = draft.devices.filter(
+        (d) => !(d.placement.kind === "surface" && d.placement.surface === ref),
+      );
     },
   };
 }

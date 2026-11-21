@@ -76,6 +76,8 @@ export function deleteStorey(id: string): Command {
       draft.walls = draft.walls.filter((w) => w.storeyId !== id);
       draft.rooms = draft.rooms.filter((r) => r.storeyId !== id);
       draft.openings = draft.openings.filter((o) => o.storeyId !== id);
+      draft.devices = draft.devices.filter((d) => d.storeyId !== id);
+      draft.furniture = draft.furniture.filter((f) => f.storeyId !== id);
     },
   };
 }
