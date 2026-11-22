@@ -10,6 +10,7 @@ import { EditorArea } from "./EditorArea";
 import { Properties } from "./Properties";
 import { ProjectSettings } from "./ProjectSettings";
 import { ExportDialog } from "./export/ExportDialog";
+import { SiteExportDialog } from "./export/SiteExportDialog";
 import { CatalogDialog } from "./catalog/CatalogDialog";
 import { Tree } from "./Tree";
 import { WarningBar } from "./WarningBar";
@@ -34,6 +35,7 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [siteOpen, setSiteOpen] = useState(false);
   const name = useStore(store, (s) => s.project.name);
   const { confirm, dialog } = useConfirm();
   const [view] = useState(() =>
@@ -94,6 +96,9 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
         <button type="button" onClick={() => setExportOpen(true)}>
           Exportieren …
         </button>
+        <button type="button" onClick={() => setSiteOpen(true)}>
+          Baustellen-PDF …
+        </button>
         <button type="button" onClick={() => setSettingsOpen(true)}>
           Projekteinstellungen
         </button>
@@ -117,6 +122,9 @@ export function Workspace({ store, save, onReload, notice, api }: WorkspaceProps
       {catalogOpen && <CatalogDialog store={store} onClose={() => setCatalogOpen(false)} />}
       {exportOpen && (
         <ExportDialog store={store} view={view} onClose={() => setExportOpen(false)} />
+      )}
+      {siteOpen && (
+        <SiteExportDialog store={store} view={view} onClose={() => setSiteOpen(false)} />
       )}
       {dialog}
     </div>

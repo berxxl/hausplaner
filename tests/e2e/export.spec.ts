@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { parseSiteMapping } from "../../src/export/mapping";
 import { openProject } from "./helpers";
 
 const MM_TO_PT = 72 / 25.4;
@@ -80,5 +81,36 @@ test.describe("PDF-Export (M5)", () => {
     expect(pdf.numPages).toBe(count);
     const last = (await texts(pdf, count)).map((i) => i.str);
     expect(last).toContain("Liste Leitungen");
+  });
+
+  test("Baustellen-PDF für das Bad: eine A4-Seite je Fläche, Seitenzuordnung aus den Metadaten (7.2, Spec-Scenarios „Bad für die Baustelle“, „Zuordnung lesbar“)", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "m4");
+    await page.getByRole("button", { name: "Baustellen-PDF …" }).click();
+    const dialog = page.getByRole("dialog", { name: "Baustellen-PDF" });
+    await dialog.getByLabel("EG Bad").check();
+    const status = dialog.getByRole("status", { name: "Fortschritt" });
+    const count = Number((await status.innerText()).split(" ")[0]);
+    expect(count).toBeGreaterThanOrEqual(3);
+    const download = page.waitForEvent("download");
+    await dialog.getByRole("button", { name: "Erzeugen" }).click();
+    const file = await download;
+    await expect(status).toHaveText(/erzeugt$/);
+    expect(file.suggestedFilename()).toMatch(/Baustelle \d\d \d\d \d{4}\.pdf$/);
+    const data = new Uint8Array(readFileSync((await file.path())!));
+    const pdf = await pdfjs.getDocument({ data, standardFontDataUrl: FONTS }).promise;
+    expect(pdf.numPages).toBe(count);
+    for (let n = 1; n <= count; n++) {
+      const vp = (await pdf.getPage(n)).getViewport({ scale: 1 });
+      expect([Math.round(vp.width), Math.round(vp.height)].sort()).toEqual([595, 842]);
+      expect((await texts(pdf, n)).map((i) => i.str)).toContain("Notizen");
+    }
+    const mapping = parseSiteMapping((await pdf.getMetadata()).metadata?.getRaw());
+    expect(mapping).not.toBeNull();
+    expect(mapping!.pages).toHaveLength(count);
+    expect(mapping!.pages.every((p) => p.roomId === "r3bad00a")).toBe(true);
+    expect(mapping!.pages.at(-1)).toMatchObject({ surface: "floor:r3bad00a", view: "Bad › Boden" });
   });
 });

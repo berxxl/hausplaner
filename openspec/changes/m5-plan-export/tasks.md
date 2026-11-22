@@ -35,8 +35,8 @@
 
 ## 7. Baustellen-PDF
 
-- [ ] 7.1 `export/site.ts`: Seiten je Raumansicht, Decke, Boden, Schräge; Maßstabswahl 1:20/1:25/1:50 mit Ausrichtung; Raster in Flächenmaß; Notizbereich; Maßstabshinweis; Unit-Tests: Bad ergibt je Wandseite, Decke und Boden eine Seite mit Raster und Bemaßung (Spec-Scenario „Bad für die Baustelle“), zu lange Wand ergibt 1:25 bzw. 1:50 mit Angabe (Spec-Scenario „Wand zu groß für 1:20“)
-- [ ] 7.2 `export/mapping.ts`: Seitenzuordnung erzeugen, in XMP schreiben, `parseSiteMapping`, `pageToSurface`; Unit-Tests: Rundreise über den XMP-Text, wie jsPDF ihn schreibt, Umrechnung eines Seitenpunkts in (u, v) (Spec-Scenario „Zuordnung lesbar“); `ui/export/SiteExportDialog.tsx` und Knopf „Baustellen-PDF …“; Playwright: Baustellen-PDF für das Bad herunterladen, Seitenzahl, Zuordnung mit pdf.js aus den Metadaten gelesen
+- [x] 7.1 `export/site.ts`: Seiten je Raumansicht, Decke, Boden, Schräge; Maßstabswahl 1:20/1:25/1:50 mit Ausrichtung; Raster in Flächenmaß; Notizbereich; Maßstabshinweis; Unit-Tests: Bad ergibt je Wandseite, Decke und Boden eine Seite mit Raster und Bemaßung (Spec-Scenario „Bad für die Baustelle“), zu lange Wand ergibt 1:25 bzw. 1:50 mit Angabe (Spec-Scenario „Wand zu groß für 1:20“)
+- [x] 7.2 `export/mapping.ts`: Seitenzuordnung erzeugen, in XMP schreiben, `parseSiteMapping`, `pageToSurface`; Unit-Tests: Rundreise über den XMP-Text, wie jsPDF ihn schreibt, Umrechnung eines Seitenpunkts in (u, v) (Spec-Scenario „Zuordnung lesbar“); `ui/export/SiteExportDialog.tsx` und Knopf „Baustellen-PDF …“; Playwright: Baustellen-PDF für das Bad herunterladen, Seitenzahl, Zuordnung mit pdf.js aus den Metadaten gelesen
 
 ## 8. Integration
 

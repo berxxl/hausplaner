@@ -99,6 +99,8 @@ export function composeSheet(
     legend: LegendEntry[];
     page?: string;
     format?: Format;
+    /** Standard: bei maßstäblichen Blättern */
+    scaleBar?: boolean;
   },
 ): Sheet {
   const f = parts.format ?? o.format;
@@ -126,7 +128,7 @@ export function composeSheet(
     };
     items.push(...legendItems(parts.legend, rect));
   }
-  if (parts.scale !== null) {
+  if (parts.scale !== null && parts.scaleBar !== false) {
     const area = drawingArea(f, { scaleBar: true });
     items.push(...scaleBarItems(parts.scale, area.x, area.y + area.height + 4));
   }
