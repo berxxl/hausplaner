@@ -46,12 +46,13 @@
 ## 7. Integration
 
 - [x] 7.1 Playwright-Ablauf: M2-Projekt öffnen (Migration), Trasse über Ecke und zur Decke zeichnen, Durchbruch, Leitung anlegen, Weg hervorgehoben, Zuschläge ändern, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
-- [ ] 7.2 Manuell: banatstrasse10 migrieren, im EG Trassen zu einigen Steckdosen und Schaltern zeichnen, eine Leitung anlegen; Befunde als Folge-Tasks
+- [x] 7.2 Manuell: banatstrasse10 migrieren, im EG Trassen zu einigen Steckdosen und Schaltern zeichnen, eine Leitung anlegen; Befunde als Folge-Tasks
 
 ### Rückmeldungen des Benutzers während m3
 
 - [x] R.1 Nordpfeil im Grundriss nach der Nordrichtung der Projekteinstellungen (Plan wird nicht gedreht); Unit-Test
 - [x] R.2 Werkzeug „Öffnung“: Druck auf eine vorhandene Öffnung wählt sie aus und verschiebt sie, statt eine neue anzulegen (bisher nur mit dem Auswahlwerkzeug, das man erst wählen musste); Spec-Delta `building-geometry`, Komponententest
+- [x] R.3 (Befund aus 7.2) Strukturbaum: Geschosse, Räume und „Flächen ohne Raum“ auf- und zuklappen (Pfeilsymbol, Pfeiltasten rechts/links), Zustand im `localStorage` über das Neuladen hinaus, zugeklappter Eintrag zeigt die Markierung darunter; Spec-Delta `workspace` (Requirement „Baum auf- und zuklappen“), Komponententest, Playwright
 
 ## Workflow follow-up
 

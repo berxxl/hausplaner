@@ -118,3 +118,35 @@ test.describe("Wandansicht (7.3)", () => {
     );
   });
 });
+
+test.describe("Baum auf- und zuklappen (m3 Rückmeldung R.3)", () => {
+  test("Geschoss und Raum zuklappen, Zustand bleibt nach dem Neuladen", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request);
+    const tree = page.getByRole("tree", { name: "Geschosse" });
+    await expect(tree.getByRole("treeitem", { name: "Wand Nord" }).first()).toBeVisible();
+    await tree.getByRole("button", { name: "Küche zuklappen" }).click();
+    await expect(tree.getByRole("treeitem", { name: "Küche" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await tree.getByRole("button", { name: "EG zuklappen" }).click();
+    await expect(tree.getByRole("treeitem", { name: "Küche" })).toHaveCount(0);
+    await page.reload();
+    await expect(tree.getByRole("treeitem", { name: "EG" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await tree.getByRole("button", { name: "EG aufklappen" }).click();
+    await expect(tree.getByRole("treeitem", { name: "Küche" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(tree.getByRole("treeitem", { name: "Bad" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+});

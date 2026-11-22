@@ -665,3 +665,15 @@ button {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+.tree__toggle {
+  display: inline-block;
+  width: 1rem;
+  margin-right: 0.15rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}

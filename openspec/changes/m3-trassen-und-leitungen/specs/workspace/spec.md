@@ -31,3 +31,16 @@ Das System SHALL Elemente nach Gewerk (Strom, KNX, Daten, Leerrohr, Kältemittel
 #### Scenario: Trassen ausblenden
 - **WHEN** der Benutzer die Kategorie Trassen ausblendet
 - **THEN** verschwinden Segmente, Knoten und Durchbrüche in allen Ansichten, Geräte und Möbel bleiben sichtbar
+
+## ADDED Requirements
+
+### Requirement: Baum auf- und zuklappen
+Das System SHALL Geschosse, Räume und „Flächen ohne Raum“ im Strukturbaum auf- und zuklappbar machen, per Klick auf das Pfeilsymbol und mit den Pfeiltasten rechts/links. Die App MUST sich den Zustand über das Neuladen hinaus merken. Ein zugeklappter Eintrag MUST markiert sein, wenn ein Eintrag darunter ausgewählt oder markiert ist.
+
+#### Scenario: Geschoss zuklappen
+- **WHEN** der Benutzer beim Keller auf das Pfeilsymbol klickt
+- **THEN** verschwinden dessen Räume aus dem Baum, die Auswahl bleibt unverändert, und nach dem Neuladen ist der Keller weiter zugeklappt
+
+#### Scenario: Markierung im zugeklappten Raum
+- **WHEN** der Raum „Küche“ zugeklappt ist und der Benutzer im Grundriss eine Wand der Küche auswählt
+- **THEN** ist der Eintrag „Küche“ markiert
