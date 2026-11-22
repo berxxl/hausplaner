@@ -3,7 +3,7 @@
 ## 1. Grundlagen
 
 - [x] 1.1 Abhängigkeiten jsPDF und svg2pdf.js (auf sehr neue JS-APIs geprüft, design.md „Risks“); Modulgerüst `src/reports/`, `src/export/`; `docs/architektur.md`: Modulschnitt (`reports/`, `ui/` statt `views/`), `settings.defaultPlotScale` streichen, PDF-Export-Abschnitt mit Verweis auf dieses Design
-- [ ] 1.2 Editor „Listen“ als fünfter Tab (`EditorKind` `"lists"`), leere Ansicht mit Listenauswahl; Exporteinstellungen im `localStorage` `hausplaner.export` mit Standardwerten (1:50, A3 quer, Planstand „Entwurf“)
+- [x] 1.2 Editor „Listen“ als fünfter Tab (`EditorKind` `"lists"`), leere Ansicht mit Listenauswahl; Exporteinstellungen im `localStorage` `hausplaner.export` mit Standardwerten (1:50, A3 quer, Planstand „Entwurf“)
 
 ## 2. Listen (rein)
 
@@ -15,7 +15,7 @@
 
 ## 3. Listen in der Oberfläche
 
-- [ ] 3.1 `ui/lists/ListsView.tsx`: Listenauswahl, Filterleiste mit listenspezifischen Filtern, Tabelle mit sortierbaren Spaltenköpfen, Summen, Zeilenklick wählt aus; Komponententests: Zeile „Rollladen Bad“ anklicken wählt das Gerät (Spec-Scenario „Gerät aus der Liste auswählen“), Spaltenkopf sortiert auf- und absteigend, Filter „nur nicht angeschlossene“, Statusfilter in der Leitungsliste, Materialliste ohne Zeilenauswahl
+- [x] 3.1 `ui/lists/ListsView.tsx`: Listenauswahl, Filterleiste mit listenspezifischen Filtern, Tabelle mit sortierbaren Spaltenköpfen, Summen, Zeilenklick wählt aus; Komponententests: Zeile „Rollladen Bad“ anklicken wählt das Gerät (Spec-Scenario „Gerät aus der Liste auswählen“), Spaltenkopf sortiert auf- und absteigend, Filter „nur nicht angeschlossene“, Statusfilter in der Leitungsliste, Materialliste ohne Zeilenauswahl
 
 ## 4. Blattaufbau
 

@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { TradeFilter } from "./TradeFilter";
 import { BoardView } from "./board/BoardView";
+import { ListsView } from "./lists/ListsView";
 
 // three.js nur laden, wenn die 3D-Ansicht geöffnet wird
 const ModelView = lazy(() => import("./three/ModelView").then((m) => ({ default: m.ModelView })));
@@ -16,9 +17,10 @@ const TABS: { kind: EditorKind; label: string }[] = [
   { kind: "surface", label: "Fläche" },
   { kind: "3d", label: "3D" },
   { kind: "board", label: "Verteiler" },
+  { kind: "lists", label: "Listen" },
 ];
 
-/** Editorbereich mit Umschaltung zwischen Grundriss, Flächenansicht, 3D und Belegung. */
+/** Editorbereich mit Umschaltung zwischen Grundriss, Flächenansicht, 3D, Belegung und Listen. */
 export function EditorArea({ store, view }: { store: ProjectStore; view: ViewStore }) {
   const editor = useStore(view, (s) => s.editor);
   const active = TABS.find((t) => t.kind === editor)!;
@@ -54,6 +56,8 @@ export function EditorArea({ store, view }: { store: ProjectStore; view: ViewSto
           <SurfaceView store={store} view={view} />
         ) : editor === "board" ? (
           <BoardView store={store} view={view} />
+        ) : editor === "lists" ? (
+          <ListsView store={store} view={view} />
         ) : (
           <ErrorBoundary title="3D-Ansicht konnte nicht gestartet werden (WebGL nicht verfügbar?)">
             <Suspense fallback={<p className="placeholder">Lade 3D …</p>}>

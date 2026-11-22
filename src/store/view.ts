@@ -34,7 +34,7 @@ export interface Selection {
 export type SurfaceTool =
   "select" | "measure" | "device" | "route" | "penetration" | "cable" | "board";
 
-export type EditorKind = "plan" | "surface" | "3d" | "board";
+export type EditorKind = "plan" | "surface" | "3d" | "board" | "lists";
 
 /** Was die Flächenansicht zeigt. */
 export type SurfaceTarget =

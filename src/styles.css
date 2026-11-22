@@ -836,3 +836,82 @@ button {
 .plan-boundary--preview {
   stroke: #0071e3;
 }
+
+/* Listen (M5) */
+.lists {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.lists__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e5e5ea;
+  font-size: 0.85rem;
+}
+.lists__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.lists__body {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem;
+}
+.lists__table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+.lists__table th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  text-align: left;
+  border-bottom: 1px solid #c7c7cc;
+  white-space: nowrap;
+}
+.lists__table th button {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  background: none;
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  cursor: pointer;
+}
+.lists__table th[aria-sort="ascending"] button::after {
+  content: " ▲";
+}
+.lists__table th[aria-sort="descending"] button::after {
+  content: " ▼";
+}
+.lists__table td {
+  padding: 0.15rem 0.5rem 0.15rem 0;
+  border-bottom: 1px solid #f2f2f7;
+  vertical-align: top;
+}
+.lists__table tbody tr[tabindex] {
+  cursor: pointer;
+}
+.lists__table tbody tr:hover {
+  background: #f5f9ff;
+}
+.lists__row--selected {
+  background: #e3efff;
+}
+.lists__num {
+  text-align: right;
+}
+.lists__summary {
+  font-size: 0.85rem;
+  padding-left: 1rem;
+}
+.lists__section h3 {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.25rem;
+}

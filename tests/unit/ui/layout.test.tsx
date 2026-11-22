@@ -24,7 +24,13 @@ describe("Layout-Gerüst (4.5)", () => {
       within(screen.getByRole("tree", { name: "Geschosse" })).getByRole("treeitem", { name: "EG" }),
     ).toBeInTheDocument();
     const tabs = within(screen.getByRole("tablist", { name: "Ansicht" })).getAllByRole("tab");
-    expect(tabs.map((t) => t.textContent)).toEqual(["Grundriss", "Fläche", "3D", "Verteiler"]);
+    expect(tabs.map((t) => t.textContent)).toEqual([
+      "Grundriss",
+      "Fläche",
+      "3D",
+      "Verteiler",
+      "Listen",
+    ]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     fireEvent.click(tabs[2]!);
     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
