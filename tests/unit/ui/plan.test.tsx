@@ -185,3 +185,16 @@ test("„Parallel verschieben um“ springt nach Enter auf 0 zurück und wirkt b
   expect(store.getState().undoStack.map((e) => e.label)).toEqual(["Wand verschieben"]);
   expect(store.getState().project.walls.find((w) => w.id === "0bw2o0st")!.start.x).toBe(8200);
 });
+
+describe("Nordpfeil", () => {
+  test("zeigt die Nordrichtung der Projekteinstellungen, ohne den Plan zu drehen", async () => {
+    const { setNorthDeg } = await import("../../../src/store/commands");
+    const { store, view } = setup();
+    render(<PlanView store={store} view={view} />);
+    const arrow = screen.getByTestId("north-arrow");
+    expect(arrow).toHaveAttribute("aria-label", "Norden (Nordrichtung 0°)");
+    act(() => store.execute(setNorthDeg(30)));
+    expect(arrow).toHaveAttribute("data-north-deg", "30");
+    expect(arrow.querySelector("g")!.getAttribute("transform")).toBe("rotate(30)");
+  });
+});

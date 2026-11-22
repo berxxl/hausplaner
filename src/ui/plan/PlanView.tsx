@@ -72,6 +72,7 @@ import {
   Grid,
   MeasureOverlay,
   OpenEndMarkers,
+  NorthArrow,
   OpeningsLayer,
   RoomLabels,
   RoomsLayer,
@@ -1165,6 +1166,7 @@ export function PlanView({ store, view }: PlanViewProps) {
             {slopeP1 && <CalibrationMarker world={slopeP1} zoom={cam.zoom} />}
           </g>
           <RoomLabels rooms={rooms} storey={storey} cam={cam} vp={vp} />
+          <NorthArrow northDeg={project.settings.northDeg} vp={vp} />
           {measure && (
             <MeasureOverlay
               a={measure.a}

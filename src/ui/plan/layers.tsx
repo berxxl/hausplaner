@@ -260,3 +260,38 @@ export function MeasureOverlay({
     </g>
   );
 }
+
+/**
+ * Nordpfeil oben rechts im Grundriss (Bildschirmkoordinaten). Folgt der Nordrichtung der
+ * Projekteinstellungen (0° = oben, im Uhrzeigersinn); der Plan selbst wird nicht gedreht.
+ */
+export function NorthArrow({ northDeg, vp }: { northDeg: number; vp: Viewport }) {
+  const deg = Math.round(northDeg * 10) / 10;
+  return (
+    <g
+      data-testid="north-arrow"
+      data-north-deg={deg}
+      role="img"
+      aria-label={`Norden (Nordrichtung ${String(deg).replace(".", ",")}°)`}
+      transform={`translate(${vp.width - 38} 42)`}
+      className="north-arrow"
+    >
+      <title>Nordrichtung in den Projekteinstellungen ändern</title>
+      <circle r={26} fill="#fff" fillOpacity={0.85} stroke="#d2d2d7" />
+      <g transform={`rotate(${deg})`}>
+        <polygon points="0,-9 6,13 0,8 -6,13" fill="#1d1d1f" />
+        {/* Buchstabe an der Pfeilspitze, aber aufrecht */}
+        <text
+          y={-17}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={11}
+          fontWeight={600}
+          transform={`rotate(${-deg} 0 -17)`}
+        >
+          N
+        </text>
+      </g>
+    </g>
+  );
+}
