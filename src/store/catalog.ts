@@ -23,11 +23,11 @@ export const MOUNTING_LABELS: Record<Mounting, string> = {
   free: "frei",
 };
 
-/** Anzahl der Objekte, die einen Typ verwenden (Leitungstypen sind in M2 nie in Verwendung). */
+/** Anzahl der Objekte, die einen Typ verwenden (Geräte, Möbel, Leitungen). */
 export function typeUsage(project: Project, kind: CatalogKind, id: string): number {
   if (kind === "deviceTypes") return project.devices.filter((d) => d.typeId === id).length;
   if (kind === "furnitureTypes") return project.furniture.filter((f) => f.typeId === id).length;
-  return 0;
+  return project.cables.filter((c) => c.lineTypeId === id).length;
 }
 
 /** Geräte dieses Typs, die auf der gegebenen Montageart sitzen. */
@@ -110,7 +110,17 @@ export function deleteCatalogType(project: Project, kind: CatalogKind, id: strin
   const n = typeUsage(project, kind, id);
   if (n > 0) {
     const what =
-      kind === "furnitureTypes" ? (n === 1 ? "Möbel" : "Möbeln") : n === 1 ? "Gerät" : "Geräten";
+      kind === "furnitureTypes"
+        ? n === 1
+          ? "Möbel"
+          : "Möbeln"
+        : kind === "lineTypes"
+          ? n === 1
+            ? "Leitung"
+            : "Leitungen"
+          : n === 1
+            ? "Gerät"
+            : "Geräten";
     return { ok: false, error: `Typ wird von ${n} ${what} verwendet` };
   }
   return {

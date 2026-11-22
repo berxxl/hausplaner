@@ -98,11 +98,12 @@ Weitere Regeln:
 - **Gewerkfilter:** neuer Schalter „Trassen“ (blendet Segmente, Knoten und Durchbrüche aus); Leitungen werden über das Gewerk ihres Typs gefiltert (ausgeblendet = nicht hervorhebbar, nicht anklickbar).
 
 ### Zonenprüfung
-Regel `route-outside-zone:<segmentId>` für Segmente `kind: surface` auf Wandseiten innerhalb einer Raumansicht. Ein Segment ist in Ordnung, wenn eine der Bedingungen gilt (Toleranz 1 mm):
+Regel `route-outside-zone:<segmentId>` für Segmente `kind: surface` auf Wandseiten innerhalb einer Raumansicht. Ein Segment ist in Ordnung, wenn eine der Bedingungen gilt (Toleranz 1 mm; 3 bis 5 werden gemeinsam als senkrechte Kette geprüft):
 1. es ist waagerecht und liegt vollständig in der oberen oder unteren waagerechten Zone (bei schräger Oberkante: beide Enden im Band unter der Kontur),
 2. es ist senkrecht und liegt vollständig in einer senkrechten Zone,
 3. es ist senkrecht, ein Ende liegt in einer waagerechten Zone und das andere an einem Gerätknoten (Stich zum Gerät),
-4. es ist senkrecht und Teil einer senkrechten Kette von Segmenten, die von einer waagerechten Zone zu einem Gerätknoten führt (Stich über einen Abzweig).
+4. es ist senkrecht und Teil einer senkrechten Kette von Segmenten, die von einer waagerechten Zone zu einem Gerätknoten führt (Stich über einen Abzweig),
+5. es ist senkrecht und Teil einer senkrechten Kette von einer waagerechten Zone zu einem Übergangsknoten an Decke, Schräge oder Boden (Aufstieg in die Decke bzw. Abstieg in den Boden; nachgetragen bei der Umsetzung, weil sonst jeder Übergang zur Decke gemeldet würde).
 
 Segmente auf Wandseiten ohne Raum, auf Decken, Böden und Schrägen werden nicht geprüft. Text: „Trasse außerhalb Installationszone“. Klick wählt das Segment und öffnet die Raumansicht. Übergehbar.
 

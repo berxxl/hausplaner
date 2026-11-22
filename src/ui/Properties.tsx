@@ -15,6 +15,9 @@ const KIND_LABELS = {
   slope: "Schräge",
   device: "Gerät",
   furniture: "Möbel",
+  "route-node": "Trassenknoten",
+  "route-segment": "Trassensegment",
+  cable: "Leitung",
 } as const;
 
 /** Eigenschaften der Auswahl. */

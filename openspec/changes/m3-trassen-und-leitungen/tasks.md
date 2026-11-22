@@ -32,15 +32,15 @@
 
 ## 5. Leitungen
 
-- [ ] 5.1 `geometry/cables.ts`: Graph aus Segmenten, Dijkstra mit deterministischem Gleichstand, Kette ordnen, zusammenhängend prüfen; Unit-Tests: kürzester Weg (Spec-Scenario „Automatischer Weg“), kein Weg (Spec-Scenario „Kein Weg“), gleich lange Wege, Weg über einen Deckendurchbruch
-- [ ] 5.2 Befehle „Leitung anlegen“ (mit Typprüfung und Wegvorschlag), „Leitung ändern“, „Weg ändern“, „Weg vorschlagen“, „Leitung löschen“; Leitungstyp in Verwendung nicht löschbar; Unit-Tests: KNX-Busleitung vom Präsenzmelder zum KNX-Taster (Spec-Scenario „Busleitung zum Präsenzmelder“), Cat 7 an Rollladenmotor abgelehnt (Spec-Scenario „Unpassender Typ“), Typ löschen abgelehnt
+- [x] 5.1 `geometry/cables.ts`: Graph aus Segmenten, Dijkstra mit deterministischem Gleichstand, Kette ordnen, zusammenhängend prüfen; Unit-Tests: kürzester Weg (Spec-Scenario „Automatischer Weg“), kein Weg (Spec-Scenario „Kein Weg“), gleich lange Wege, Weg über einen Deckendurchbruch
+- [x] 5.2 Befehle „Leitung anlegen“ (mit Typprüfung und Wegvorschlag), „Leitung ändern“, „Weg ändern“, „Weg vorschlagen“, „Leitung löschen“; Leitungstyp in Verwendung nicht löschbar; Unit-Tests: KNX-Busleitung vom Präsenzmelder zum KNX-Taster (Spec-Scenario „Busleitung zum Präsenzmelder“), Cat 7 an Rollladenmotor abgelehnt (Spec-Scenario „Unpassender Typ“), Typ löschen abgelehnt
 - [ ] 5.3 Länge mit Zuschlägen, Einstellungen in den Projekteinstellungen (Befehl, Prüfung ≥ 0); Unit-Tests: 8,4 m Trasse Dose → Schalter ergibt 9,9 m (Spec-Scenario „Längenberechnung“), Wand verschoben verlängert Segmente und Länge (Spec-Scenario „Wand verschoben“), unterbrochener Weg ohne Länge
 - [ ] 5.4 Werkzeug „Leitung“ (zwei Geräte, auch über Ansichten und Geschosse), Leitungseigenschaften (Typ, Bezeichnung, Status, Länge, Weg bearbeiten, Weg vorschlagen), Hervorheben in allen Ansichten, im Grundriss und in 3D, Baum markiert die Flächen; Playwright: Leitung über zwei Geschosse auswählen hebt den Weg in allen beteiligten Ansichten und in 3D hervor (Spec-Scenario „Leitung über zwei Geschosse“); Komponententest: Status „geprüft“ (Spec-Scenario „Leitung geprüft“)
 
 ## 6. Belegung und Regeln
 
-- [ ] 6.1 Belegung je Segment (Anzahl, Querschnittssumme, Füllgrad, Leitungsliste), Regel `conduit-overfull`; Unit-Test: fünf Leitungen über M20 melden „Leerrohr überfüllt“ (Spec-Scenario „Volles Leerrohr“), M25 belegt (Spec-Scenario „Leerrohr belegen“)
-- [ ] 6.2 Regel `route-outside-zone` mit den vier Bedingungen aus `design.md`; Unit-Tests: Diagonale meldet (Spec-Scenario „Diagonale Trasse“), senkrechter Stich zum Schalter meldet nichts (Spec-Scenario „Senkrechter Stich“), waagerecht in der oberen Zone, senkrecht in der senkrechten Zone, Stich über Abzweig, Wandseite ohne Raum nicht geprüft
+- [x] 6.1 Belegung je Segment (Anzahl, Querschnittssumme, Füllgrad, Leitungsliste), Regel `conduit-overfull`; Unit-Test: fünf Leitungen über M20 melden „Leerrohr überfüllt“ (Spec-Scenario „Volles Leerrohr“), M25 belegt (Spec-Scenario „Leerrohr belegen“)
+- [x] 6.2 Regel `route-outside-zone` mit den fünf Bedingungen aus `design.md`; Unit-Tests: Diagonale meldet (Spec-Scenario „Diagonale Trasse“), senkrechter Stich zum Schalter meldet nichts (Spec-Scenario „Senkrechter Stich“), waagerecht in der oberen Zone, senkrecht in der senkrechten Zone, Stich über Abzweig, Aufstieg von der Zone zur Decke, Wandseite ohne Raum nicht geprüft
 - [ ] 6.3 Regeln `cable-without-path`, `route-node-off-edge` und die Verweise ins Leere mit ihren Aktionen; Klickziele in der Warnungsübersicht; Unit-Tests je Regel, nicht übergehbare Warnungen
 
 ## 7. Integration

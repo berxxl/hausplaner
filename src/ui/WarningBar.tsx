@@ -4,6 +4,8 @@ import { isSuppressible, type ProjectWarning } from "../rules";
 import { deleteOpening } from "../store/commands";
 import { deleteDevices } from "../store/devices";
 import { deleteFurniture } from "../store/furniture";
+import { deleteCables, detachNode } from "../store/cables";
+import { deleteRoute } from "../store/routes";
 import type { Command, ProjectStore } from "../store/history";
 import type { ViewStore } from "../store/view";
 import { reactivateWarning, suppressWarning } from "../store/warnings";
@@ -13,6 +15,9 @@ import { activateWarning, warningInfos, type WarningInfo } from "./warnings";
 function deleteCommand(target: NonNullable<ProjectWarning["deletable"]>): Command {
   if (target.kind === "device") return deleteDevices([target.id]);
   if (target.kind === "furniture") return deleteFurniture([target.id]);
+  if (target.kind === "route-node") return deleteRoute({ nodes: [target.id] });
+  if (target.kind === "route-segment") return deleteRoute({ segments: [target.id] });
+  if (target.kind === "cable") return deleteCables([target.id]);
   return deleteOpening(target.id);
 }
 
@@ -69,6 +74,15 @@ export function WarningBar({ store, view }: { store: ProjectStore; view: ViewSto
               onClick={() => store.execute(reactivateWarning(w.key))}
             >
               Wieder aktivieren
+            </button>
+          )}
+          {w.detachNode && (
+            <button
+              type="button"
+              aria-label={`Vom Gerät lösen: ${w.text}`}
+              onClick={() => store.execute(detachNode(w.detachNode!))}
+            >
+              Vom Gerät lösen
             </button>
           )}
           {w.deletable && (

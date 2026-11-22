@@ -6,12 +6,24 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import type { Trade } from "../model/types";
 
 export type SelectableKind =
-  "storey" | "wall" | "room" | "opening" | "slope" | "device" | "furniture";
+  | "storey"
+  | "wall"
+  | "room"
+  | "opening"
+  | "slope"
+  | "device"
+  | "furniture"
+  | "route-node"
+  | "route-segment"
+  | "cable";
 
 export interface Selection {
   kind: SelectableKind;
   id: string;
-  /** Mehrfachauswahl von Geräten derselben Fläche (enthält `id`), design.md M2 „Auswahl“. */
+  /**
+   * Mehrfachauswahl von Geräten derselben Fläche bzw. von Trassensegmenten (enthält `id`),
+   * design.md M2 „Auswahl“, M3 „Auswahl“.
+   */
   ids?: string[];
 }
 

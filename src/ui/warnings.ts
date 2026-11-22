@@ -7,22 +7,43 @@ import { findRoomView, freeSurfacesOf, roomViewsOf } from "./derived";
 import type { ProjectStore } from "../store/history";
 import type { SurfaceTarget, ViewStore } from "../store/view";
 
-/** Ansicht der Fläche eines Geräts: Wandseite → Raumansicht des Abschnitts, sonst ganze Wandseite. */
-export function deviceSurfaceTarget(project: Project, device: Device): SurfaceTarget | null {
-  const p = device.placement;
-  if (p.kind !== "surface") return null;
-  const [kind, id, extra] = p.surface.split(":");
+/** Ansicht einer Fläche an der Stelle u: Wandseite → Raumansicht des Abschnitts, sonst ganze Wandseite. */
+export function surfaceTargetAt(project: Project, ref: string, u: number): SurfaceTarget {
+  const [kind, id, extra] = ref.split(":");
   if (kind === "wall") {
     for (const views of roomViewsOf(project).values()) {
-      const v = views.find(
-        (x) => x.ref === p.surface && p.u >= x.section.uFrom && p.u <= x.section.uTo,
-      );
+      const v = views.find((x) => x.ref === ref && u >= x.section.uFrom && u <= x.section.uTo);
       if (v) return { kind: "room-wall", key: v.key };
     }
-    return { kind: "wall-side", ref: p.surface };
+    return { kind: "wall-side", ref };
   }
   if (kind === "ceiling" || kind === "floor") return { kind, roomId: id! };
   return { kind: "slope", roomId: id!, slopeId: extra! };
+}
+
+/** Ansicht der Fläche eines Geräts. */
+export function deviceSurfaceTarget(project: Project, device: Device): SurfaceTarget | null {
+  const p = device.placement;
+  return p.kind === "surface" ? surfaceTargetAt(project, p.surface, p.u) : null;
+}
+
+/** Ansicht und Geschoss eines Trassenknotens (erster Anker) bzw. eines Segments (Fläche, sonst Knoten a). */
+export function routeSurfaceTarget(
+  project: Project,
+  target: { kind: "route-node" | "route-segment"; id: string },
+): { surface: SurfaceTarget; storeyId: string } | null {
+  let nodeId = target.id;
+  let surface: string | undefined;
+  if (target.kind === "route-segment") {
+    const s = project.routeSegments.find((x) => x.id === target.id);
+    if (!s) return null;
+    nodeId = s.a;
+    surface = s.surface;
+  }
+  const n = project.routeNodes.find((x) => x.id === nodeId);
+  if (!n) return null;
+  const a = (surface && n.anchors.find((x) => x.surface === surface)) || n.anchors[0]!;
+  return { surface: surfaceTargetAt(project, a.surface, a.u), storeyId: n.storeyId };
 }
 
 /** Wandansicht des Raums an Seite L, in dessen Abschnitt die Mitte der Öffnung liegt; sonst die ganze Wandseite L. */
@@ -60,6 +81,14 @@ export function activateWarning(
     const surface = deviceSurfaceTarget(project, device);
     if (surface) view.openSurface(surface, device.storeyId);
     else view.setEditor("plan");
+  } else if (target.kind === "route-node" || target.kind === "route-segment") {
+    view.select({ kind: target.kind, id: target.id });
+    const place = routeSurfaceTarget(project, target);
+    if (!place) return;
+    view.setActiveStorey(place.storeyId);
+    view.openSurface(place.surface, place.storeyId);
+  } else if (target.kind === "cable") {
+    view.select({ kind: "cable", id: target.id });
   } else if (target.kind === "opening") {
     const opening = project.openings.find((o) => o.id === target.id);
     view.select({ kind: "opening", id: target.id });
@@ -143,6 +172,18 @@ function describe(project: Project, w: ProjectWarning): { element: string; place
         ? surfacePlace(project, surface, d.storeyId)
         : { storeyId: d.storeyId, view: "Grundriss" },
     };
+  }
+  if (t.kind === "route-node" || t.kind === "route-segment") {
+    const place =
+      w.target.kind === "none" ? null : routeSurfaceTarget(project, { kind: t.kind, id: t.id });
+    return {
+      element: t.kind === "route-node" ? "Trassenknoten" : "Trassensegment",
+      place: place ? surfacePlace(project, place.surface, place.storeyId) : {},
+    };
+  }
+  if (t.kind === "cable") {
+    const c = project.cables.find((x) => x.id === t.id);
+    return { element: c?.label ?? "Leitung", place: {} };
   }
   const f = project.furniture.find((x) => x.id === t.id);
   return {
