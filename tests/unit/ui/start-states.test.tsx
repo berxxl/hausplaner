@@ -22,7 +22,7 @@ describe("Startzustände (4.4)", () => {
 
   test("neuere Schemaversion: Fehlerseite mit Hinweis auf neuere App-Version", async () => {
     const files = readFixture("klein");
-    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 9");
+    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 3", "schemaVersion: 9");
     render(<App api={mockApi(files).api} />);
     expect(await screen.findByRole("list", { name: "Ladefehler" })).toHaveTextContent(
       "Projekt wurde mit neuerer App-Version erstellt",
@@ -44,7 +44,7 @@ describe("Startzustände (4.4)", () => {
       "projekt.yaml",
     ]);
     expect(written["projekt.yaml"]).toBe(
-      'schemaVersion: 2\nname: "haus-daten"\nsettings:\n  northDeg: 0\n  installZones:\n    horizontalTop: [150, 450]\n    horizontalBottom: [150, 450]\n    verticalFromEdge: [100, 300]\n',
+      'schemaVersion: 3\nname: "haus-daten"\nsettings:\n  northDeg: 0\n  installZones:\n    horizontalTop: [150, 450]\n    horizontalBottom: [150, 450]\n    verticalFromEdge: [100, 300]\n  lengthAllowance: {perDeviceMm: 300, wastePercent: 10}\n',
     );
     expect(written["katalog.yaml"]).toMatch(/- id: "presence-knx"\n {4}name: "Präsenzmelder KNX"/);
     expect(written["geschosse/eg.yaml"]).toMatch(
@@ -83,7 +83,7 @@ describe("Startzustände (4.4)", () => {
     files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 1\n", "");
     render(<App api={mockApi(files).api} />);
     expect(await screen.findByRole("region", { name: "Hinweis" })).toHaveTextContent(
-      "Projekt auf Version 2 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
   });
 });

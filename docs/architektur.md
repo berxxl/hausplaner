@@ -65,7 +65,7 @@ haus-daten/
 
 \* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` in der Datei ihres Geschosses (`storeyId` wird wie bei Wänden beim Laden gesetzt, nicht geschrieben).
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“).
 
 Regeln für deterministisches Schreiben:
 
@@ -147,7 +147,7 @@ interface Project {
 
 interface Settings {
   northDeg: number;            // Nordrichtung im Grundriss, 0 = +y, im Uhrzeigersinn (M1)
-  lengthAllowance: { perDeviceMm: number; perBoardMm: number; wastePercent: number }; // 300 / 1500 / 10
+  lengthAllowance: { perDeviceMm: number; perBoardMm?: number; wastePercent: number }; // 300 / 1500 / 10; perBoardMm ab M4 (M3)
   installZones: { horizontalTop: [number, number]; horizontalBottom: [number, number];
                   verticalFromEdge: [number, number] };   // [150,450], [150,450], [100,300]
   teReservePercent: number;    // 25
@@ -200,7 +200,7 @@ interface Device {
     | { kind: "surface"; surface: SurfaceRef; u: number; v: number; rotationDeg: number }
     | { kind: "board"; boardId: Id; fieldId: Id; row: number; slot: number }   // Reiheneinbau
     | { kind: "free"; x: number; y: number; z: number };                      // z. B. Klima-Außengerät; z über Rohfußboden
-  circuitId?: Id;
+  circuitId?: Id;                              // ab M4
   knxLineId?: Id;                              // nur Busteilnehmer
   props?: Record<string, unknown>;             // typabhängig, z. B. Leistung; ab Bedarf (nicht in M2)
 }
@@ -212,17 +212,19 @@ interface Furniture {
 
 interface RouteNode {
   id: Id;
-  anchors: { surface: SurfaceRef; u: number; v: number }[];  // >1 Anker = Knoten auf einer Kante (Übergang)
-  deviceId?: Id;                                             // Knoten an einem Gerät
-  boardId?: Id;                                              // Knoten am Verteiler
+  storeyId: Id;                                              // Geschoss des ersten Ankers; beim Laden gesetzt, nicht geschrieben
+  anchors: { surface: SurfaceRef; u: number; v: number }[];  // >1 Anker = Knoten auf einer Kante (Übergang); der erste ist maßgebend
+  deviceId?: Id;                                             // Knoten an einem Gerät (Anker folgt dem Gerät)
+  boardId?: Id;                                              // Knoten am Verteiler (ab M4)
 }
 
 interface RouteSegment {
   id: Id; a: Id; b: Id;                        // RouteNode-Ids
+  storeyId: Id;                                // Geschoss von Knoten a; beim Laden gesetzt, nicht geschrieben
   kind: "surface" | "penetration";
   surface?: SurfaceRef;                        // bei kind=surface
   penetration?: { method: "drill" | "core-drill" | "slot" | "conduit"; diameterMm: number };
-  conduit?: { diameterMm: number };            // Leerrohr auf dem Segment
+  conduit?: { size: string; innerDiameterMm: number };  // Leerrohr auf dem Segment, z. B. M25 / 18,3
   status: Status;
 }
 
@@ -230,9 +232,9 @@ interface Cable {
   id: Id; lineTypeId: Id; label: string; status: Status;
   from: Endpoint; to: Endpoint;
   path: Id[];                                  // geordnete RouteSegment-Ids
-  circuitId?: Id;
+  circuitId?: Id;                              // ab M4
 }
-type Endpoint = { deviceId: Id } | { boardId: Id };
+type Endpoint = { deviceId: Id } | { boardId: Id };   // boardId ab M4
 
 interface Board {
   id: Id; kind: "meter-cabinet" | "sub-distribution" | "media";

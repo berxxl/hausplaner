@@ -1,11 +1,11 @@
 /**
- * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, architektur.md „Datenmodell“).
+ * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, architektur.md „Datenmodell“).
  * Dateischemata beschreiben genau den Inhalt einer Datei; alle Objekte sind strict.
  */
 import { z } from "zod";
 import { ID_PATTERN } from "./ids";
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 const id = z.string().regex(ID_PATTERN, "ID muss aus 8 Zeichen 0-9 und a-z bestehen");
 const mm = z.number().int("Längen sind ganze Millimeter");
@@ -31,7 +31,17 @@ export const InstallZonesSchema = z.strictObject({
   verticalFromEdge: range,
 });
 
-export const SettingsSchema = z.strictObject({ northDeg: deg, installZones: InstallZonesSchema });
+/** Zuschläge für Leitungslängen (design.md M3 „Leitungen“). */
+export const LengthAllowanceSchema = z.strictObject({
+  perDeviceMm: nonNegativeMm,
+  wastePercent: z.number().nonnegative("Wert darf nicht negativ sein"),
+});
+
+export const SettingsSchema = z.strictObject({
+  northDeg: deg,
+  installZones: InstallZonesSchema,
+  lengthAllowance: LengthAllowanceSchema,
+});
 
 export const ProjectFileSchema = z.strictObject({
   schemaVersion: z.number().int().nonnegative(),
@@ -230,6 +240,55 @@ export const FurnitureSchema = z.strictObject({
   elevationMm: nonNegativeMm,
 });
 
+// --- Trassen und Leitungen (M3) ---
+
+const surfaceRef = z.string().regex(SURFACE_REF_PATTERN, "Ungültige Fläche");
+const status = z.enum(["planned", "installed", "verified"]);
+
+export const AnchorSchema = z.strictObject({ surface: surfaceRef, u: mm, v: mm });
+
+export const RouteNodeSchema = z.strictObject({
+  id,
+  deviceId: id.optional(),
+  anchors: z.array(AnchorSchema).min(1, "Mindestens ein Anker"),
+});
+
+export const PENETRATION_METHODS = ["drill", "core-drill", "slot", "conduit"] as const;
+
+export const RouteSegmentSchema = z
+  .strictObject({
+    id,
+    a: id,
+    b: id,
+    kind: z.enum(["surface", "penetration"]),
+    surface: surfaceRef.optional(),
+    penetration: z
+      .strictObject({ method: z.enum(PENETRATION_METHODS), diameterMm: positiveMm })
+      .optional(),
+    conduit: z.strictObject({ size: text, innerDiameterMm: z.number().positive() }).optional(),
+    status,
+  })
+  .refine(
+    (s) => (s.kind === "surface" ? !!s.surface && !s.penetration : !!s.penetration && !s.surface),
+    {
+      message: "surface nur bei kind surface, penetration nur bei kind penetration",
+    },
+  );
+
+export const EndpointSchema = z.strictObject({ deviceId: id });
+
+export const CableSchema = z.strictObject({
+  id,
+  label: text,
+  lineTypeId: catalogId,
+  status,
+  from: EndpointSchema,
+  to: EndpointSchema,
+  path: z.array(id).optional(),
+});
+
+export const CablesFileSchema = z.strictObject({ cables: z.array(CableSchema).optional() });
+
 export const WarningsFileSchema = z.strictObject({
   suppressedWarnings: z.array(z.string()).optional(),
 });
@@ -241,9 +300,12 @@ export const StoreyFileSchema = z.strictObject({
   openings: z.array(OpeningSchema).optional(),
   devices: z.array(DeviceSchema).optional(),
   furniture: z.array(FurnitureSchema).optional(),
+  routeNodes: z.array(RouteNodeSchema).optional(),
+  routeSegments: z.array(RouteSegmentSchema).optional(),
 });
 
 export type ProjectFile = z.infer<typeof ProjectFileSchema>;
 export type StoreyFile = z.infer<typeof StoreyFileSchema>;
 export type CatalogFile = z.infer<typeof CatalogFileSchema>;
 export type WarningsFile = z.infer<typeof WarningsFileSchema>;
+export type CablesFile = z.infer<typeof CablesFileSchema>;

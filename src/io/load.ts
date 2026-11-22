@@ -5,11 +5,13 @@
 import { isMap, isSeq, LineCounter, parseDocument, type Document } from "yaml";
 import type { z } from "zod";
 import {
+  CablesFileSchema,
   CatalogFileSchema,
   CURRENT_SCHEMA_VERSION,
   ProjectFileSchema,
   StoreyFileSchema,
   WarningsFileSchema,
+  type CablesFile,
   type CatalogFile,
   type ProjectFile,
   type StoreyFile,
@@ -19,6 +21,7 @@ import { hasMigration, migrate, migrationNotice, type RawFiles } from "../model/
 import type { Project } from "../model/types";
 import { filesToProject } from "./project-files";
 import {
+  CABLES_FILE,
   CATALOG_FILE,
   isKnownFile,
   PROJECT_FILE,
@@ -154,6 +157,8 @@ function storeyFileIds(file: StoreyFile): { id: string; path: Segment[] }[] {
   file.openings?.forEach((o, i) => ids.push({ id: o.id, path: ["openings", i, "id"] }));
   file.devices?.forEach((d, i) => ids.push({ id: d.id, path: ["devices", i, "id"] }));
   file.furniture?.forEach((f, i) => ids.push({ id: f.id, path: ["furniture", i, "id"] }));
+  file.routeNodes?.forEach((n, i) => ids.push({ id: n.id, path: ["routeNodes", i, "id"] }));
+  file.routeSegments?.forEach((x, i) => ids.push({ id: x.id, path: ["routeSegments", i, "id"] }));
   return ids;
 }
 
@@ -272,6 +277,12 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     if (result.success) warningsFile = result.data;
     else errors.push(...schemaErrors(WARNINGS_FILE, parsed.get(WARNINGS_FILE), result.error));
   }
+  let cablesFile: CablesFile | undefined;
+  if (raw[CABLES_FILE] !== undefined) {
+    const result = CablesFileSchema.safeParse(raw[CABLES_FILE] ?? {});
+    if (result.success) cablesFile = result.data;
+    else errors.push(...schemaErrors(CABLES_FILE, parsed.get(CABLES_FILE), result.error));
+  }
   const storeyFiles: { path: string; data: StoreyFile }[] = [];
   for (const path of storeyPaths) {
     const result = StoreyFileSchema.safeParse(raw[path]);
@@ -322,6 +333,11 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     }
     checkIds(path, storeyFileIds(data));
   }
+  if (cablesFile)
+    checkIds(
+      CABLES_FILE,
+      (cablesFile.cables ?? []).map((c, i) => ({ id: c.id, path: ["cables", i, "id"] })),
+    );
   if (errors.length > 0) return { status: "error", errors };
 
   return {
@@ -331,6 +347,7 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
       storeyFiles.map((s) => s.data),
       catalogFile,
       warningsFile,
+      cablesFile,
     ),
     contents,
     ...(notice ? { notice } : {}),

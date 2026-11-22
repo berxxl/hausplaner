@@ -1,6 +1,6 @@
 /** Neue Objekte mit Standardwerten (design.md „Neues Projekt“). */
 import { CURRENT_SCHEMA_VERSION } from "./schema";
-import { DEFAULT_INSTALL_ZONES, defaultCatalog } from "./default-catalog";
+import { DEFAULT_LENGTH_ALLOWANCE, DEFAULT_INSTALL_ZONES, defaultCatalog } from "./default-catalog";
 import { newId } from "./ids";
 import { uniqueSlug } from "./slug";
 import type { Project, Storey } from "./types";
@@ -23,7 +23,11 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     name,
-    settings: { northDeg: 0, installZones: structuredClone(DEFAULT_INSTALL_ZONES) },
+    settings: {
+      northDeg: 0,
+      installZones: structuredClone(DEFAULT_INSTALL_ZONES),
+      lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+    },
     catalog: defaultCatalog(),
     storeys: [storey],
     walls: [],
@@ -31,6 +35,9 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
     openings: [],
     devices: [],
     furniture: [],
+    routeNodes: [],
+    routeSegments: [],
+    cables: [],
     suppressedWarnings: [],
   };
 }

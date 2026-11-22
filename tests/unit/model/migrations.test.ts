@@ -12,7 +12,7 @@ describe("Schemaversion und Migration (2.6)", () => {
     return files;
   }
 
-  test("Dummy-Migration 0 → 1 läuft (danach die echte 1 → 2), liefert Hinweis und schreibt nichts", () => {
+  test("Dummy-Migration 0 → 1 läuft (danach die echten 1 → 2 → 3), liefert Hinweis und schreibt nichts", () => {
     registerMigration(0, (files) => ({
       ...files,
       "projekt.yaml": { schemaVersion: 1, ...(files["projekt.yaml"] as object) },
@@ -21,14 +21,14 @@ describe("Schemaversion und Migration (2.6)", () => {
     const result = loadProject(files);
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
-    expect(result.project.schemaVersion).toBe(2);
+    expect(result.project.schemaVersion).toBe(3);
     expect(result.notice).toBe(
-      "Projekt auf Version 2 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     // Der gelesene Inhalt bleibt die Vergleichsbasis: Laden selbst schreibt nichts.
     expect(result.contents["projekt.yaml"]).toBe(files["projekt.yaml"]);
-    // Erst beim Speichern weicht projekt.yaml ab und enthält schemaVersion 2.
-    expect(projectToFiles(result.project)["projekt.yaml"]).toMatch(/^schemaVersion: 2\n/);
+    // Erst beim Speichern weicht projekt.yaml ab und enthält schemaVersion 3.
+    expect(projectToFiles(result.project)["projekt.yaml"]).toMatch(/^schemaVersion: 3\n/);
   });
 
   test("ohne registrierte Migration ist eine Datei ohne schemaVersion ein Ladefehler", () => {

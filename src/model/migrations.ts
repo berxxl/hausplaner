@@ -5,6 +5,7 @@
  */
 import { CURRENT_SCHEMA_VERSION } from "./schema";
 import {
+  DEFAULT_LENGTH_ALLOWANCE,
   DEFAULT_DEVICE_TYPES,
   DEFAULT_FURNITURE_TYPES,
   DEFAULT_INSTALL_ZONES,
@@ -60,6 +61,16 @@ export function migrateV1toV2(files: RawFiles): RawFiles {
   return next;
 }
 registerMigration(1, migrateV1toV2);
+
+/** 2 → 3 (design.md M3 „Schemaversion 3 und Migration“): Standardzuschläge für Leitungslängen. */
+export function migrateV2toV3(files: RawFiles): RawFiles {
+  const project = structuredClone(files["projekt.yaml"]) as Record<string, unknown>;
+  const settings = (project.settings ?? {}) as Record<string, unknown>;
+  project.settings = { ...settings, lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE } };
+  project.schemaVersion = 3;
+  return { ...files, "projekt.yaml": project };
+}
+registerMigration(2, migrateV2toV3);
 
 export function migrationNotice(version: number): string {
   return `Projekt auf Version ${version} aktualisiert, wird beim nächsten Speichern geschrieben`;

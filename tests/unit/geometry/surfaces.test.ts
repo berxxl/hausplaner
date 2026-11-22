@@ -1,4 +1,7 @@
-import { DEFAULT_INSTALL_ZONES } from "../../../src/model/default-catalog";
+import {
+  DEFAULT_LENGTH_ALLOWANCE,
+  DEFAULT_INSTALL_ZONES,
+} from "../../../src/model/default-catalog";
 import {
   bearing,
   deriveRoomViews,
@@ -43,12 +46,19 @@ function wall(
 
 function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: "T",
-    settings: { northDeg, installZones: structuredClone(DEFAULT_INSTALL_ZONES) },
+    settings: {
+      northDeg,
+      installZones: structuredClone(DEFAULT_INSTALL_ZONES),
+      lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+    },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
     furniture: [],
+    routeNodes: [],
+    routeSegments: [],
+    cables: [],
     suppressedWarnings: [],
     storeys: [
       {

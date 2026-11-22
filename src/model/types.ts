@@ -1,6 +1,9 @@
-/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- und M2-Teil). */
+/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- bis M3-Teil). */
 import type { z } from "zod";
 import type {
+  AnchorSchema,
+  LengthAllowanceSchema,
+  CableSchema,
   DevicePlacementSchema,
   DeviceSchema,
   DeviceTypeSchema,
@@ -13,6 +16,8 @@ import type {
   TRADES,
   PointSchema,
   RoomSchema,
+  RouteNodeSchema,
+  RouteSegmentSchema,
   SettingsSchema,
   SlopeSchema,
   StoreySchema,
@@ -48,6 +53,16 @@ export type DevicePlacement = z.infer<typeof DevicePlacementSchema>;
 export type Device = z.infer<typeof DeviceSchema> & { storeyId: Id };
 export type Furniture = z.infer<typeof FurnitureSchema> & { storeyId: Id };
 
+export type LengthAllowance = z.infer<typeof LengthAllowanceSchema>;
+export type Anchor = z.infer<typeof AnchorSchema>;
+/** storeyId: Geschoss des ersten Ankers; beim Laden gesetzt (design.md M3 „Dateiformat M3“). */
+export type RouteNode = z.infer<typeof RouteNodeSchema> & { storeyId: Id };
+/** storeyId: Geschoss von Knoten a; beim Laden gesetzt. */
+export type RouteSegment = z.infer<typeof RouteSegmentSchema> & { storeyId: Id };
+/** Im Modell ist `path` immer gesetzt (in der Datei weggelassen, wenn leer). */
+export type Cable = Omit<z.infer<typeof CableSchema>, "path"> & { path: Id[] };
+export type Status = Cable["status"];
+
 export interface Project {
   schemaVersion: number;
   name: string;
@@ -59,6 +74,10 @@ export interface Project {
   openings: Opening[];
   devices: Device[];
   furniture: Furniture[];
+  routeNodes: RouteNode[];
+  routeSegments: RouteSegment[];
+  /** leitungen.yaml */
+  cables: Cable[];
   /** Schlüssel bewusst übergangener Warnungen (warnungen.yaml). */
   suppressedWarnings: string[];
 }

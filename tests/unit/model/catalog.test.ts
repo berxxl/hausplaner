@@ -98,12 +98,12 @@ describe("Migration 1 → 2 (1.6)", () => {
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.notice).toBe(
-      "Projekt auf Version 2 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     // Laden selbst schreibt nichts: Vergleichsbasis ist der gelesene Inhalt
     expect(result.contents).toEqual(files);
     const p = result.project;
-    expect(p.schemaVersion).toBe(2);
+    expect(p.schemaVersion).toBe(3);
     expect(p.settings.installZones).toEqual({
       horizontalTop: [150, 450],
       horizontalBottom: [150, 450],
@@ -115,7 +115,7 @@ describe("Migration 1 → 2 (1.6)", () => {
     store.execute({ label: "Projekt umbenennen", run: (d) => void (d.name = "Neu") });
     const out = projectToFiles(store.getState().project);
     expect(out["geschosse/eg.yaml"]).toBe(files["geschosse/eg.yaml"]);
-    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 2\n/);
+    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 3\n/);
     expect(out["katalog.yaml"]).toContain('- id: "socket"');
   });
 

@@ -1,6 +1,6 @@
 /**
  * Dateiformat – die einzige Stelle mit Feldreihenfolge, Sortierung und Flow-Stil
- * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“). Writer und Golden-File-Tests hängen daran.
+ * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“). Writer und Golden-File-Tests hängen daran.
  */
 
 export type TypeName =
@@ -31,7 +31,16 @@ export type TypeName =
   | "device"
   | "placement"
   | "furniture"
-  | "warningsFile";
+  | "warningsFile"
+  | "lengthAllowance"
+  | "routeNode"
+  | "anchor"
+  | "routeSegment"
+  | "penetration"
+  | "conduit"
+  | "cablesFile"
+  | "cable"
+  | "endpoint";
 
 export type FieldKind =
   | { kind: "scalar" }
@@ -65,7 +74,14 @@ const f = (key: string, value: FieldKind = scalar, optional = false): FieldSpec 
 
 export const FORMAT: Record<TypeName, TypeSpec> = {
   projectFile: { fields: [f("schemaVersion"), f("name"), f("settings", obj("settings"))] },
-  settings: { fields: [f("northDeg"), f("installZones", obj("installZones"))] },
+  settings: {
+    fields: [
+      f("northDeg"),
+      f("installZones", obj("installZones")),
+      f("lengthAllowance", obj("lengthAllowance")),
+    ],
+  },
+  lengthAllowance: { flow: true, fields: [f("perDeviceMm"), f("wastePercent")] },
   installZones: {
     fields: [
       f("horizontalTop", flowScalars),
@@ -81,6 +97,8 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("openings", byId("opening"), true),
       f("devices", byId("device"), true),
       f("furniture", byId("furniture"), true),
+      f("routeNodes", byId("routeNode"), true),
+      f("routeSegments", byId("routeSegment"), true),
     ],
   },
   storey: {
@@ -226,6 +244,37 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("elevationMm"),
     ],
   },
+  routeNode: {
+    fields: [f("id"), f("deviceId", scalar, true), f("anchors", { kind: "list", of: "anchor" })],
+  },
+  anchor: { flow: true, fields: [f("surface"), f("u"), f("v")] },
+  routeSegment: {
+    fields: [
+      f("id"),
+      f("a"),
+      f("b"),
+      f("kind"),
+      f("surface", scalar, true),
+      f("penetration", obj("penetration"), true),
+      f("conduit", obj("conduit"), true),
+      f("status"),
+    ],
+  },
+  penetration: { flow: true, fields: [f("method"), f("diameterMm")] },
+  conduit: { flow: true, fields: [f("size"), f("innerDiameterMm")] },
+  cablesFile: { fields: [f("cables", byId("cable"), true)] },
+  cable: {
+    fields: [
+      f("id"),
+      f("label"),
+      f("lineTypeId"),
+      f("status"),
+      f("from", obj("endpoint")),
+      f("to", obj("endpoint")),
+      f("path", flowScalars, true),
+    ],
+  },
+  endpoint: { flow: true, fields: [f("deviceId")] },
   warningsFile: {
     fields: [f("suppressedWarnings", { kind: "scalars", sorted: true }, true)],
   },

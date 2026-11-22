@@ -1,15 +1,25 @@
-import { DEFAULT_INSTALL_ZONES } from "../../../src/model/default-catalog";
+import {
+  DEFAULT_LENGTH_ALLOWANCE,
+  DEFAULT_INSTALL_ZONES,
+} from "../../../src/model/default-catalog";
 import { createProjectStore, HISTORY_LIMIT, historyShortcut } from "../../../src/store/history";
 import type { Project } from "../../../src/model/types";
 
 function emptyProject(): Project {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: "Test",
-    settings: { northDeg: 0, installZones: structuredClone(DEFAULT_INSTALL_ZONES) },
+    settings: {
+      northDeg: 0,
+      installZones: structuredClone(DEFAULT_INSTALL_ZONES),
+      lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+    },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
     furniture: [],
+    routeNodes: [],
+    routeSegments: [],
+    cables: [],
     suppressedWarnings: [],
     storeys: [],
     walls: [],

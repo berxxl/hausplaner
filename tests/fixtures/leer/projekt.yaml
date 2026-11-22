@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 name: "Leeres Projekt"
 settings:
   northDeg: 0
@@ -6,3 +6,4 @@ settings:
     horizontalTop: [150, 450]
     horizontalBottom: [150, 450]
     verticalFromEdge: [100, 300]
+  lengthAllowance: {perDeviceMm: 300, wastePercent: 10}

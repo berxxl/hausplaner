@@ -24,15 +24,15 @@ M1 und M2 sind archiviert (`openspec/changes/archive/2026-11-21-m1-gebaeudemodel
 ## Decisions
 
 ### Schemaversion 3 und Migration
-M3 erhöht `schemaVersion` auf 3. Grund wie in M2: Eine M2-App würde `routeNodes` in Geschossdateien als unbekanntes Feld ablehnen; mit Version 3 meldet sie „Projekt wurde mit neuerer App-Version erstellt“. Die Migration `2 → 3` setzt `settings.cableAllowances` auf die Standardwerte und schreibt nichts von selbst (Hinweis „Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben“). Neue Projekte starten in Version 3.
+M3 erhöht `schemaVersion` auf 3. Grund wie in M2: Eine M2-App würde `routeNodes` in Geschossdateien als unbekanntes Feld ablehnen; mit Version 3 meldet sie „Projekt wurde mit neuerer App-Version erstellt“. Die Migration `2 → 3` setzt `settings.lengthAllowance` auf die Standardwerte und schreibt nichts von selbst (Hinweis „Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben“). Neue Projekte starten in Version 3.
 
 ### Dateiformat M3
 M3 schreibt zusätzlich `routeNodes` und `routeSegments` in die Geschossdateien und `leitungen.yaml`. `leitungen.yaml` wird nur geschrieben, wenn es mindestens eine Leitung gibt, sonst gelöscht (`null`), wie `warnungen.yaml`. Neu oder geändert gegenüber M2 (übrige Zeilen gelten unverändert):
 
 | Objekt | Felder in Schreibreihenfolge (`?` = nur wenn gesetzt) | Listen sortiert nach | Flow-Stil |
 |---|---|---|---|
-| `settings` | `northDeg`, `installZones`, `cableAllowances` | – | – |
-| `cableAllowances` | `deviceMm`, `wastePercent` | – | ja |
+| `settings` | `northDeg`, `installZones`, `lengthAllowance` | – | – |
+| `lengthAllowance` | `perDeviceMm`, `wastePercent` | – | ja |
 | Geschossdatei | `storey`, `walls`, `rooms`, `openings`, `devices`, `furniture`, `routeNodes`, `routeSegments` | je Liste nach `id` | – |
 | `routeNode` | `id`, `deviceId?`, `anchors` | – | – |
 | `anchor` | `surface`, `u`, `v` | – | ja |
@@ -46,7 +46,7 @@ M3 schreibt zusätzlich `routeNodes` und `routeSegments` in die Geschossdateien 
 Weitere Regeln:
 - **Ablage:** Ein Knoten steht in der Datei des Geschosses seines ersten Ankers, ein Segment in der Datei des Geschosses seines Knotens `a`. Ein Durchbruch durch eine Geschossdecke hat einen Knoten in jedem der beiden Geschosse; sein Knoten `a` ist der im oberen Geschoss, damit er in dessen Datei steht. Bei Wanddurchbrüchen ist `a` der Knoten auf der Seite, auf der der Benutzer geklickt hat. `storeyId` wird nicht geschrieben, sondern beim Laden gesetzt.
 - **Leitungen** stehen geschossübergreifend in `leitungen.yaml`; `path` ist die geordnete Liste der Segment-IDs vom Endpunkt `from` zum Endpunkt `to`, einzeilig im Flow-Stil.
-- `docs/architektur.md` wird angepasst: `RouteNode.boardId`, `RouteSegment.conduit` mit `size` und `innerDiameterMm`, `Endpoint` mit `boardId` (ab M4), `settings.cableAllowances`.
+- `docs/architektur.md` wird angepasst: `RouteNode.boardId`, `RouteSegment.conduit` mit `size` und `innerDiameterMm`, `Endpoint` mit `boardId` (ab M4), `settings.lengthAllowance`.
 - **Verweise ins Leere** öffnen das Projekt und erzeugen nicht übergehbare Warnungen mit Aktion „Löschen“: Knoten mit unbekannter Fläche in einem Anker, Knoten mit unbekanntem Gerät (Aktion „Vom Gerät lösen“ statt Löschen), Segment mit unbekanntem Knoten, Leitung mit unbekanntem Typ oder Gerät. Unbekannte Segment-IDs in `path` werden beim Laden nicht entfernt, sie machen den Weg unterbrochen (siehe Warnungen); der nächste Befehl entfernt sie mit der Pfadbereinigung in `normalizeAfterCommand`.
 
 ### Knoten und Anker
@@ -87,7 +87,7 @@ Weitere Regeln:
 - **Typprüfung:** Der Leitungstyp ist zulässig, wenn sein Gewerk in `connects` beider Gerätetypen steht. Die Prüfung gilt beim Anlegen und beim Ändern von Typ oder Endpunkt (Ablehnung mit derselben Meldung).
 - **Wegvorschlag:** kürzester Weg (Dijkstra, Gewicht = Segmentlänge in mm, Durchbrüche mit ihrer Länge) im ungerichteten Graphen aller Segmente von einem Gerätknoten des ersten zu einem Gerätknoten des zweiten Geräts. Gibt es mehrere gleich lange Wege, gewinnt der mit der lexikografisch kleineren Folge der Segment-IDs (deterministisch). Ohne Weg bleibt `path` leer.
 - **Weg bearbeiten:** In den Leitungseigenschaften „Weg bearbeiten“: Klicks auf Segmente in Flächenansichten und Grundriss fügen sie hinzu oder entfernen sie; „Fertig“ ordnet die gewählten Segmente zu einer Kette vom ersten zum zweiten Gerät und speichert sie als ein Befehl „Weg ändern“. Lässt sich keine Kette bilden, wird die Auswahl trotzdem gespeichert (in gegebener Reihenfolge) und die Leitung gilt als unterbrochen. „Weg vorschlagen“ ersetzt den Weg durch den Wegvorschlag (Befehl).
-- **Länge:** (Summe der Segmentlängen + 2 · `deviceMm`) · (1 + `wastePercent`/100), angezeigt in m mit einer Nachkommastelle, intern in mm. Standard `deviceMm` 300, `wastePercent` 10; einstellbar in den Projekteinstellungen (Befehl „Leitungszuschläge ändern“, Prüfung ≥ 0). Für eine Leitung ohne zusammenhängenden Weg wird keine Länge angezeigt („–“).
+- **Länge:** (Summe der Segmentlängen + 2 · `perDeviceMm`) · (1 + `wastePercent`/100), angezeigt in m mit einer Nachkommastelle, intern in mm. Standard `perDeviceMm` 300, `wastePercent` 10; einstellbar in den Projekteinstellungen (Befehl „Leitungszuschläge ändern“, Prüfung ≥ 0). Für eine Leitung ohne zusammenhängenden Weg wird keine Länge angezeigt („–“).
 - **Hervorheben:** Ist eine Leitung ausgewählt, werden ihre Segmente in allen Flächenansichten, im Grundriss und in 3D hervorgehoben; der Baum markiert alle Flächen, über die sie läuft.
 
 ### Darstellung
@@ -144,7 +144,7 @@ Neue reine Module: `geometry/routes.ts` (Anker → Welt, Übergänge an Kanten, 
 
 ### Tests und Fixtures
 - Neue Fixture `tests/fixtures/m3/`: Kopie der M2-Fixture mit zwei Geschossen (EG und OG), Trassen in Küche und Flur über eine Raumecke und zur Decke, einem Wanddurchbruch, einem Deckendurchbruch EG/OG, einem Leerrohr M20 und drei Leitungen (eine über beide Geschosse); Golden-File-Test für alle Dateien.
-- Migrations-Test mit der M2-Fixture: Version 3, erster Befehl schreibt `projekt.yaml` mit `cableAllowances`, sonst nichts.
+- Migrations-Test mit der M2-Fixture: Version 3, erster Befehl schreibt `projekt.yaml` mit `lengthAllowance`, sonst nichts.
 - Unit-Tests für Übergänge (Ecke, Decke, Schräge), Gegenknoten (Innenwand, Außenwand, Decke), Längen, Dijkstra (gleich lange Wege deterministisch), Kette ordnen, Füllgrad, Zonenprüfung (alle vier Bedingungen und Diagonale), Teilen mit Pfadanpassung, Löschkaskaden, Normalisierung.
 - Playwright: Trasse von der oberen Zone zur Steckdose zeichnen, über die Ecke fortsetzen, Durchbruch durch die Innenwand, Leitung anlegen und Weg in 3D hervorgehoben, Zuschläge ändern ändert die Länge, speichern und neu laden.
 

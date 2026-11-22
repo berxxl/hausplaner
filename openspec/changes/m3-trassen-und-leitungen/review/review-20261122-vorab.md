@@ -22,7 +22,7 @@ Verdict: PASS nach Korrekturen
 - [R5] [MAJOR] Specs ↔ Meilensteinplan: Die m3-Specs setzten Verteiler als Endpunkte voraus (UV EG, „Leitung zu UV OG“, Verteilerzuschlag), Verteiler kommen aber erst mit m4. Vom Benutzer entschieden am 2026-11-22: Verteiler erst in m4. Behoben: m3-Specs auf Geräte als Endpunkte umgestellt (Längenbeispiel jetzt (8,4 + 0,3 + 0,3) × 1,1 = 9,9 m), Requirement „Mehrere Leitungen gleichzeitig“ und die Verteiler-Fassungen als Deltas nach `m4-verteiler-und-stromkreise/specs/cables` und `…/cable-routes` verschoben; Proposals von m3 und m4 ergänzt.
 - [R6] [MINOR] design.md:Ablage: „Segment in der Datei von Knoten `a`“ widersprach „Deckendurchbruch in der Datei des oberen Geschosses“. Behoben: `a` ist bei Deckendurchbrüchen der obere Knoten, bei Wanddurchbrüchen der auf der angeklickten Seite.
 - [R7] [MINOR] design.md:Verweise ins Leere: Offen war, wann unbekannte Segment-IDs aus `path` verschwinden. Behoben: nicht beim Laden, sondern beim nächsten Befehl über die Pfadbereinigung in `normalizeAfterCommand`.
-- [R8] [INFO] docs/architektur.md führt `RouteNode.boardId`, `Endpoint.boardId` und `conduit.diameterMm`. Die Anpassung (boardId ab M4, `conduit` mit `size` und `innerDiameterMm`, `cableAllowances`) ist Task 1.6.
+- [R8] [INFO] docs/architektur.md führt `RouteNode.boardId`, `Endpoint.boardId` und `conduit.diameterMm`. Die Anpassung (boardId ab M4, `conduit` mit `size` und `innerDiameterMm`, `lengthAllowance`) ist Task 1.6.
 
 ## Stage 3: Umsetzbarkeit und Testbarkeit
 Verdict: PASS

@@ -2,12 +2,12 @@
 
 ## 1. Datenmodell, Dateiformat, Migration
 
-- [ ] 1.1 zod-Schema für `routeNode` (Anker, `deviceId?`), `routeSegment` (`surface` und `penetration`, `conduit?`, `status`), `cable` (`from`/`to` mit `deviceId`, `path`), `settings.cableAllowances` nach `design.md` „Dateiformat M3“, alle Objekte `.strict()`; `CURRENT_SCHEMA_VERSION` = 3; Unit-Test: M3-Fixture besteht die Prüfung, unbekanntes Feld in `routeSegment` ist ein Ladefehler
+- [x] 1.1 zod-Schema für `routeNode` (Anker, `deviceId?`), `routeSegment` (`surface` und `penetration`, `conduit?`, `status`), `cable` (`from`/`to` mit `deviceId`, `path`), `settings.lengthAllowance` nach `design.md` „Dateiformat M3“, alle Objekte `.strict()`; `CURRENT_SCHEMA_VERSION` = 3; Unit-Test: M3-Fixture besteht die Prüfung, unbekanntes Feld in `routeSegment` ist ein Ladefehler
 - [ ] 1.2 Aufteilen und Zusammenführen: Knoten und Segmente in Geschossdateien nach den Ablageregeln (Knoten: Geschoss des ersten Ankers; Segment: Geschoss von Knoten `a`), `storeyId` beim Laden gesetzt; `leitungen.yaml` nur bei mindestens einer Leitung, sonst `null`; Unit-Test Rundreise mit der M3-Fixture
 - [ ] 1.3 Writer-Tabelle erweitern; Golden-File-Tests: (a) M3-Fixture Laden → Speichern byteweise identisch für alle Dateien, (b) Knoten verschieben ändert genau eine Zeile, (c) Leitungsstatus ändern ändert nur `leitungen.yaml`, (d) Segment teilen ändert die Geschossdatei und die Pfade in `leitungen.yaml`
-- [ ] 1.4 Ladeprüfung: doppelte IDs über alle Dateien; Verweise ins Leere (Anker ohne Fläche, Knoten ohne Gerät, Segment ohne Knoten, Leitung ohne Typ oder Gerät, unbekannte IDs in `path`) öffnen das Projekt; Unit-Test je Fall
-- [ ] 1.5 Migration `2 → 3` (Standardzuschläge), neues Projekt in Version 3; Unit-Test mit der M2-Fixture: Migration schreibt nichts, erster Befehl schreibt `projekt.yaml` mit `schemaVersion: 3` und `cableAllowances`, alle übrigen Dateien byteweise unverändert
-- [ ] 1.6 Fixture `tests/fixtures/m3/` nach `design.md` „Tests und Fixtures“ (per Writer erzeugt); `docs/architektur.md` anpassen (`boardId` ab M4, `conduit`, `cableAllowances`, Ablage)
+- [x] 1.4 Ladeprüfung: doppelte IDs über alle Dateien; Verweise ins Leere (Anker ohne Fläche, Knoten ohne Gerät, Segment ohne Knoten, Leitung ohne Typ oder Gerät, unbekannte IDs in `path`) öffnen das Projekt; Unit-Test je Fall
+- [x] 1.5 Migration `2 → 3` (Standardzuschläge), neues Projekt in Version 3; Unit-Test mit der M2-Fixture: Migration schreibt nichts, erster Befehl schreibt `projekt.yaml` mit `schemaVersion: 3` und `lengthAllowance`, alle übrigen Dateien byteweise unverändert
+- [ ] 1.6 Fixture `tests/fixtures/m3/` nach `design.md` „Tests und Fixtures“ (per Writer erzeugt); `docs/architektur.md` anpassen (`boardId` ab M4, `conduit`, `lengthAllowance`, Ablage)
 
 ## 2. Trassengeometrie
 

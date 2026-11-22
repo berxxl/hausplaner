@@ -423,3 +423,6 @@ export const DEFAULT_INSTALL_ZONES = {
   horizontalBottom: [150, 450] as [number, number],
   verticalFromEdge: [100, 300] as [number, number],
 };
+
+/** Standardzuschläge für Leitungslängen (design.md M3 „Leitungen“). */
+export const DEFAULT_LENGTH_ALLOWANCE = { perDeviceMm: 300, wastePercent: 10 };

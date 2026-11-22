@@ -19,9 +19,19 @@ export function readFixture(name: string): Record<string, string> {
   return files;
 }
 
+/** Fixture als M2-Projekt (Schemaversion 2, ohne Leitungszuschläge) für Migrationstests. */
+export function readV2Fixture(name: string): Record<string, string> {
+  const files = readFixture(name);
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace(
+    "schemaVersion: 3",
+    "schemaVersion: 2",
+  ).replace(/ {2}lengthAllowance: .*\n/, "");
+  return files;
+}
+
 /** Fixture als M1-Projekt (Schemaversion 1, ohne Installationszonen) für Migrationstests. */
 export function readV1Fixture(name: string): Record<string, string> {
-  const files = readFixture(name);
+  const files = readV2Fixture(name);
   files["projekt.yaml"] = files["projekt.yaml"]!.replace(
     "schemaVersion: 2",
     "schemaVersion: 1",

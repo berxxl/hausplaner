@@ -1,8 +1,14 @@
 /** Aufteilen und Zusammenführen Project ↔ Dateien. Frei von React. */
 import type { Catalog, DeviceType, Project } from "../model/types";
-import type { CatalogFile, ProjectFile, StoreyFile, WarningsFile } from "../model/schema";
+import type {
+  CablesFile,
+  CatalogFile,
+  ProjectFile,
+  StoreyFile,
+  WarningsFile,
+} from "../model/schema";
 import { writeYaml } from "./writer";
-import { CATALOG_FILE, PROJECT_FILE, storeyFilePath, WARNINGS_FILE } from "./paths";
+import { CABLES_FILE, CATALOG_FILE, PROJECT_FILE, storeyFilePath, WARNINGS_FILE } from "./paths";
 
 /** Serialisiert das Projekt in seine Dateien (Pfad → Inhalt). */
 export function projectToFiles(project: Project): Record<string, string> {
@@ -23,10 +29,12 @@ export function projectToFiles(project: Project): Record<string, string> {
       openings: own(project.openings),
       devices: own(project.devices),
       furniture: own(project.furniture),
+      routeNodes: own(project.routeNodes),
+      routeSegments: own(project.routeSegments),
     };
     files[storeyFilePath(storey.slug)] = writeYaml(storeyFile, "storeyFile");
   }
-  // katalog.yaml und warnungen.yaml nur mit Inhalt; sonst fehlt die Datei (= leer)
+  // katalog.yaml, warnungen.yaml und leitungen.yaml nur mit Inhalt; sonst fehlt die Datei (= leer)
   const { deviceTypes, lineTypes, furnitureTypes } = project.catalog;
   if (deviceTypes.length + lineTypes.length + furnitureTypes.length > 0) {
     files[CATALOG_FILE] = writeYaml(catalogToFile(project.catalog), "catalogFile");
@@ -34,6 +42,10 @@ export function projectToFiles(project: Project): Record<string, string> {
   if (project.suppressedWarnings.length > 0) {
     const warnings: WarningsFile = { suppressedWarnings: project.suppressedWarnings };
     files[WARNINGS_FILE] = writeYaml(warnings, "warningsFile");
+  }
+  if (project.cables.length > 0) {
+    const cables: CablesFile = { cables: project.cables };
+    files[CABLES_FILE] = writeYaml(cables, "cablesFile");
   }
   return files;
 }
@@ -63,6 +75,7 @@ export function filesToProject(
   storeyFiles: StoreyFile[],
   catalogFile?: CatalogFile,
   warningsFile?: WarningsFile,
+  cablesFile?: CablesFile,
 ): Project {
   const project: Project = {
     schemaVersion: projectFile.schemaVersion,
@@ -75,6 +88,9 @@ export function filesToProject(
     openings: [],
     devices: [],
     furniture: [],
+    routeNodes: [],
+    routeSegments: [],
+    cables: (cablesFile?.cables ?? []).map((c) => ({ ...c, path: c.path ?? [] })),
     suppressedWarnings: warningsFile?.suppressedWarnings ?? [],
   };
   for (const file of storeyFiles) {
@@ -85,6 +101,8 @@ export function filesToProject(
     for (const o of file.openings ?? []) project.openings.push({ ...o, storeyId });
     for (const d of file.devices ?? []) project.devices.push({ ...d, storeyId });
     for (const f of file.furniture ?? []) project.furniture.push({ ...f, storeyId });
+    for (const n of file.routeNodes ?? []) project.routeNodes.push({ ...n, storeyId });
+    for (const s of file.routeSegments ?? []) project.routeSegments.push({ ...s, storeyId });
   }
   return project;
 }
