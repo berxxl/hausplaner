@@ -1,0 +1,21 @@
+cables:
+  - id: "c1licht1"
+    label: "Schalter Küche – Deckenauslass"
+    lineTypeId: "nym-j-3x1-5"
+    status: "planned"
+    from: {deviceId: "d2schalt"}
+    to: {deviceId: "d3decke1"}
+    path: ["s1stich1", "s3zone02", "s4hoch01", "s5decke1"]
+  - id: "c2og0001"
+    label: "Deckenauslass Küche – Bodendose Kind"
+    lineTypeId: "nym-j-3x1-5"
+    status: "installed"
+    from: {deviceId: "d3decke1"}
+    to: {deviceId: "d7bodog1"}
+    path: ["s8decke2", "s9kern01", "saboden1"]
+  - id: "c3ohne01"
+    label: "Schalter Küche – Steckdose"
+    lineTypeId: "nym-j-3x1-5"
+    status: "planned"
+    from: {deviceId: "d2schalt"}
+    to: {deviceId: "d1steck1"}

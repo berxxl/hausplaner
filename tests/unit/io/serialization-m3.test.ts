@@ -2,6 +2,8 @@
 import { loadProject } from "../../../src/io/load";
 import { projectToFiles } from "../../../src/io/project-files";
 import type { Project } from "../../../src/model/types";
+import { createProjectStore } from "../../../src/store/history";
+import { makeNode, moveNode, splitSegment } from "../../../src/store/routes";
 import { readFixture, readV2Fixture } from "../fixtures";
 
 function load(files: Record<string, string>): Project {
@@ -139,5 +141,75 @@ describe("Migration 2 → 3 (1.5)", () => {
     );
     for (const path of Object.keys(files).filter((x) => x !== "projekt.yaml"))
       expect(out[path]).toBe(files[path]);
+  });
+});
+
+/** Zeilen, die sich zwischen zwei Dateiständen unterscheiden. */
+function changedLines(a: Record<string, string>, b: Record<string, string>) {
+  const changes: string[] = [];
+  for (const path of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const la = (a[path] ?? "").split("\n");
+    const lb = (b[path] ?? "").split("\n");
+    if (la.length !== lb.length) {
+      changes.push(`${path}: Zeilenzahl`);
+      continue;
+    }
+    la.forEach((line, i) => line !== lb[i] && changes.push(`${path}:${i + 1}`));
+  }
+  return changes;
+}
+
+describe("Aufteilen und Zusammenführen M3 (1.2)", () => {
+  test("M3-Fixture: Knoten und Segmente je Geschoss, Durchbruch EG/OG im OG, storeyId gesetzt", () => {
+    const p = load(readFixture("m3"));
+    expect(p.storeys).toHaveLength(2);
+    const og = p.storeys.find((s) => s.slug === "og")!.id;
+    expect(p.routeSegments.find((s) => s.id === "s9kern01")!.storeyId).toBe(og);
+    expect(p.routeNodes.find((n) => n.id === "n9durch1")!.storeyId).toBe(EG);
+    expect(p.cables.map((c) => c.id)).toEqual(["c1licht1", "c2og0001", "c3ohne01"]);
+  });
+});
+
+describe("Golden Files M3 (1.3)", () => {
+  const store = () => createProjectStore(load(readFixture("m3")));
+
+  test("(a) M3-Fixture: Laden → Speichern byteweise identisch für alle Dateien", () => {
+    const files = readFixture("m3");
+    expect(projectToFiles(load(files))).toEqual(files);
+  });
+
+  test("(b) Knoten verschieben ändert genau eine Zeile", () => {
+    const s = store();
+    const before = projectToFiles(s.getState().project);
+    s.execute(moveNode("n4zone02", { surface: "wall:1bih0wst:R", u: 2100, v: 2065 }));
+    expect(changedLines(before, projectToFiles(s.getState().project))).toHaveLength(1);
+  });
+
+  test("(c) Leitungsstatus ändern ändert nur leitungen.yaml", () => {
+    const s = store();
+    const before = projectToFiles(s.getState().project);
+    s.execute({ label: "Leitung ändern", run: (d) => void (d.cables[0]!.status = "verified") });
+    const changes = changedLines(before, projectToFiles(s.getState().project));
+    expect(changes).toEqual(["leitungen.yaml:5"]);
+  });
+
+  test("(d) Segment teilen ändert die Geschossdatei und die Pfade in leitungen.yaml", () => {
+    const s = store();
+    const before = projectToFiles(s.getState().project);
+    const p = s.getState().project;
+    s.execute(
+      splitSegment({
+        segmentId: "s3zone02",
+        node: makeNode(p, "nczweig1", [{ surface: "wall:1bih0wst:R", u: 2800, v: 2065 }]),
+        idA: "sczweiga",
+        idB: "sczweigb",
+      }),
+    );
+    const after = projectToFiles(s.getState().project);
+    const files = new Set(changedLines(before, after).map((c) => c.split(":")[0]));
+    expect(files).toEqual(new Set(["geschosse/eg.yaml", "leitungen.yaml"]));
+    expect(after["leitungen.yaml"]).toContain(
+      'path: ["s1stich1", "sczweigb", "sczweiga", "s4hoch01", "s5decke1"]',
+    );
   });
 });

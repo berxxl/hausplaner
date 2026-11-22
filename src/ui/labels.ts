@@ -35,3 +35,13 @@ export const STATUS_LABELS = {
 } as const;
 
 export const WARNING_COLOR = "#d70015";
+
+/** „2 Geräte und 1 Leitung werden mitgelöscht.“ (design.md M2/M3 „Löschen“); null, wenn nichts. */
+export function cascadeMessage(devices: number, cables: number): string | null {
+  const parts: string[] = [];
+  if (devices > 0) parts.push(`${devices} ${devices === 1 ? "Gerät" : "Geräte"}`);
+  if (cables > 0) parts.push(`${cables} ${cables === 1 ? "Leitung" : "Leitungen"}`);
+  if (parts.length === 0) return null;
+  const singular = parts.length === 1 && (devices === 1 || cables === 1);
+  return `${parts.join(" und ")} ${singular ? "wird" : "werden"} mitgelöscht.`;
+}

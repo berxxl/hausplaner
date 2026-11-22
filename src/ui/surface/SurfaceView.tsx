@@ -32,6 +32,9 @@ import type { SurfaceTool } from "../../store/view";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
 import { DeviceGlyph } from "../DeviceGlyph";
 import { isTextTarget } from "../shortcuts";
+import { useConfirm } from "../useConfirm";
+import { cascadeMessage } from "../labels";
+import { dependentCableCount } from "../../store/routes";
 import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { warnedIds } from "../derived";
@@ -64,6 +67,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
   const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
   const [message, setMessage] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const model = useMemo(() => (target ? surfaceModel(project, target) : null), [project, target]);
 
   const hasModel = model !== null;
@@ -87,14 +91,23 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTextTarget(e.target)) return;
-      if ((e.key === "Delete" || e.key === "Backspace") && view.selectedDevices().length > 0) {
+      const ids = view.selectedDevices();
+      if ((e.key === "Delete" || e.key === "Backspace") && ids.length > 0) {
         e.preventDefault();
-        store.execute(deleteDevices(view.selectedDevices()));
+        void (async () => {
+          const msg = cascadeMessage(0, dependentCableCount(store.getState().project, ids));
+          if (
+            msg &&
+            !(await confirm({ title: "Gerät löschen?", message: msg, confirmLabel: "Löschen" }))
+          )
+            return;
+          store.execute(deleteDevices(ids));
+        })();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [store, view]);
+  }, [store, view, confirm]);
 
   useLayoutEffect(() => {
     const el = container.current;
@@ -574,6 +587,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           Rohfußboden
         </p>
       )}
+      {confirmDialog}
     </div>
   );
 }

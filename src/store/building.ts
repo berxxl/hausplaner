@@ -27,7 +27,11 @@ export function onSurfaceOf(
 
 /** Anzahl der Geräte, die mit der Wand bzw. dem Raum gelöscht würden. */
 export function dependentDeviceCount(project: Project, owner: "wall" | "room", id: string) {
-  return project.devices.filter((d) => onSurfaceOf(d, owner, id)).length;
+  return dependentDeviceIds(project, owner, id).length;
+}
+
+export function dependentDeviceIds(project: Project, owner: "wall" | "room", id: string) {
+  return project.devices.filter((d) => onSurfaceOf(d, owner, id)).map((d) => d.id);
 }
 
 export function wallGeoms(project: Project | Draft<Project>, storeyId: string): WallGeom[] {

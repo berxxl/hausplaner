@@ -7,6 +7,8 @@
 | `klein/` | ein Geschoss „EG“, 8000 × 6000 mm Außenmaß (Achsen), Außenwände 300 mm, Innenwände 120 mm, vier Räume (Küche, Wohnen, Bad mit 140 mm Fußbodenaufbau, Schlafen), ein Fenster mit innen liegendem Rollladenkasten, eine Tür |
 | `leer/` | ein Geschoss „EG“ ohne Bauteile, Ausgangspunkt für Zeichentests |
 | `dg/` | `geschosse/dg.yaml` ist das verbindliche Beispiel aus `openspec/changes/m1-gebaeudemodell/design.md` (Abschnitt „Dateiformat M1“): Raum „Schlafen“ mit Schräge 45° ab 1000 mm an der Südwand (Kniestock), Ost- und Westwand als Giebelwände unter der Schräge, Fenster mit Aufsatzkasten in der Nordwand |
+| `m2/` | `klein/` mit Katalog (eigener Typ „Steckdose USB-C“, Möbeltypen Küchenunterschrank und Kleiderschrank), sechs Geräten auf Wand, Decke, Boden und frei, einem Kleiderschrank und der übergangenen Warnung `device-covered:d6usbsch` |
+| `m3/` | `m2/` plus OG auf 2800 mm (gleiche Wände, Raum „Kind“ über der Küche, Bodendose); Trassen in der Küche vom Schalter in die obere Zone, über die Raumecke zur Bohrung in die Innenwand (40 mm) und über die Oberkante zum Deckenauslass, Leerrohr M20, Kernbohrung 65 mm Küchendecke → Boden OG; drei Leitungen (eine über beide Geschosse, eine ohne Weg). Erzeugt über die Store-Befehle, daher normalisiert |
 
 Alle Dateien sind kanonisch geschrieben: Laden und Speichern muss sie byteweise unverändert lassen.
 

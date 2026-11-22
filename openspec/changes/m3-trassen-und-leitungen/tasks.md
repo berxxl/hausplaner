@@ -3,11 +3,11 @@
 ## 1. Datenmodell, Dateiformat, Migration
 
 - [x] 1.1 zod-Schema für `routeNode` (Anker, `deviceId?`), `routeSegment` (`surface` und `penetration`, `conduit?`, `status`), `cable` (`from`/`to` mit `deviceId`, `path`), `settings.lengthAllowance` nach `design.md` „Dateiformat M3“, alle Objekte `.strict()`; `CURRENT_SCHEMA_VERSION` = 3; Unit-Test: M3-Fixture besteht die Prüfung, unbekanntes Feld in `routeSegment` ist ein Ladefehler
-- [ ] 1.2 Aufteilen und Zusammenführen: Knoten und Segmente in Geschossdateien nach den Ablageregeln (Knoten: Geschoss des ersten Ankers; Segment: Geschoss von Knoten `a`), `storeyId` beim Laden gesetzt; `leitungen.yaml` nur bei mindestens einer Leitung, sonst `null`; Unit-Test Rundreise mit der M3-Fixture
-- [ ] 1.3 Writer-Tabelle erweitern; Golden-File-Tests: (a) M3-Fixture Laden → Speichern byteweise identisch für alle Dateien, (b) Knoten verschieben ändert genau eine Zeile, (c) Leitungsstatus ändern ändert nur `leitungen.yaml`, (d) Segment teilen ändert die Geschossdatei und die Pfade in `leitungen.yaml`
+- [x] 1.2 Aufteilen und Zusammenführen: Knoten und Segmente in Geschossdateien nach den Ablageregeln (Knoten: Geschoss des ersten Ankers; Segment: Geschoss von Knoten `a`), `storeyId` beim Laden gesetzt; `leitungen.yaml` nur bei mindestens einer Leitung, sonst `null`; Unit-Test Rundreise mit der M3-Fixture
+- [x] 1.3 Writer-Tabelle erweitern; Golden-File-Tests: (a) M3-Fixture Laden → Speichern byteweise identisch für alle Dateien, (b) Knoten verschieben ändert genau eine Zeile, (c) Leitungsstatus ändern ändert nur `leitungen.yaml`, (d) Segment teilen ändert die Geschossdatei und die Pfade in `leitungen.yaml`
 - [x] 1.4 Ladeprüfung: doppelte IDs über alle Dateien; Verweise ins Leere (Anker ohne Fläche, Knoten ohne Gerät, Segment ohne Knoten, Leitung ohne Typ oder Gerät, unbekannte IDs in `path`) öffnen das Projekt; Unit-Test je Fall
 - [x] 1.5 Migration `2 → 3` (Standardzuschläge), neues Projekt in Version 3; Unit-Test mit der M2-Fixture: Migration schreibt nichts, erster Befehl schreibt `projekt.yaml` mit `schemaVersion: 3` und `lengthAllowance`, alle übrigen Dateien byteweise unverändert
-- [ ] 1.6 Fixture `tests/fixtures/m3/` nach `design.md` „Tests und Fixtures“ (per Writer erzeugt); `docs/architektur.md` anpassen (`boardId` ab M4, `conduit`, `lengthAllowance`, Ablage)
+- [x] 1.6 Fixture `tests/fixtures/m3/` nach `design.md` „Tests und Fixtures“ (per Writer erzeugt); `docs/architektur.md` anpassen (`boardId` ab M4, `conduit`, `lengthAllowance`, Ablage)
 
 ## 2. Trassengeometrie
 
@@ -18,8 +18,8 @@
 
 ## 3. Trassen zeichnen und bearbeiten
 
-- [ ] 3.1 Befehle in `store/routes.ts`: „Trasse zeichnen“ (Segment mit neuen oder vorhandenen Knoten), „Segment teilen“, „Knoten verschieben“, „Segment ändern“ (Status, Leerrohr), „Trasse löschen“ (Knoten mit Segmenten, Segment allein); Unit-Tests inkl. Undo
-- [ ] 3.2 `normalizeAfterCommand`: Gerätknoten auf Gerätelage, weitere Anker von Übergangsknoten, verwaiste Knoten entfernen, gelöschte Segmente aus Pfaden entfernen; Löschkaskaden für Gerät, Wand, Raum, Geschoss mit Anzahl mitgelöschter Leitungen in der Bestätigung; Unit-Tests: Gerät verschieben zieht den Knoten mit, Gerät löschen löscht seine Leitungen und lässt den Knoten stehen, Wand löschen nimmt Knoten und Segmente mit, Undo stellt alles her
+- [x] 3.1 Befehle in `store/routes.ts`: „Trasse zeichnen“ (Segment mit neuen oder vorhandenen Knoten), „Segment teilen“, „Knoten verschieben“, „Segment ändern“ (Status, Leerrohr), „Trasse löschen“ (Knoten mit Segmenten, Segment allein); Unit-Tests inkl. Undo
+- [x] 3.2 `normalizeAfterCommand`: Gerätknoten auf Gerätelage, weitere Anker von Übergangsknoten, verwaiste Knoten entfernen, gelöschte Segmente aus Pfaden entfernen; Löschkaskaden für Gerät, Wand, Raum, Geschoss mit Anzahl mitgelöschter Leitungen in der Bestätigung; Unit-Tests: Gerät verschieben zieht den Knoten mit, Gerät löschen löscht seine Leitungen und lässt den Knoten stehen, Wand löschen nimmt Knoten und Segmente mit, Undo stellt alles her
 - [ ] 3.3 Werkzeug „Trasse“ in der Flächenansicht mit Fang (Gerät, Knoten, Segment → Abzweig, Kante, Winkelfang, Shift), Zug bis Esc; Playwright: Trasse von der oberen Zone senkrecht zur Steckdose endet in einem Gerätknoten (Spec-Scenario „Trasse zur Steckdose“), Klick auf ein Segment teilt es (Spec-Scenario „Abzweig“), Trasse bis an die rechte Ecke und in der Nachbarwand fortsetzen
 - [ ] 3.4 Auswahl, Ziehen und Eigenschaften von Knoten und Segmenten (u, v, Abstand zur Bezugskante, Status, Leerrohr, Belegung), Mehrfachauswahl mit Shift; Komponententest: drei Segmente gemeinsam auf „verlegt“, ein Undo-Schritt (Spec-Scenario „Mehrere Segmente verlegt“); Knoten auf 1830 mm ab Raumecke und Segment auf „verlegt“ (Spec-Scenario „Aufmaß übernehmen“)
 - [ ] 3.5 Werkzeug „Durchbruch“ mit Dialog (Art, Durchmesser mit Standardwerten); Komponententest: Durchbruch in der Küchenwand erscheint in der Fluransicht

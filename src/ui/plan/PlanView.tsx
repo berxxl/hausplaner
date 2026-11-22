@@ -91,7 +91,9 @@ import {
 } from "../../store/furniture";
 import { warnedIds, warningsOf } from "../derived";
 import { isDeviceVisible } from "../filter";
-import { dependentDeviceCount } from "../../store/building";
+import { dependentDeviceIds } from "../../store/building";
+import { dependentCableCount } from "../../store/routes";
+import { cascadeMessage } from "../labels";
 import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
 import { DeviceGlyph } from "../DeviceGlyph";
@@ -369,16 +371,28 @@ export function PlanView({ store, view }: PlanViewProps) {
     return () => el.removeEventListener("wheel", onWheel);
   }, [cam, vp]);
 
-  /** Löschen der Auswahl; mitgelöschte Geräte werden vorher bestätigt (design.md M2). */
+  /** Löschen der Auswahl; mitgelöschte Geräte und Leitungen werden vorher bestätigt (design.md M2, M3). */
   const deleteSelection = async () => {
     const sel = view.getState().selection;
     if (!sel) return;
-    if (sel.kind === "wall" || sel.kind === "room") {
-      const n = dependentDeviceCount(project, sel.kind, sel.id);
-      if (n > 0) {
+    if (sel.kind === "wall" || sel.kind === "room" || sel.kind === "device") {
+      const ids =
+        sel.kind === "device"
+          ? view.selectedDevices()
+          : dependentDeviceIds(project, sel.kind, sel.id);
+      const message = cascadeMessage(
+        sel.kind === "device" ? 0 : ids.length,
+        dependentCableCount(project, ids),
+      );
+      if (message) {
         const ok = await confirm({
-          title: sel.kind === "wall" ? "Wand löschen?" : "Raum löschen?",
-          message: `${n} ${n === 1 ? "Gerät wird" : "Geräte werden"} mitgelöscht.`,
+          title:
+            sel.kind === "wall"
+              ? "Wand löschen?"
+              : sel.kind === "room"
+                ? "Raum löschen?"
+                : "Gerät löschen?",
+          message,
           confirmLabel: "Löschen",
         });
         if (!ok) return;

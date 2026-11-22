@@ -1,0 +1,9 @@
+schemaVersion: 3
+name: "Kleines Projekt"
+settings:
+  northDeg: 0
+  installZones:
+    horizontalTop: [150, 450]
+    horizontalBottom: [150, 450]
+    verticalFromEdge: [100, 300]
+  lengthAllowance: {perDeviceMm: 300, wastePercent: 10}

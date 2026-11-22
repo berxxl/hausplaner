@@ -187,3 +187,14 @@ describe("Darstellung (3.8)", () => {
     expect(store.getState().project.devices).toHaveLength(6);
   });
 });
+
+describe("Bestätigungstext beim Mitlöschen (M3)", () => {
+  test("Geräte und Leitungen", async () => {
+    const { cascadeMessage } = await import("../../../src/ui/labels");
+    expect(cascadeMessage(2, 0)).toBe("2 Geräte werden mitgelöscht.");
+    expect(cascadeMessage(1, 0)).toBe("1 Gerät wird mitgelöscht.");
+    expect(cascadeMessage(0, 1)).toBe("1 Leitung wird mitgelöscht.");
+    expect(cascadeMessage(2, 1)).toBe("2 Geräte und 1 Leitung werden mitgelöscht.");
+    expect(cascadeMessage(0, 0)).toBeNull();
+  });
+});
