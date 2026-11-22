@@ -918,7 +918,8 @@ button {
 
 /* Exportdialog (M5) */
 .dialog.export-dialog {
-  width: min(960px, 94vw);
+  max-width: 56rem;
+  width: 90vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -951,8 +952,12 @@ button {
 .export-dialog__room {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 0.25rem 0.75rem;
   padding-left: 1rem;
+}
+.export-dialog__room > span {
+  min-width: 7rem;
 }
 .export-dialog__strong {
   font-weight: 600;

@@ -2,7 +2,7 @@
  * Dialog „Baustellen-PDF“ (design.md M5 „Baustellen-PDF“): Räume wählen, Filter, Seitenzahl,
  * Meldungen; erzeugt die PDF mit eingebetteter Seitenzuordnung.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { pdfFileName } from "../../export/compose";
 import { SITE_PDF_NAMESPACE, siteMappingText } from "../../export/mapping";
@@ -32,6 +32,9 @@ export function SiteExportDialog({
   const [rooms, setRooms] = useState<string[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  // Fokus in den Dialog, damit Esc sofort schließt
+  useEffect(() => ref.current?.focus(), []);
   const date = formatDate(new Date());
 
   const result = useMemo(
@@ -82,6 +85,8 @@ export function SiteExportDialog({
   return (
     <div className="dialog-backdrop">
       <div
+        ref={ref}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="site-title"

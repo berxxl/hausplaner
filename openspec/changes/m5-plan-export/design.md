@@ -103,6 +103,7 @@ Ein Probelauf vor dem Design (2026-11-22) ergab: svg2pdf.js braucht `getBBox` un
 - [svg2pdf.js ist nur im Browser prüfbar] → Blätter sind rein und unit-getestet; der PDF-Schritt ist dünn und wird in Playwright in Chromium, Firefox und WebKit geprüft. Safari des Benutzers ist älter als Playwright-WebKit: beide Bibliotheken wurden auf sehr neue APIs durchsucht (keine Treffer); nach der Umsetzung prüft der Benutzer in Safari.
 - [Standardschriften nur WinAnsi] → `pdfText` ersetzt bekannte Zeichen; Umlaute, „ß“, „×“, „·“, „–“, „„ “ sind enthalten. Eigene Schriften wären mehrere 100 kB groß.
 - [Maßketten können sich bei dichten Geräten überdecken] → senkrecht gesetzte Werte mit 1,8 mm Schrift; 71-mm-Kombinationen liegen bei 1:20 3,55 mm auseinander und bleiben lesbar, bei 1:50 (1,42 mm) nicht. Baustellen-PDF bevorzugt 1:20.
+- [1:20 auf A4 ist eng] → mit Maßketten (22 mm), Überschrift und Notizbereich (40 mm) passt eine Fläche in 1:20 hoch bis etwa 3,1 × 3,2 m, quer bis etwa 4,0 × 2,4 m; größere Flächen kommen in 1:25 bzw. 1:50 mit Hinweis auf der Seite. Prüfung durch den Benutzer in 8.2.
 - [Große PDFs] → ein Haus mit 40 Räumen ergibt rund 200 Seiten; svg2pdf.js braucht dafür einige Sekunden. Fortschrittsanzeige, kein Abbruch nötig.
 
 ## Entscheidungen bei der Ausarbeitung (2026-11-22, zur Prüfung durch den Benutzer)

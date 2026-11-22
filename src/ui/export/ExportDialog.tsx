@@ -2,7 +2,7 @@
  * Dialog „PDF exportieren“ (design.md M5 „Exportdialog“): Inhalt, Maßstab, Format, Planstand,
  * Gewerke, Status, Passmeldungen, Fortschritt, Download.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { pdfFileName, type ExportOptions } from "../../export/compose";
 import {
@@ -61,6 +61,9 @@ export function ExportDialog({
   }));
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  // Fokus in den Dialog, damit Esc sofort schließt
+  useEffect(() => ref.current?.focus(), []);
 
   const options: ExportOptions = useMemo(
     () => ({
@@ -119,6 +122,8 @@ export function ExportDialog({
   return (
     <div className="dialog-backdrop">
       <div
+        ref={ref}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-title"
