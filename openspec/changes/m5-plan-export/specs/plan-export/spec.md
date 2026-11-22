@@ -42,7 +42,7 @@ Das System SHALL jedes Blatt mit Plankopf (Projekt, Planinhalt, Geschoss, Maßst
 - **THEN** zeigt die Legende genau diese Symbole mit Namen
 
 ### Requirement: Baustellen-PDF
-Das System SHALL eine Baustellen-PDF für ausgewählte Räume erzeugen: je Wandseite, Decke und Boden eine Seite A4 im Maßstab 1:20 (bei Bedarf kleiner, mit Angabe auf dem Blatt), mit Millimeterraster, Bemaßung ab linker Raumecke und OKFF, geplanten Geräten und Trassen sowie freiem Notizbereich.
+Das System SHALL eine Baustellen-PDF für ausgewählte Räume erzeugen: je Wandseite, Decke und Boden eine Seite A4 im Maßstab 1:20 (bei Bedarf kleiner, mit Angabe auf dem Blatt), mit einem Raster in Flächenmaß (100 mm fein, 1 m kräftig), Bemaßung ab linker Raumecke und OKFF, geplanten Geräten und Trassen sowie freiem Notizbereich.
 
 #### Scenario: Bad für die Baustelle
 - **WHEN** der Benutzer für „Bad OG“ eine Baustellen-PDF erzeugt

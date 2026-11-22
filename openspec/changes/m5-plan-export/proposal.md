@@ -21,6 +21,8 @@ Der Elektriker und andere Gewerke arbeiten mit ausgedruckten bzw. als PDF versch
 
 ### Modified Capabilities
 
+- `workspace`: Editor „Listen“ im Editorbereich
+
 ## Impact
 
-Neues Modul `export/`; Listenansicht; keine Änderung am Datenmodell. Setzt `m4-verteiler-und-stromkreise` voraus.
+Neue Module `reports/` und `export/`; Editor „Listen“ (MODIFIED `workspace`); Abhängigkeiten jsPDF und svg2pdf.js; keine Änderung am Datenmodell. Setzt `m4-verteiler-und-stromkreise` voraus.
