@@ -60,6 +60,8 @@
 - [x] R.4 banatstrasse10 OG: Wandenden auf die Achsen legen, `aoytki8w` (Flurabgrenzung mit gleich großer Öffnung) durch eine Raumgrenze ersetzen, Räume neu erkennen; Diff dem Benutzer zeigen (2026-11-22 über Store-Befehle geschrieben, nur `geschosse/og.yaml`; Stub `6e59j4hq` bleibt wie im EG frei, `r84ym8kl` offen – Rückfrage; Wandstärke `kmqewfc4` 230 mm vom Benutzer bestätigt)
 
 - [x] R.5 Verteiler nach dem Platzieren per Maus verschieben: im Grundriss entlang der Wand ziehen (bisher nur auswählen), in der Flächenansicht prüfen (Ziehen ist dort umgesetzt; ergänzt: u auf die Seitenfläche begrenzt); ein Befehl „Verteiler verschieben“, Verteilerknoten folgt; Komponententest und Playwright (Spec-Scenario „Verteiler per Maus verschieben“)
+- [x] R.6 (Befund 7.2) Werkzeug „Verteiler“: Klick auf einen vorhandenen Verteiler wählt ihn aus und verschiebt ihn, statt den Dialog „Verteiler anlegen“ zu öffnen (wie Werkzeug „Öffnung“); Komponententest
+- [x] R.7 (Befund 7.2) Belegungsansicht: Beschriftung auf das Gerät beschnitten, Geräte unter 3 TE einzeilig senkrecht, Typzeile nur, wenn sie von der Bezeichnung abweicht; trägt ein Gerät noch den Typnamen, zeigt es den Kurznamen seines Stromkreises (LS) oder, wenn schmal, das Kürzel aus dem Symbol („LS“); Tooltip mit Bezeichnung, Typ, Stromkreis und Kanälen; Komponententest
 
 ## Workflow follow-up
 

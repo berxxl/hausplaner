@@ -24,7 +24,8 @@ import { deleteDevices } from "../../store/devices";
 import type { ProjectStore } from "../../store/history";
 import type { ViewStore } from "../../store/view";
 import { isTextTarget } from "../shortcuts";
-import { BOARD_LAYOUT, boardLayout, slotAt, slotPosition } from "./layout";
+import { BOARD_LAYOUT, boardLayout, slotAt, slotPosition, symbolText } from "./layout";
+import { circuitShortName } from "../../geometry/circuits";
 import { STATUS_COLORS } from "../labels";
 
 type Drag =
@@ -206,6 +207,19 @@ export function BoardView({ store, view }: { store: ProjectStore; view: ViewStor
             const selected = selectedIds.has(d.id);
             const highlighted = circuit?.protectionDeviceId === d.id;
             const channels = assignmentsOf(d.id);
+            // Beschriftung (7.2): schmale Geräte senkrecht; trägt ein Gerät noch den Typnamen, zeigt es
+            // seinen Stromkreis (LS) oder, wenn schmal, das Kürzel aus dem Symbol
+            const typeName = type?.name ?? d.typeId;
+            const protects = project.circuits.find((c) => c.protectionDeviceId === d.id);
+            const narrow = deviceTeWidth(type) < 3;
+            const shown =
+              d.label !== typeName
+                ? d.label
+                : protects
+                  ? circuitShortName(protects.label)
+                  : narrow
+                    ? (symbolText(type?.symbol) ?? d.label)
+                    : d.label;
             return (
               <g
                 key={d.id}
@@ -228,22 +242,43 @@ export function BoardView({ store, view }: { store: ProjectStore; view: ViewStor
                   fillOpacity={0.18}
                   stroke={STATUS_COLORS[d.status]}
                 />
-                <text x={pos.x + 4} y={pos.y + 16}>
-                  {d.label}
-                </text>
-                <text x={pos.x + 4} y={pos.y + 32} className="board-view__type">
-                  {type?.name ?? d.typeId}
-                </text>
-                {channels.length > 0 && (
-                  <title>
-                    {channels
-                      .map((a) => {
-                        const c = project.devices.find((x) => x.id === a.consumerDeviceId);
-                        return `${channelLabel(d.label, a.channel)} → ${c?.label ?? "?"}`;
-                      })
-                      .join("\n")}
-                  </title>
-                )}
+                <clipPath id={`board-clip-${d.id}`}>
+                  <rect x={pos.x + 1} y={pos.y + 1} width={w - 2} height={L.row - 10} />
+                </clipPath>
+                <g clipPath={`url(#board-clip-${d.id})`}>
+                  {narrow ? (
+                    <text
+                      data-board-label={d.id}
+                      transform={`translate(${pos.x + w / 2 + 4} ${pos.y + L.row - 14}) rotate(-90)`}
+                    >
+                      {shown}
+                    </text>
+                  ) : (
+                    <>
+                      <text data-board-label={d.id} x={pos.x + 4} y={pos.y + 16}>
+                        {shown}
+                      </text>
+                      {typeName !== shown && (
+                        <text x={pos.x + 4} y={pos.y + 32} className="board-view__type">
+                          {typeName}
+                        </text>
+                      )}
+                    </>
+                  )}
+                </g>
+                <title>
+                  {[
+                    d.label,
+                    typeName !== d.label ? typeName : null,
+                    protects ? protects.label : null,
+                    ...channels.map((a) => {
+                      const c = project.devices.find((x) => x.id === a.consumerDeviceId);
+                      return `${channelLabel(d.label, a.channel)} → ${c?.label ?? "?"}`;
+                    }),
+                  ]
+                    .filter(Boolean)
+                    .join("\n")}
+                </title>
               </g>
             );
           })}

@@ -7,7 +7,7 @@ import type { Project } from "../../../src/model/types";
 import { createProjectStore } from "../../../src/store/history";
 import { createViewStore } from "../../../src/store/view";
 import { BoardView } from "../../../src/ui/board/BoardView";
-import { slotPosition } from "../../../src/ui/board/layout";
+import { slotPosition, symbolText } from "../../../src/ui/board/layout";
 import { PlanView } from "../../../src/ui/plan/PlanView";
 import { Properties } from "../../../src/ui/Properties";
 import { SurfaceView } from "../../../src/ui/surface/SurfaceView";
@@ -223,6 +223,77 @@ describe("Verteiler per Maus verschieben (R.5)", () => {
     expect(uv(store).placement).toEqual({ surface: SIDE, u: Math.round(side.uMin + 275), v: 1600 });
     expect(node(store).anchors).toEqual([boardNodeAnchor(uv(store))]);
     expect(store.undoLabel()).toBe("Verteiler verschieben");
+  });
+
+  test("Werkzeug „Verteiler“: Klick auf einen vorhandenen Verteiler wählt und verschiebt ihn statt einen neuen anzulegen (7.2)", () => {
+    const store = withNode();
+    const view = createViewStore({ surface: { kind: "wall-side", ref: SIDE }, editor: "surface" });
+    render(<SurfaceView store={store} view={view} />);
+    fireEvent.click(
+      within(screen.getByRole("toolbar", { name: "Werkzeuge der Fläche" })).getByRole("button", {
+        name: "Verteiler",
+      }),
+    );
+    const svg = screen.getByRole("img", { name: "Flächenansicht" });
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf("Flächenansicht", 2000, 1620) });
+    expect(view.getState().selection).toEqual({ kind: "board", id: UV });
+    fireEvent.pointerMove(svg, screenOf("Flächenansicht", 2400, 1620));
+    fireEvent.pointerUp(svg, screenOf("Flächenansicht", 2400, 1620));
+    expect(screen.queryByRole("dialog", { name: "Verteiler anlegen" })).toBeNull();
+    expect(P(store).boards).toHaveLength(4);
+    expect(uv(store).placement.u).toBe(2400);
+    expect(store.undoLabel()).toBe("Verteiler verschieben");
+    // daneben auf der freien Wand: Dialog zum Anlegen
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf("Flächenansicht", 400, 1620) });
+    expect(screen.getByRole("dialog", { name: "Verteiler anlegen" })).toBeInTheDocument();
+  });
+});
+
+describe("Beschriftung in der Belegung (7.2)", () => {
+  test("LS nebeneinander: senkrecht, auf das Gerät beschnitten, LS mit Typnamen zeigt den Stromkreis; alles im Tooltip", () => {
+    const store = load("m4");
+    store.execute({
+      label: "LS und Kreis",
+      run(d) {
+        d.devices.push({
+          id: "dls00002",
+          label: "LS-Schalter",
+          typeId: "mcb",
+          status: "planned",
+          placement: { kind: "board", boardId: "b2uveg01", fieldId: "f4vert02", row: 1, slot: 2 },
+          storeyId: "e0g1k2m3",
+        });
+        d.circuits.push({
+          id: "k3f3bad1",
+          label: "F3 Bad",
+          boardId: "b2uveg01",
+          protectionDeviceId: "dls00002",
+          lineTypeId: "nym-j-3x1-5",
+        });
+      },
+    });
+    const view = createViewStore();
+    act(() => view.openBoard("b2uveg01"));
+    render(<BoardView store={store} view={view} />);
+    const svg = screen.getByRole("img", { name: "Belegung" });
+    const ls = svg.querySelector('[data-board-device="dls00002"]')!;
+    const label = ls.querySelector("[data-board-label]")!;
+    expect(label).toHaveTextContent(/^F3$/);
+    expect(label.getAttribute("transform")).toContain("rotate(-90)");
+    // keine zweite Zeile mit dem Typnamen, Text auf das Geräterechteck beschnitten
+    expect(ls.querySelectorAll("text")).toHaveLength(1);
+    expect(ls.querySelector("[clip-path]")).not.toBeNull();
+    expect(ls.querySelector("title")).toHaveTextContent("LS-Schalter");
+    expect(ls.querySelector("title")).toHaveTextContent("F3 Bad");
+    // eigene Bezeichnung bleibt
+    const f1 = svg.querySelector('[data-board-device="d8lsf101"] [data-board-label]')!;
+    expect(f1).toHaveTextContent("F1 LS B16");
+  });
+
+  test("Kürzel aus dem Symbol: genau ein Text, sonst keiner", () => {
+    expect(symbolText("<rect/><text x='50' font-size='30'>LS</text>")).toBe("LS");
+    expect(symbolText("<text>A</text><text>B</text>")).toBeNull();
+    expect(symbolText(undefined)).toBeNull();
   });
 });
 

@@ -26,7 +26,7 @@ import { snapPoints, surfaceModel, type SurfaceModel } from "./model";
 import { frontRect, viewPlacement, wallDeviceBuildup } from "../../geometry/devices";
 import { allIds } from "../../model/factory";
 import { newId } from "../../model/ids";
-import type { Device, DevicePlacement } from "../../model/types";
+import type { Board, Device, DevicePlacement } from "../../model/types";
 import { addDevice, deleteDevices, placementStorey } from "../../store/devices";
 import type { SurfaceTool } from "../../store/view";
 import { DeviceTypePicker } from "../catalog/DeviceTypePicker";
@@ -411,6 +411,14 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     });
   };
 
+  /** Wählt einen Verteiler aus und beginnt das Verschieben auf seiner Wandseite (ein Befehl). */
+  const grabBoard = (board: Board, world: Vec, e: ReactPointerEvent<SVGSVGElement>) => {
+    view.select({ kind: "board", id: board.id });
+    store.begin("Verteiler verschieben");
+    drag.current = { kind: "board", id: board.id, start: world, base: { ...board.placement } };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return;
     const world = toWorld(e);
@@ -423,6 +431,9 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       );
     }
     if (tool === "board") {
+      // Vorhandener Verteiler: auswählen und verschieben statt neu anlegen (7.2, wie „Öffnung“)
+      const existing = hitBoard(world);
+      if (existing) return grabBoard(existing.board, world, e);
       if (!model.ref.startsWith("wall:")) return setMessage("Verteiler nur auf Wandseiten");
       const dv =
         model.kind === "wall-side"
@@ -455,18 +466,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       return;
     }
     const boardHit = hitBoard(world);
-    if (boardHit) {
-      view.select({ kind: "board", id: boardHit.board.id });
-      store.begin("Verteiler verschieben");
-      drag.current = {
-        kind: "board",
-        id: boardHit.board.id,
-        start: world,
-        base: { ...boardHit.board.placement },
-      };
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-      return;
-    }
+    if (boardHit) return grabBoard(boardHit.board, world, e);
     const node = hitRouteNode(world);
     if (node) {
       view.select({ kind: "route-node", id: node.id });

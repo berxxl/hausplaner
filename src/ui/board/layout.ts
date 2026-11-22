@@ -46,3 +46,9 @@ export function slotAt(board: Board, x: number, y: number): Placement | null {
   }
   return null;
 }
+
+/** Einziger Text eines Katalogsymbols (z. B. „LS“), als Kürzel für schmale Geräte. */
+export function symbolText(symbol: string | undefined): string | null {
+  const texts = [...(symbol ?? "").matchAll(/<text[^>]*>([^<]+)<\/text>/g)];
+  return texts.length === 1 ? texts[0]![1]!.trim() : null;
+}
