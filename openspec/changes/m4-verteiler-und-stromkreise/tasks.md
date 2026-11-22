@@ -57,7 +57,9 @@
 - [x] R.1 Gedachte Raumgrenze nach design.md „Gedachte Raumgrenze“: Schema, Ablage, Golden File; Raumerkennung mit Grenzen; Befehle zeichnen/löschen mit Neuberechnung; Werkzeug, Darstellung, Auswahl, Eigenschaften im Grundriss; Trassenübergang Decke/Boden über die Grenze; Unit-Tests (Spec-Scenarios „Flur abgrenzen“, „Trasse über die Raumgrenze“, „Raumgrenze löschen“), Komponententest Werkzeug
 - [x] R.2 Wandende im Wandkörper rastet auf die Achse; Unit-Test (Spec-Scenario „Wand bis an die Oberfläche gezeichnet“)
 - [x] R.3 Keine Raumansichten mit fertiger Breite ≤ 1 mm; Unit-Test
-- [x] R.4 banatstrasse10 OG: Wandenden auf die Achsen legen, `aoytki8w` (Flurabgrenzung mit gleich großer Öffnung) durch eine Raumgrenze ersetzen, Räume neu erkennen; Diff dem Benutzer zeigen (2026-11-22 über Store-Befehle geschrieben, nur `geschosse/og.yaml`; Stub `6e59j4hq` bleibt wie im EG frei, `r84ym8kl` offen – Rückfrage)
+- [x] R.4 banatstrasse10 OG: Wandenden auf die Achsen legen, `aoytki8w` (Flurabgrenzung mit gleich großer Öffnung) durch eine Raumgrenze ersetzen, Räume neu erkennen; Diff dem Benutzer zeigen (2026-11-22 über Store-Befehle geschrieben, nur `geschosse/og.yaml`; Stub `6e59j4hq` bleibt wie im EG frei, `r84ym8kl` offen – Rückfrage; Wandstärke `kmqewfc4` 230 mm vom Benutzer bestätigt)
+
+- [ ] R.5 Verteiler nach dem Platzieren per Maus verschieben: im Grundriss entlang der Wand ziehen (bisher nur auswählen), in der Flächenansicht prüfen (Ziehen ist dort umgesetzt); ein Befehl „Verteiler verschieben“, Verteilerknoten folgt; Komponententest und Playwright
 
 ## Workflow follow-up
 
