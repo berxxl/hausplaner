@@ -19,7 +19,7 @@
 
 ## 4. Blattaufbau
 
-- [ ] 4.1 `export/sheet.ts` und `export/svg.ts`: Blattmodell, Formate, Rand, Zeichenfläche, Plankopf (Projekt, Planinhalt, Geschoss, Maßstab, Datum, Planstand, Planart, Filter), Maßstabsleiste, Legende mit Überlauf, `pdfText`, Passprüfung mit nötigem Maßstab; Unit-Tests: Zeichenfläche A3 quer und A4 hoch, Plankopf-Texte, `pdfText` ersetzt „→“ und behält Umlaute, Passprüfung meldet „passt in 1:50 nicht auf A3 quer (braucht 1:100)“, SVG hat Breite/Höhe in mm und viewBox
+- [x] 4.1 `export/sheet.ts` und `export/svg.ts`: Blattmodell, Formate, Rand, Zeichenfläche, Plankopf (Projekt, Planinhalt, Geschoss, Maßstab, Datum, Planstand, Planart, Filter), Maßstabsleiste, Legende mit Überlauf, `pdfText`, Passprüfung mit nötigem Maßstab; Unit-Tests: Zeichenfläche A3 quer und A4 hoch, Plankopf-Texte, `pdfText` ersetzt „→“ und behält Umlaute, Passprüfung meldet „passt in 1:50 nicht auf A3 quer (braucht 1:100)“, SVG hat Breite/Höhe in mm und viewBox
 
 ## 5. Planinhalte
 
