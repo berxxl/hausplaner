@@ -2,18 +2,20 @@
  * Befehle für Leitungen (design.md M3 „Leitungen“). Prüfungen vorab mit `Checked` wie beim Katalog:
  * abgelehnte Schritte landen nie in der Undo-Historie. Frei von React.
  */
-import { compatibleLineTypes, orderChain, suggestPath } from "../geometry/cables";
-import type { Cable, LengthAllowance, Project } from "../model/types";
+import {
+  compatibleLineTypes,
+  endpointLabel,
+  endpointTrades,
+  orderChain,
+  suggestPath,
+} from "../geometry/cables";
+import type { Cable, Endpoint, LengthAllowance, Project } from "../model/types";
 import type { Checked } from "./catalog";
 import type { Command } from "./history";
 
-const deviceLabel = (project: Project, id: string) =>
-  project.devices.find((d) => d.id === id)?.label ?? id;
-
-function tradesText(project: Project, deviceId: string): string {
-  const d = project.devices.find((x) => x.id === deviceId);
-  const t = project.catalog.deviceTypes.find((x) => x.id === d?.typeId);
-  return t && t.connects.length > 0 ? t.connects.map((c) => TRADE_TEXT[c]).join(", ") : "nichts";
+function tradesText(project: Project, ep: Endpoint): string {
+  const trades = endpointTrades(project, ep);
+  return trades.length > 0 ? trades.map((c) => TRADE_TEXT[c]).join(", ") : "nichts";
 }
 
 const TRADE_TEXT: Record<string, string> = {
@@ -27,12 +29,12 @@ const TRADE_TEXT: Record<string, string> = {
 };
 
 /** „Keine passende Leitung: <Gerät 1> schließt <Gewerke> an, <Gerät 2> <Gewerke>“ */
-export function noMatchingLineMessage(project: Project, a: string, b: string): string {
-  return `Keine passende Leitung: ${deviceLabel(project, a)} schließt ${tradesText(project, a)} an, ${deviceLabel(project, b)} ${tradesText(project, b)}`;
+export function noMatchingLineMessage(project: Project, a: Endpoint, b: Endpoint): string {
+  return `Keine passende Leitung: ${endpointLabel(project, a)} schließt ${tradesText(project, a)} an, ${endpointLabel(project, b)} ${tradesText(project, b)}`;
 }
 
 /** Prüft den Leitungstyp gegen beide Endpunkte. */
-function typeCheck(project: Project, lineTypeId: string, a: string, b: string): string | null {
+function typeCheck(project: Project, lineTypeId: string, a: Endpoint, b: Endpoint): string | null {
   return compatibleLineTypes(project, a, b).some((t) => t.id === lineTypeId)
     ? null
     : noMatchingLineMessage(project, a, b);
@@ -40,9 +42,9 @@ function typeCheck(project: Project, lineTypeId: string, a: string, b: string): 
 
 /** „Leitung anlegen“ mit Typprüfung und Wegvorschlag. */
 export function addCable(project: Project, cable: Omit<Cable, "path" | "status">): Checked {
-  const error = typeCheck(project, cable.lineTypeId, cable.from.deviceId, cable.to.deviceId);
+  const error = typeCheck(project, cable.lineTypeId, cable.from, cable.to);
   if (error) return { ok: false, error };
-  const path = suggestPath(project, cable.from.deviceId, cable.to.deviceId);
+  const path = suggestPath(project, cable.from, cable.to);
   return {
     ok: true,
     command: {
@@ -62,7 +64,7 @@ export function editCable(project: Project, id: string, edit: CableEdit): Checke
   if (!c) return { ok: false, error: "Leitung nicht gefunden" };
   const next = { ...c, ...edit };
   if (edit.lineTypeId !== undefined || edit.from !== undefined || edit.to !== undefined) {
-    const error = typeCheck(project, next.lineTypeId, next.from.deviceId, next.to.deviceId);
+    const error = typeCheck(project, next.lineTypeId, next.from, next.to);
     if (error) return { ok: false, error };
   }
   return {
@@ -94,7 +96,7 @@ export function setCablePath(project: Project, id: string, segmentIds: readonly 
 /** „Weg vorschlagen“: ersetzt den Weg durch den kürzesten. */
 export function suggestCablePath(project: Project, id: string): Command {
   const c = project.cables.find((x) => x.id === id);
-  const path = c ? suggestPath(project, c.from.deviceId, c.to.deviceId) : [];
+  const path = c ? suggestPath(project, c.from, c.to) : [];
   return {
     label: "Weg vorschlagen",
     run(draft) {
@@ -127,7 +129,7 @@ export function detachNode(nodeId: string): Command {
 
 /** „Leitungszuschläge ändern“ mit Prüfung ≥ 0. */
 export function setLengthAllowance(allowance: LengthAllowance): Checked {
-  if (allowance.perDeviceMm < 0 || allowance.wastePercent < 0)
+  if (allowance.perDeviceMm < 0 || allowance.perBoardMm < 0 || allowance.wastePercent < 0)
     return { ok: false, error: "Zuschläge dürfen nicht negativ sein" };
   return {
     ok: true,

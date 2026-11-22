@@ -1,6 +1,6 @@
 /**
  * Dateiformat – die einzige Stelle mit Feldreihenfolge, Sortierung und Flow-Stil
- * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“). Writer und Golden-File-Tests hängen daran.
+ * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“). Writer und Golden-File-Tests hängen daran.
  */
 
 export type TypeName =
@@ -40,12 +40,19 @@ export type TypeName =
   | "conduit"
   | "cablesFile"
   | "cable"
-  | "endpoint";
+  | "endpoint"
+  | "boardsFile"
+  | "board"
+  | "boardPlacement"
+  | "boardField"
+  | "circuit"
+  | "knxLine"
+  | "knxAssignment";
 
 export type FieldKind =
   | { kind: "scalar" }
   | { kind: "object"; type: TypeName }
-  | { kind: "list"; of: TypeName; sortBy?: "id"; flow?: boolean }
+  | { kind: "list"; of: TypeName; sortBy?: "id" | "actuatorChannel"; flow?: boolean }
   /** Liste einfacher Werte; `sorted` sortiert alphabetisch. */
   | { kind: "scalars"; flow?: boolean; sorted?: boolean };
 
@@ -79,9 +86,11 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("northDeg"),
       f("installZones", obj("installZones")),
       f("lengthAllowance", obj("lengthAllowance")),
+      f("teReservePercent"),
+      f("actuatorReservePercent"),
     ],
   },
-  lengthAllowance: { flow: true, fields: [f("perDeviceMm"), f("wastePercent")] },
+  lengthAllowance: { flow: true, fields: [f("perDeviceMm"), f("perBoardMm"), f("wastePercent")] },
   installZones: {
     fields: [
       f("horizontalTop", flowScalars),
@@ -215,9 +224,17 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
     fields: [f("id"), f("name"), f("widthMm"), f("depthMm"), f("heightMm"), f("elevationMm")],
   },
   device: {
-    fields: [f("id"), f("label"), f("typeId"), f("status"), f("placement", obj("placement"))],
+    fields: [
+      f("id"),
+      f("label"),
+      f("typeId"),
+      f("status"),
+      f("placement", obj("placement")),
+      f("circuitId", scalar, true),
+      f("knxLineId", scalar, true),
+    ],
   },
-  /** surface: kind, surface, u, v, rotationDeg; free: kind, x, y, z. */
+  /** surface: kind, surface, u, v, rotationDeg; free: kind, x, y, z; board: kind, boardId, fieldId, row, slot. */
   placement: {
     flow: true,
     fields: [
@@ -229,6 +246,10 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("x", scalar, true),
       f("y", scalar, true),
       f("z", scalar, true),
+      f("boardId", scalar, true),
+      f("fieldId", scalar, true),
+      f("row", scalar, true),
+      f("slot", scalar, true),
     ],
   },
   furniture: {
@@ -245,7 +266,12 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
     ],
   },
   routeNode: {
-    fields: [f("id"), f("deviceId", scalar, true), f("anchors", { kind: "list", of: "anchor" })],
+    fields: [
+      f("id"),
+      f("deviceId", scalar, true),
+      f("boardId", scalar, true),
+      f("anchors", { kind: "list", of: "anchor" }),
+    ],
   },
   anchor: { flow: true, fields: [f("surface"), f("u"), f("v")] },
   routeSegment: {
@@ -274,7 +300,48 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("path", flowScalars, true),
     ],
   },
-  endpoint: { flow: true, fields: [f("deviceId")] },
+  endpoint: { flow: true, fields: [f("deviceId", scalar, true), f("boardId", scalar, true)] },
+  boardsFile: {
+    fields: [
+      f("boards", byId("board"), true),
+      f("devices", byId("device"), true),
+      f("circuits", byId("circuit"), true),
+      f("knxLines", byId("knxLine"), true),
+      f("knxAssignments", { kind: "list", of: "knxAssignment", sortBy: "actuatorChannel" }, true),
+    ],
+  },
+  board: {
+    fields: [
+      f("id"),
+      f("label"),
+      f("kind"),
+      f("placement", obj("boardPlacement")),
+      f("mounting"),
+      f("widthMm"),
+      f("heightMm"),
+      f("depthMm"),
+      f("parentBoardId", scalar, true),
+      f("feedCableId", scalar, true),
+      // Benutzerreihenfolge, nicht nach ID (design.md M4 „Dateiformat M4“)
+      f("fields", { kind: "list", of: "boardField" }, true),
+    ],
+  },
+  boardPlacement: { flow: true, fields: [f("surface"), f("u"), f("v")] },
+  boardField: { flow: true, fields: [f("id"), f("kind"), f("rows"), f("tePerRow")] },
+  circuit: {
+    fields: [
+      f("id"),
+      f("label"),
+      f("boardId"),
+      f("protectionDeviceId", scalar, true),
+      f("lineTypeId", scalar, true),
+    ],
+  },
+  knxLine: { fields: [f("id"), f("label"), f("boardId", scalar, true)] },
+  knxAssignment: {
+    flow: true,
+    fields: [f("actuatorDeviceId"), f("channel"), f("consumerDeviceId")],
+  },
   warningsFile: {
     fields: [f("suppressedWarnings", { kind: "scalars", sorted: true }, true)],
   },

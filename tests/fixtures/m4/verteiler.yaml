@@ -1,0 +1,73 @@
+boards:
+  - id: "b1zaehl1"
+    label: "Zählerschrank"
+    kind: "meter-cabinet"
+    placement: {surface: "wall:0bw2o0st:L", u: 1500, v: 1400}
+    mounting: "surface"
+    widthMm: 800
+    heightMm: 1100
+    depthMm: 210
+    fields:
+      - {id: "f1zaehlr", kind: "meter", rows: 0, tePerRow: 0}
+      - {id: "f2apz001", kind: "apz", rows: 1, tePerRow: 12}
+      - {id: "f3vert01", kind: "distribution", rows: 5, tePerRow: 12}
+  - id: "b2uveg01"
+    label: "UV EG"
+    kind: "sub-distribution"
+    placement: {surface: "wall:1cih0ost:R", u: 2000, v: 1500}
+    mounting: "flush"
+    widthMm: 550
+    heightMm: 1100
+    depthMm: 120
+    fields:
+      - {id: "f4vert02", kind: "distribution", rows: 4, tePerRow: 12}
+  - id: "b3uvog01"
+    label: "UV OG"
+    kind: "sub-distribution"
+    placement: {surface: "wall:1bih0wog:R", u: 2000, v: 1500}
+    mounting: "flush"
+    widthMm: 550
+    heightMm: 1100
+    depthMm: 120
+    parentBoardId: "b1zaehl1"
+    feedCableId: "c4zuleit"
+    fields:
+      - {id: "f5vert03", kind: "distribution", rows: 4, tePerRow: 12}
+  - id: "b4medien"
+    label: "Medienverteiler"
+    kind: "media"
+    placement: {surface: "wall:1aiv0ert:L", u: 2000, v: 1500}
+    mounting: "flush"
+    widthMm: 550
+    heightMm: 650
+    depthMm: 120
+    fields:
+      - {id: "f6multi1", kind: "multimedia", rows: 2, tePerRow: 12}
+devices:
+  - id: "d8lsf101"
+    label: "F1 LS B16"
+    typeId: "mcb"
+    status: "planned"
+    placement: {kind: "board", boardId: "b2uveg01", fieldId: "f4vert02", row: 1, slot: 1}
+  - id: "d9ja0001"
+    label: "JA1"
+    typeId: "knx-blind-actuator"
+    status: "planned"
+    placement: {kind: "board", boardId: "b3uvog01", fieldId: "f5vert03", row: 1, slot: 1}
+    knxLineId: "l1linie1"
+circuits:
+  - id: "k1f1kuec"
+    label: "F1 Küche Steckdosen"
+    boardId: "b2uveg01"
+    protectionDeviceId: "d8lsf101"
+    lineTypeId: "nym-j-3x2-5"
+  - id: "k2f2kind"
+    label: "F2 Kind"
+    boardId: "b3uvog01"
+    lineTypeId: "nym-j-3x1-5"
+knxLines:
+  - id: "l1linie1"
+    label: "1.1"
+    boardId: "b3uvog01"
+knxAssignments:
+  - {actuatorDeviceId: "d9ja0001", channel: 1, consumerDeviceId: "daroll01"}

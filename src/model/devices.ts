@@ -15,6 +15,7 @@ export function mountingForSurface(kind: SurfaceKind): Mounting {
 
 /** Montageart, auf der ein Gerät sitzt. */
 export function deviceMounting(device: Device): Mounting {
+  if (device.placement.kind === "board") return "din-rail";
   return device.placement.kind === "free"
     ? "free"
     : mountingForSurface(surfaceKind(device.placement.surface));

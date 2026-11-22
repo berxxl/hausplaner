@@ -128,7 +128,12 @@ function SingleDevice({
   const refId = useId();
   const [edgeKey, setEdgeKey] = useState("left");
   const p = device.placement;
-  const mounting = p.kind === "free" ? "free" : mountingForSurface(surfaceKind(p.surface));
+  const mounting =
+    p.kind === "free"
+      ? "free"
+      : p.kind === "board"
+        ? "din-rail"
+        : mountingForSurface(surfaceKind(p.surface));
   const compatible = project.catalog.deviceTypes.filter(
     (t) => t.mounting.includes(mounting) || t.id === device.typeId,
   );
@@ -192,7 +197,7 @@ function SingleDevice({
         </p>
       </>
     );
-  } else {
+  } else if (p.kind === "surface") {
     const distances = wallDistanceFields(project, device);
     positionFields = (
       <>

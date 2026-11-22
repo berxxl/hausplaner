@@ -5,6 +5,10 @@
  */
 import { CURRENT_SCHEMA_VERSION } from "./schema";
 import {
+  DEFAULT_ACTUATOR_RESERVE_PERCENT,
+  DEFAULT_TE_RESERVE_PERCENT,
+  M4_DEVICE_TYPE_IDS,
+  M4_LINE_TYPE_IDS,
   DEFAULT_LENGTH_ALLOWANCE,
   DEFAULT_DEVICE_TYPES,
   DEFAULT_FURNITURE_TYPES,
@@ -66,11 +70,48 @@ registerMigration(1, migrateV1toV2);
 export function migrateV2toV3(files: RawFiles): RawFiles {
   const project = structuredClone(files["projekt.yaml"]) as Record<string, unknown>;
   const settings = (project.settings ?? {}) as Record<string, unknown>;
-  project.settings = { ...settings, lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE } };
+  const { perBoardMm: _perBoard, ...allowance } = DEFAULT_LENGTH_ALLOWANCE;
+  void _perBoard;
+  project.settings = { ...settings, lengthAllowance: allowance };
   project.schemaVersion = 3;
   return { ...files, "projekt.yaml": project };
 }
 registerMigration(2, migrateV2toV3);
+
+/**
+ * 3 → 4 (design.md M4 „Schemaversion 4 und Migration“): Reserven, Verteilerzuschlag und die
+ * neuen Standardtypen, deren ID im Projektkatalog fehlt. Vorhandene Typen bleiben unverändert.
+ */
+export function migrateV3toV4(files: RawFiles): RawFiles {
+  const next: RawFiles = { ...files };
+  const project = structuredClone(files["projekt.yaml"]) as Record<string, unknown>;
+  const settings = (project.settings ?? {}) as Record<string, unknown>;
+  const allowance = (settings.lengthAllowance ?? {}) as Record<string, unknown>;
+  project.settings = {
+    ...settings,
+    lengthAllowance: { ...allowance, perBoardMm: DEFAULT_LENGTH_ALLOWANCE.perBoardMm },
+    teReservePercent: DEFAULT_TE_RESERVE_PERCENT,
+    actuatorReservePercent: DEFAULT_ACTUATOR_RESERVE_PERCENT,
+  };
+  project.schemaVersion = 4;
+  next["projekt.yaml"] = project;
+  const raw = files["katalog.yaml"];
+  // Ohne katalog.yaml gilt der Katalog als leer (bewusst geleert); dann nichts ergänzen.
+  if (raw && typeof raw === "object") {
+    const catalog = structuredClone(raw) as Record<string, unknown>;
+    const add = <T extends { id: string }>(key: string, defaults: T[], ids: string[]) => {
+      const list = Array.isArray(catalog[key]) ? (catalog[key] as { id?: unknown }[]) : [];
+      const have = new Set(list.map((t) => t.id));
+      const missing = defaults.filter((t) => ids.includes(t.id) && !have.has(t.id));
+      if (missing.length > 0) catalog[key] = [...list, ...structuredClone(missing)];
+    };
+    add("deviceTypes", DEFAULT_DEVICE_TYPES, M4_DEVICE_TYPE_IDS);
+    add("lineTypes", DEFAULT_LINE_TYPES, M4_LINE_TYPE_IDS);
+    next["katalog.yaml"] = catalog;
+  }
+  return next;
+}
+registerMigration(3, migrateV3toV4);
 
 export function migrationNotice(version: number): string {
   return `Projekt auf Version ${version} aktualisiert, wird beim nächsten Speichern geschrieben`;

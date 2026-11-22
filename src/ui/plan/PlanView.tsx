@@ -38,7 +38,7 @@ import { distance, projectOnSegment, sub, type Vec } from "../../geometry/vec";
 import { allIds } from "../../model/factory";
 import { newId } from "../../model/ids";
 import { roundMm } from "../../model/rounding";
-import type { Storey, Wall } from "../../model/types";
+import type { Endpoint, Storey, Wall } from "../../model/types";
 import {
   addOpening,
   addRoom,
@@ -470,6 +470,11 @@ export function PlanView({ store, view }: PlanViewProps) {
         ({ at }) =>
           Math.abs(p.x - at.x) <= PLAN_SYMBOL_MM / 2 && Math.abs(p.y - at.y) <= PLAN_SYMBOL_MM / 2,
       )?.device;
+  /** Endpunkt für das Werkzeug „Leitung“: Gerät, ab M4 auch Verteiler. */
+  const endpointAt = (p: Vec): Endpoint | undefined => {
+    const d = hitDevice(p);
+    return d ? { deviceId: d.id } : undefined;
+  };
   const hitFurniture = (p: Vec) =>
     [...storeyFurniture].reverse().find((f) => pointInPolygon(p, footprint(f)));
   const hitRoom = (p: Vec) =>
@@ -564,7 +569,9 @@ export function PlanView({ store, view }: PlanViewProps) {
           view.select({ kind: "device", id: device.id });
           // Ziehen nur für freie Geräte und entlang der Wand (design.md M2 „Geräte platzieren“)
           const draggable =
-            device.placement.kind === "free" || surfaceKind(device.placement.surface) === "wall";
+            device.placement.kind === "free" ||
+            (device.placement.kind === "surface" &&
+              surfaceKind(device.placement.surface) === "wall");
           if (draggable) {
             store.begin("Gerät verschieben");
             drag.current = { kind: "device", deviceId: device.id };
@@ -600,7 +607,7 @@ export function PlanView({ store, view }: PlanViewProps) {
         setMeasure((m) => (!m || m.b ? { a: world, b: null } : { a: m.a, b: world }));
         return;
       case "cable":
-        cableTool.clickDevice(hitDevice(world)?.id);
+        cableTool.clickEndpoint(endpointAt(world));
         return;
       case "device": {
         if (!storey) return;
@@ -843,7 +850,7 @@ export function PlanView({ store, view }: PlanViewProps) {
             x.placement.y = Math.round(world.y);
           }
         });
-      } else {
+      } else if (p.kind === "surface") {
         const side = wallSides(base, storey.id).find((sd) => sd.ref === p.surface);
         if (!side) return;
         const u = Math.round(Math.min(side.uMax, Math.max(side.uMin, sideU(side, world))));

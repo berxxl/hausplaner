@@ -1,6 +1,7 @@
 /** Aufteilen und Zusammenführen Project ↔ Dateien. Frei von React. */
 import type { Catalog, DeviceType, Project } from "../model/types";
 import type {
+  BoardsFile,
   CablesFile,
   CatalogFile,
   ProjectFile,
@@ -8,7 +9,17 @@ import type {
   WarningsFile,
 } from "../model/schema";
 import { writeYaml } from "./writer";
-import { CABLES_FILE, CATALOG_FILE, PROJECT_FILE, storeyFilePath, WARNINGS_FILE } from "./paths";
+import {
+  BOARDS_FILE,
+  CABLES_FILE,
+  CATALOG_FILE,
+  PROJECT_FILE,
+  storeyFilePath,
+  WARNINGS_FILE,
+} from "./paths";
+
+/** Reiheneinbaugeräte stehen in verteiler.yaml, alle anderen Geräte in den Geschossdateien. */
+const inBoard = (d: Project["devices"][number]) => d.placement.kind === "board";
 
 /** Serialisiert das Projekt in seine Dateien (Pfad → Inhalt). */
 export function projectToFiles(project: Project): Record<string, string> {
@@ -27,7 +38,7 @@ export function projectToFiles(project: Project): Record<string, string> {
       walls: own(project.walls),
       rooms: own(project.rooms),
       openings: own(project.openings),
-      devices: own(project.devices),
+      devices: own(project.devices).filter((d) => !inBoard(d)),
       furniture: own(project.furniture),
       routeNodes: own(project.routeNodes),
       routeSegments: own(project.routeSegments),
@@ -46,6 +57,25 @@ export function projectToFiles(project: Project): Record<string, string> {
   if (project.cables.length > 0) {
     const cables: CablesFile = { cables: project.cables };
     files[CABLES_FILE] = writeYaml(cables, "cablesFile");
+  }
+  // verteiler.yaml nur mit Inhalt (design.md M4 „Dateiformat M4“)
+  const boardDevices = project.devices.filter(inBoard);
+  if (
+    project.boards.length +
+      boardDevices.length +
+      project.circuits.length +
+      project.knxLines.length +
+      project.knxAssignments.length >
+    0
+  ) {
+    const boards = {
+      boards: project.boards,
+      devices: boardDevices,
+      circuits: project.circuits,
+      knxLines: project.knxLines,
+      knxAssignments: project.knxAssignments,
+    } as unknown as BoardsFile;
+    files[BOARDS_FILE] = writeYaml(boards, "boardsFile");
   }
   return files;
 }
@@ -76,6 +106,7 @@ export function filesToProject(
   catalogFile?: CatalogFile,
   warningsFile?: WarningsFile,
   cablesFile?: CablesFile,
+  boardsFile?: BoardsFile,
 ): Project {
   const project: Project = {
     schemaVersion: projectFile.schemaVersion,
@@ -91,6 +122,10 @@ export function filesToProject(
     routeNodes: [],
     routeSegments: [],
     cables: (cablesFile?.cables ?? []).map((c) => ({ ...c, path: c.path ?? [] })),
+    boards: [],
+    circuits: boardsFile?.circuits ?? [],
+    knxLines: boardsFile?.knxLines ?? [],
+    knxAssignments: boardsFile?.knxAssignments ?? [],
     suppressedWarnings: warningsFile?.suppressedWarnings ?? [],
   };
   for (const file of storeyFiles) {
@@ -103,6 +138,22 @@ export function filesToProject(
     for (const f of file.furniture ?? []) project.furniture.push({ ...f, storeyId });
     for (const n of file.routeNodes ?? []) project.routeNodes.push({ ...n, storeyId });
     for (const s of file.routeSegments ?? []) project.routeSegments.push({ ...s, storeyId });
+  }
+  // Verteiler: Geschoss der Wand; ohne Wand (Verweis ins Leere) das erste Geschoss der Dateien
+  const fallback = project.storeys[0]?.id ?? "";
+  const wallStorey = new Map(project.walls.map((w) => [w.id, w.storeyId]));
+  for (const b of boardsFile?.boards ?? []) {
+    const wallId = b.placement.surface.split(":")[1]!;
+    project.boards.push({
+      ...b,
+      fields: b.fields ?? [],
+      storeyId: wallStorey.get(wallId) ?? fallback,
+    });
+  }
+  const boardStorey = new Map(project.boards.map((b) => [b.id, b.storeyId]));
+  for (const d of boardsFile?.devices ?? []) {
+    const boardId = d.placement.kind === "board" ? d.placement.boardId : "";
+    project.devices.push({ ...d, storeyId: boardStorey.get(boardId) ?? fallback });
   }
   return project;
 }

@@ -3,7 +3,7 @@
  * Kein Teil des Projektmodells, daher nicht im Undo.
  */
 import { createStore, type StoreApi } from "zustand/vanilla";
-import type { Trade } from "../model/types";
+import type { Endpoint, Trade } from "../model/types";
 
 export type SelectableKind =
   | "storey"
@@ -65,7 +65,7 @@ export interface ViewState {
   selection: Selection | null;
   pathEdit: PathEdit | null;
   /** Erstes Gerät des Werkzeugs „Leitung“; bleibt über Ansichten und Geschosse bis Esc. */
-  cableFrom: string | null;
+  cableFrom: Endpoint | null;
   /** Geschoss des Grundrisses und des Baums. */
   activeStoreyId: string | null;
   editor: EditorKind;
@@ -117,7 +117,7 @@ export interface ViewStore extends StoreApi<ViewState> {
   setShowZones(show: boolean): void;
   setShowFeeds(show: boolean): void;
   setPathEdit(edit: PathEdit | null): void;
-  setCableFrom(deviceId: string | null): void;
+  setCableFrom(from: Endpoint | null): void;
   /** Im Modus „Weg bearbeiten“: Segment hinzufügen oder entfernen; sonst false. */
   togglePathSegment(segmentId: string): boolean;
 }
@@ -194,7 +194,7 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     setPathEdit(pathEdit: PathEdit | null) {
       store.setState({ pathEdit });
     },
-    setCableFrom(cableFrom: string | null) {
+    setCableFrom(cableFrom: Endpoint | null) {
       store.setState({ cableFrom });
     },
     togglePathSegment(segmentId: string) {

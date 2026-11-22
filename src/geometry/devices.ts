@@ -141,6 +141,8 @@ export function placementWorld(
 ): DeviceWorld | null {
   const device = { storeyId, placement: p } as Device;
   if (p.kind === "free") return { x: p.x, y: p.y, z: p.z, normal: { x: 0, y: 0, z: 1 } };
+  // Reiheneinbaugeräte haben keine eigene Lage im Raum (design.md M4 „Belegungsansicht“)
+  if (p.kind === "board") return null;
   const storey = project.storeys.find((s) => s.id === storeyId);
   if (!storey) return null;
   const [kind, id, extra] = p.surface.split(":");
@@ -330,6 +332,7 @@ export function planSymbol(
   const w = deviceWorld(project, device);
   if (!w) return null;
   if (device.placement.kind === "free") return { x: w.x, y: w.y, frame: "free" };
+  if (device.placement.kind !== "surface") return null;
   const kind = surfaceKind(device.placement.surface);
   if (kind === "wall")
     return {

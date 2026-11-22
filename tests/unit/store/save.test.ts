@@ -106,7 +106,7 @@ describe("Speichern (4.2)", () => {
     expect(calls[0]).toEqual({ "geschosse/eg.yaml": null });
   });
 
-  test("nach Migration schreibt erst die erste Änderung projekt.yaml mit schemaVersion 3 und katalog.yaml", async () => {
+  test("nach Migration schreibt erst die erste Änderung projekt.yaml mit schemaVersion 4 und katalog.yaml", async () => {
     registerMigration(0, (f) => ({
       ...f,
       "projekt.yaml": { schemaVersion: 1, ...(f["projekt.yaml"] as object) },
@@ -126,7 +126,7 @@ describe("Speichern (4.2)", () => {
       "katalog.yaml",
       "projekt.yaml",
     ]);
-    expect(calls[0]!["projekt.yaml"]).toMatch(/^schemaVersion: 3\n/);
+    expect(calls[0]!["projekt.yaml"]).toMatch(/^schemaVersion: 4\n/);
   });
 
   test("Cmd/Strg+S nach Migration schreibt auch ohne Änderung", async () => {

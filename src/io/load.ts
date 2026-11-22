@@ -5,12 +5,14 @@
 import { isMap, isSeq, LineCounter, parseDocument, type Document } from "yaml";
 import type { z } from "zod";
 import {
+  BoardsFileSchema,
   CablesFileSchema,
   CatalogFileSchema,
   CURRENT_SCHEMA_VERSION,
   ProjectFileSchema,
   StoreyFileSchema,
   WarningsFileSchema,
+  type BoardsFile,
   type CablesFile,
   type CatalogFile,
   type ProjectFile,
@@ -21,6 +23,7 @@ import { hasMigration, migrate, migrationNotice, type RawFiles } from "../model/
 import type { Project } from "../model/types";
 import { filesToProject } from "./project-files";
 import {
+  BOARDS_FILE,
   CABLES_FILE,
   CATALOG_FILE,
   isKnownFile,
@@ -169,6 +172,32 @@ function catalogFileIds(file: CatalogFile): { id: string; path: Segment[] }[] {
   return ids;
 }
 
+function boardsFileIds(file: BoardsFile): { id: string; path: Segment[] }[] {
+  const ids: { id: string; path: Segment[] }[] = [];
+  file.boards?.forEach((b, i) => {
+    ids.push({ id: b.id, path: ["boards", i, "id"] });
+    b.fields?.forEach((f, j) => ids.push({ id: f.id, path: ["boards", i, "fields", j, "id"] }));
+  });
+  file.devices?.forEach((d, i) => ids.push({ id: d.id, path: ["devices", i, "id"] }));
+  file.circuits?.forEach((c, i) => ids.push({ id: c.id, path: ["circuits", i, "id"] }));
+  file.knxLines?.forEach((l, i) => ids.push({ id: l.id, path: ["knxLines", i, "id"] }));
+  return ids;
+}
+
+/** In verteiler.yaml stehen nur Reiheneinbaugeräte, in Geschossdateien keine (design.md M4). */
+function boardDeviceErrors(file: BoardsFile, parsed: ParsedFile | undefined): LoadError[] {
+  const errors: LoadError[] = [];
+  file.devices?.forEach((d, i) => {
+    if (d.placement.kind !== "board")
+      errors.push({
+        file: BOARDS_FILE,
+        line: parsed ? lineOf(parsed, ["devices", i, "placement"]) : undefined,
+        message: "In verteiler.yaml stehen nur Geräte mit placement.kind board",
+      });
+  });
+  return errors;
+}
+
 export function loadProject(allFiles: Record<string, string>): LoadResult {
   // Nur bekannte Dateien (projekt.yaml, katalog.yaml, warnungen.yaml, geschosse/*.yaml).
   const paths = Object.keys(allFiles).filter(isKnownFile).sort();
@@ -283,6 +312,12 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     if (result.success) cablesFile = result.data;
     else errors.push(...schemaErrors(CABLES_FILE, parsed.get(CABLES_FILE), result.error));
   }
+  let boardsFile: BoardsFile | undefined;
+  if (raw[BOARDS_FILE] !== undefined) {
+    const result = BoardsFileSchema.safeParse(raw[BOARDS_FILE] ?? {});
+    if (result.success) boardsFile = result.data;
+    else errors.push(...schemaErrors(BOARDS_FILE, parsed.get(BOARDS_FILE), result.error));
+  }
   const storeyFiles: { path: string; data: StoreyFile }[] = [];
   for (const path of storeyPaths) {
     const result = StoreyFileSchema.safeParse(raw[path]);
@@ -332,12 +367,22 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
       slugOwners.set(data.storey.slug, path);
     }
     checkIds(path, storeyFileIds(data));
+    data.devices?.forEach((d, i) => {
+      if (d.placement.kind === "board")
+        errors.push({
+          file: path,
+          line: lineOf(file, ["devices", i, "placement"]),
+          message: "Reiheneinbaugeräte (placement.kind board) stehen in verteiler.yaml",
+        });
+    });
   }
   if (cablesFile)
     checkIds(
       CABLES_FILE,
       (cablesFile.cables ?? []).map((c, i) => ({ id: c.id, path: ["cables", i, "id"] })),
     );
+  if (boardsFile) checkIds(BOARDS_FILE, boardsFileIds(boardsFile));
+  if (boardsFile) errors.push(...boardDeviceErrors(boardsFile, parsed.get(BOARDS_FILE)));
   if (errors.length > 0) return { status: "error", errors };
 
   return {
@@ -348,6 +393,7 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
       catalogFile,
       warningsFile,
       cablesFile,
+      boardsFile,
     ),
     contents,
     ...(notice ? { notice } : {}),

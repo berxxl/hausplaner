@@ -1,0 +1,222 @@
+storey:
+  id: "e0g1k2m3"
+  name: "EG"
+  slug: "eg"
+  elevationMm: 0
+  rawHeightMm: 2500
+  defaults: {floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0}
+walls:
+  - id: "0aw1s0ud"
+    kind: "exterior"
+    start: {x: 0, y: 0}
+    end: {x: 8000, y: 0}
+    thicknessMm: 300
+  - id: "0bw2o0st"
+    kind: "exterior"
+    start: {x: 8000, y: 0}
+    end: {x: 8000, y: 6000}
+    thicknessMm: 300
+  - id: "0cw3n0rd"
+    kind: "exterior"
+    start: {x: 8000, y: 6000}
+    end: {x: 0, y: 6000}
+    thicknessMm: 300
+  - id: "0dw4w0st"
+    kind: "exterior"
+    start: {x: 0, y: 6000}
+    end: {x: 0, y: 0}
+    thicknessMm: 300
+  - id: "1aiv0ert"
+    kind: "interior"
+    start: {x: 4000, y: 0}
+    end: {x: 4000, y: 6000}
+    thicknessMm: 120
+  - id: "1bih0wst"
+    kind: "interior"
+    start: {x: 0, y: 3000}
+    end: {x: 4000, y: 3000}
+    thicknessMm: 120
+  - id: "1cih0ost"
+    kind: "interior"
+    start: {x: 4000, y: 3000}
+    end: {x: 8000, y: 3000}
+    thicknessMm: 120
+rooms:
+  - id: "r1kueche"
+    name: "Küche"
+    seed: {x: 2000, y: 1500}
+    polygon:
+      - {x: 150, y: 150}
+      - {x: 3940, y: 150}
+      - {x: 3940, y: 2940}
+      - {x: 150, y: 2940}
+  - id: "r2wohnen"
+    name: "Wohnen"
+    seed: {x: 6000, y: 1500}
+    polygon:
+      - {x: 4060, y: 150}
+      - {x: 7850, y: 150}
+      - {x: 7850, y: 2940}
+      - {x: 4060, y: 2940}
+  - id: "r3bad00a"
+    name: "Bad"
+    floorBuildupMm: 140
+    seed: {x: 2000, y: 4500}
+    polygon:
+      - {x: 150, y: 3060}
+      - {x: 3940, y: 3060}
+      - {x: 3940, y: 5850}
+      - {x: 150, y: 5850}
+  - id: "r4schlaf"
+    name: "Schlafen"
+    seed: {x: 6000, y: 4500}
+    polygon:
+      - {x: 4060, y: 3060}
+      - {x: 7850, y: 3060}
+      - {x: 7850, y: 5850}
+      - {x: 4060, y: 5850}
+openings:
+  - id: "o1fenstr"
+    wallId: "0aw1s0ud"
+    kind: "window"
+    offsetMm: 1495
+    widthMm: 1010
+    heightMm: 1250
+    sillMm: 900
+    shutterBox: {position: "inside", heightMm: 250}
+  - id: "o2tuer00"
+    wallId: "1aiv0ert"
+    kind: "door"
+    offsetMm: 1000
+    widthMm: 885
+    heightMm: 2135
+    sillMm: 0
+devices:
+  - id: "d1steck1"
+    label: "Steckdose Küche 1"
+    typeId: "socket"
+    status: "planned"
+    placement: {kind: "surface", surface: "wall:0aw1s0ud:L", u: 1200, v: 300, rotationDeg: 0}
+    circuitId: "k1f1kuec"
+  - id: "d2schalt"
+    label: "Schalter Küche"
+    typeId: "switch"
+    status: "installed"
+    placement: {kind: "surface", surface: "wall:1bih0wst:R", u: 3500, v: 1050, rotationDeg: 0}
+  - id: "d3decke1"
+    label: "Deckenauslass Küche"
+    typeId: "ceiling-outlet"
+    status: "verified"
+    placement: {kind: "surface", surface: "ceiling:r1kueche", u: -2000, v: 1500, rotationDeg: 0}
+  - id: "d4boden1"
+    label: "Bodendose Wohnen"
+    typeId: "socket"
+    status: "planned"
+    placement: {kind: "surface", surface: "floor:r2wohnen", u: 6000, v: 1500, rotationDeg: 90}
+  - id: "d5klima1"
+    label: "Klima außen"
+    typeId: "ac-outdoor"
+    status: "planned"
+    placement: {kind: "free", x: 9000, y: 1500, z: 0}
+  - id: "d6usbsch"
+    label: "USB-C Schlafen"
+    typeId: "k7usb2c4"
+    status: "planned"
+    placement: {kind: "surface", surface: "wall:0cw3n0rd:L", u: 6500, v: 300, rotationDeg: 0}
+  - id: "dbnetz01"
+    label: "Netzwerkdose Wohnen"
+    typeId: "network-socket"
+    status: "planned"
+    placement: {kind: "surface", surface: "wall:1cih0ost:R", u: 1000, v: 300, rotationDeg: 0}
+furniture:
+  - id: "f1schrnk"
+    typeId: "wardrobe"
+    x: 6000
+    y: 5550
+    rotationDeg: 0
+    widthMm: 2000
+    depthMm: 600
+    heightMm: 2200
+    elevationMm: 0
+routeNodes:
+  - id: "n1schalt"
+    deviceId: "d2schalt"
+    anchors:
+      - {surface: "wall:1bih0wst:R", u: 3500, v: 1050}
+  - id: "n2zone01"
+    anchors:
+      - {surface: "wall:1bih0wst:R", u: 3500, v: 2065}
+  - id: "n3ecke01"
+    anchors:
+      - {surface: "wall:1bih0wst:R", u: 3925, v: 2065}
+      - {surface: "wall:1aiv0ert:L", u: 3075, v: 2065}
+  - id: "n4zone02"
+    anchors:
+      - {surface: "wall:1bih0wst:R", u: 2000, v: 2065}
+  - id: "n5decke1"
+    anchors:
+      - {surface: "wall:1bih0wst:R", u: 2000, v: 2365}
+      - {surface: "ceiling:r1kueche", u: -2000, v: 2925}
+  - id: "n6ausl01"
+    deviceId: "d3decke1"
+    anchors:
+      - {surface: "ceiling:r1kueche", u: -2000, v: 1500}
+  - id: "n7bohr01"
+    anchors:
+      - {surface: "wall:1aiv0ert:L", u: 4000, v: 2065}
+  - id: "n8wohn01"
+    anchors:
+      - {surface: "wall:1aiv0ert:R", u: 2000, v: 2065}
+  - id: "n9durch1"
+    anchors:
+      - {surface: "ceiling:r1kueche", u: -1000, v: 1000}
+routeSegments:
+  - id: "s1stich1"
+    a: "n2zone01"
+    b: "n1schalt"
+    kind: "surface"
+    surface: "wall:1bih0wst:R"
+    status: "installed"
+  - id: "s2zone01"
+    a: "n2zone01"
+    b: "n3ecke01"
+    kind: "surface"
+    surface: "wall:1bih0wst:R"
+    status: "planned"
+  - id: "s3zone02"
+    a: "n4zone02"
+    b: "n2zone01"
+    kind: "surface"
+    surface: "wall:1bih0wst:R"
+    conduit: {size: "M20", innerDiameterMm: 14.1}
+    status: "planned"
+  - id: "s4hoch01"
+    a: "n5decke1"
+    b: "n4zone02"
+    kind: "surface"
+    surface: "wall:1bih0wst:R"
+    status: "planned"
+  - id: "s5decke1"
+    a: "n5decke1"
+    b: "n6ausl01"
+    kind: "surface"
+    surface: "ceiling:r1kueche"
+    status: "planned"
+  - id: "s6innen1"
+    a: "n3ecke01"
+    b: "n7bohr01"
+    kind: "surface"
+    surface: "wall:1aiv0ert:L"
+    status: "planned"
+  - id: "s7bohr01"
+    a: "n7bohr01"
+    b: "n8wohn01"
+    kind: "penetration"
+    penetration: {method: "drill", diameterMm: 40}
+    status: "planned"
+  - id: "s8decke2"
+    a: "n6ausl01"
+    b: "n9durch1"
+    kind: "surface"
+    surface: "ceiling:r1kueche"
+    status: "planned"

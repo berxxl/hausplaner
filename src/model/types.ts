@@ -1,7 +1,13 @@
-/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- bis M3-Teil). */
+/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- bis M4-Teil). */
 import type { z } from "zod";
 import type {
   AnchorSchema,
+  BoardFieldSchema,
+  BoardSchema,
+  CircuitSchema,
+  EndpointSchema,
+  KnxAssignmentSchema,
+  KnxLineSchema,
   LengthAllowanceSchema,
   CableSchema,
   DevicePlacementSchema,
@@ -63,6 +69,18 @@ export type RouteSegment = z.infer<typeof RouteSegmentSchema> & { storeyId: Id }
 export type Cable = Omit<z.infer<typeof CableSchema>, "path"> & { path: Id[] };
 export type Status = Cable["status"];
 
+export type Endpoint = z.infer<typeof EndpointSchema>;
+export type BoardField = z.infer<typeof BoardFieldSchema>;
+/** storeyId: Geschoss der Wand von placement.surface; beim Laden gesetzt, nie geschrieben. */
+export type Board = Omit<z.infer<typeof BoardSchema>, "fields"> & {
+  storeyId: Id;
+  fields: BoardField[];
+};
+export type Circuit = z.infer<typeof CircuitSchema>;
+export type KnxLine = z.infer<typeof KnxLineSchema>;
+export type KnxAssignment = z.infer<typeof KnxAssignmentSchema>;
+export type BoardPlacement = Extract<DevicePlacement, { kind: "board" }>;
+
 export interface Project {
   schemaVersion: number;
   name: string;
@@ -78,6 +96,11 @@ export interface Project {
   routeSegments: RouteSegment[];
   /** leitungen.yaml */
   cables: Cable[];
+  /** verteiler.yaml (M4); Reiheneinbaugeräte stehen in `devices`. */
+  boards: Board[];
+  circuits: Circuit[];
+  knxLines: KnxLine[];
+  knxAssignments: KnxAssignment[];
   /** Schlüssel bewusst übergangener Warnungen (warnungen.yaml). */
   suppressedWarnings: string[];
 }

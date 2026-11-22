@@ -56,7 +56,7 @@ haus-daten/
   projekt.yaml          schemaVersion, Name, Einstellungen (Geschosse werden über geschosse/*.yaml gefunden)
   katalog.yaml          deviceTypes, lineTypes, furnitureTypes
   geschosse/<slug>.yaml je Geschoss: storey, walls, rooms, openings, devices*, furniture, routeNodes, routeSegments
-  verteiler.yaml        boards, Reiheneinbaugeräte (devices mit placement board), circuits, knxLines, knxAssignments
+  verteiler.yaml        boards, Reiheneinbaugeräte (devices mit placement board), circuits, knxLines, knxAssignments (ab M4, nur mit Inhalt)
   leitungen.yaml        cables
   warnungen.yaml        suppressedWarnings
   notizen.yaml          importierte Baustellennotizen (ab m7)
@@ -65,12 +65,12 @@ haus-daten/
 
 \* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` in der Datei ihres Geschosses (`storeyId` wird wie bei Wänden beim Laden gesetzt, nicht geschrieben).
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“; M4: `openspec/changes/m4-verteiler-und-stromkreise/design.md`, Abschnitt „Dateiformat M4“).
 
 Regeln für deterministisches Schreiben:
 
 - IDs: 8 Zeichen aus `[0-9a-z]`, zufällig, unveränderlich, projektweit eindeutig. Ausnahme: Typen des Standardkatalogs haben feste, lesbare IDs aus `[a-z0-9-]` (z. B. `socket-double`), damit `typeId` lesbar ist. Jedes Objekt mit Namen trägt ihn direkt nach der ID.
-- Listen sortiert nach ID, nie nach Einfügereihenfolge. So ändert eine Wertänderung genau eine Zeile.
+- Listen sortiert nach ID, nie nach Einfügereihenfolge. So ändert eine Wertänderung genau eine Zeile. Ausnahmen mit räumlicher Reihenfolge: Raumkonturen und die Felder eines Verteilers (links nach rechts); `knxAssignments` haben keine ID und sind nach Aktor, dann Kanal sortiert.
 - Feste Feldreihenfolge je Objekttyp, definiert an einer Stelle im Code.
 - Längen als ganze Millimeter, Winkel auf 0,1°, PDF-Koordinaten auf 0,1 Punkt, Anteile (z. B. Deckkraft) auf zwei Nachkommastellen; gerundet wird bereits beim Setzen eines Werts.
 - Punkte und kurze Tupel einzeilig im Flow-Stil ohne Innenabstand: `{x: 120, y: 3400}`. Alles andere im Block-Stil, Einrückung 2, Listeneinträge eingerückt, keine Zeilenumbrüche in langen Zeilen (`yaml`-Optionen `lineWidth: 0`, `flowCollectionPadding: false`, `indent: 2`, `indentSeq: true`).
@@ -140,18 +140,18 @@ interface Project {
   cables: Cable[];
   boards: Board[];
   circuits: Circuit[];
-  knxLines: { id: Id; label: string }[];      // z. B. "1.1"
+  knxLines: KnxLine[];                        // z. B. "1.1"
   knxAssignments: KnxAssignment[];
   suppressedWarnings: string[];  // Warnungsschlüssel, die bewusst übergangen wurden
 }
 
 interface Settings {
   northDeg: number;            // Nordrichtung im Grundriss, 0 = +y, im Uhrzeigersinn (M1)
-  lengthAllowance: { perDeviceMm: number; perBoardMm?: number; wastePercent: number }; // 300 / 1500 / 10; perBoardMm ab M4 (M3)
+  lengthAllowance: { perDeviceMm: number; perBoardMm: number; wastePercent: number }; // 300 / 1500 / 10 (M3, perBoardMm ab M4)
   installZones: { horizontalTop: [number, number]; horizontalBottom: [number, number];
                   verticalFromEdge: [number, number] };   // [150,450], [150,450], [100,300]
-  teReservePercent: number;    // 25
-  actuatorReservePercent: number; // 20
+  teReservePercent: number;    // 25 (M4)
+  actuatorReservePercent: number; // 20 (M4)
   defaultPlotScale: number;    // 50
 }
 
@@ -200,8 +200,8 @@ interface Device {
     | { kind: "surface"; surface: SurfaceRef; u: number; v: number; rotationDeg: number }
     | { kind: "board"; boardId: Id; fieldId: Id; row: number; slot: number }   // Reiheneinbau
     | { kind: "free"; x: number; y: number; z: number };                      // z. B. Klima-Außengerät; z über Rohfußboden
-  circuitId?: Id;                              // ab M4
-  knxLineId?: Id;                              // nur Busteilnehmer
+  circuitId?: Id;                              // ab M4, nur Geräte des Gewerks Strom außerhalb von Verteilern
+  knxLineId?: Id;                              // ab M4, nur Busteilnehmer
   props?: Record<string, unknown>;             // typabhängig, z. B. Leistung; ab Bedarf (nicht in M2)
 }
 
@@ -232,18 +232,19 @@ interface Cable {
   id: Id; lineTypeId: Id; label: string; status: Status;
   from: Endpoint; to: Endpoint;
   path: Id[];                                  // geordnete RouteSegment-Ids
-  circuitId?: Id;                              // ab M4
+  // Stromkreis einer Leitung wird abgeleitet (beide Endpunkte im Stromkreis bzw. Gerät + dessen Verteiler), nicht gespeichert (M4)
 }
-type Endpoint = { deviceId: Id } | { boardId: Id };   // boardId ab M4
+type Endpoint = { deviceId: Id } | { boardId: Id };   // genau eins; boardId ab M4
 
 interface Board {
   id: Id; kind: "meter-cabinet" | "sub-distribution" | "media";
-  label: string; storeyId: Id;
-  placement: { surface: SurfaceRef; u: number; v: number };
+  label: string; storeyId: Id;                // storeyId aus der Wand; beim Laden gesetzt, nicht geschrieben
+  placement: { surface: SurfaceRef; u: number; v: number };   // nur Wandseiten; Mitte der Vorderseite
   mounting: "flush" | "surface"; widthMm: number; heightMm: number; depthMm: number;
   fields: { id: Id; kind: "meter" | "apz" | "upper-connection" | "lower-connection"
-                       | "distribution" | "multimedia"; rows: number; tePerRow: number }[];
+                       | "distribution" | "multimedia"; rows: number; tePerRow: number }[];  // links nach rechts
   parentBoardId?: Id;                          // Hierarchie
+  feedCableId?: Id;                            // Zuleitung vom übergeordneten Verteiler (eine Leitung)
 }
 
 interface Circuit {
@@ -253,8 +254,9 @@ interface Circuit {
 }
 
 interface KnxAssignment {
-  actuatorDeviceId: Id; channel: number; consumerDeviceId: Id;
+  actuatorDeviceId: Id; channel: number; consumerDeviceId: Id;   // channel ab 1 (Anzeige A, B, …)
 }
+interface KnxLine { id: Id; label: string; boardId?: Id; }       // boardId: Verteiler, in dem die Linie beginnt
 ```
 
 ### Katalog

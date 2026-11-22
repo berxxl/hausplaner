@@ -1,6 +1,12 @@
 /** Neue Objekte mit Standardwerten (design.md „Neues Projekt“). */
 import { CURRENT_SCHEMA_VERSION } from "./schema";
-import { DEFAULT_LENGTH_ALLOWANCE, DEFAULT_INSTALL_ZONES, defaultCatalog } from "./default-catalog";
+import {
+  DEFAULT_ACTUATOR_RESERVE_PERCENT,
+  DEFAULT_LENGTH_ALLOWANCE,
+  DEFAULT_INSTALL_ZONES,
+  DEFAULT_TE_RESERVE_PERCENT,
+  defaultCatalog,
+} from "./default-catalog";
 import { newId } from "./ids";
 import { uniqueSlug } from "./slug";
 import type { Project, Storey } from "./types";
@@ -27,6 +33,8 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
       northDeg: 0,
       installZones: structuredClone(DEFAULT_INSTALL_ZONES),
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+      teReservePercent: DEFAULT_TE_RESERVE_PERCENT,
+      actuatorReservePercent: DEFAULT_ACTUATOR_RESERVE_PERCENT,
     },
     catalog: defaultCatalog(),
     storeys: [storey],
@@ -38,6 +46,10 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
     routeNodes: [],
     routeSegments: [],
     cables: [],
+    boards: [],
+    circuits: [],
+    knxLines: [],
+    knxAssignments: [],
     suppressedWarnings: [],
   };
 }
@@ -93,6 +105,12 @@ export function allIds(project: Project): string[] {
     ...project.openings.map((o) => o.id),
     ...project.devices.map((d) => d.id),
     ...project.furniture.map((f) => f.id),
+    ...project.routeNodes.map((n) => n.id),
+    ...project.routeSegments.map((s) => s.id),
+    ...project.cables.map((c) => c.id),
+    ...project.boards.flatMap((b) => [b.id, ...b.fields.map((f) => f.id)]),
+    ...project.circuits.map((c) => c.id),
+    ...project.knxLines.map((l) => l.id),
     ...deviceTypes.map((t) => t.id),
     ...lineTypes.map((t) => t.id),
     ...furnitureTypes.map((t) => t.id),

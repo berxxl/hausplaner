@@ -54,7 +54,7 @@ function normalizeRoutes(base: Project, draft: Draft<Project>): void {
     );
     if (deleted.size > 0)
       draft.cables = draft.cables.filter(
-        (c) => !deleted.has(c.from.deviceId) && !deleted.has(c.to.deviceId),
+        (c) => !deleted.has(c.from.deviceId ?? "") && !deleted.has(c.to.deviceId ?? ""),
       );
     for (const n of draft.routeNodes) {
       if (!n.deviceId) continue;

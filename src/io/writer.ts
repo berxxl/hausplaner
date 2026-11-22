@@ -30,7 +30,12 @@ function fieldNode(value: unknown, kind: FieldKind, inFlow: boolean): unknown {
       return objectNode(value as Plain, kind.type, inFlow);
     case "list": {
       if (!Array.isArray(value)) throw new Error("Liste erwartet");
-      const items = kind.sortBy ? [...value].sort(byKey(kind.sortBy)) : value;
+      const items =
+        kind.sortBy === "id"
+          ? [...value].sort(byKey("id"))
+          : kind.sortBy === "actuatorChannel"
+            ? [...value].sort(byActuatorChannel)
+            : value;
       const seq = new YAMLSeq();
       seq.flow = inFlow || !!kind.flow;
       for (const item of items) seq.items.push(objectNode(item as Plain, kind.of, seq.flow));
@@ -55,6 +60,16 @@ function byKey(key: string) {
     const kb = String((b as Plain)[key]);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   };
+}
+
+/** knxAssignments: nach Aktor, dann Kanal (design.md M4 „Dateiformat M4“). */
+function byActuatorChannel(a: unknown, b: unknown): number {
+  const x = a as Plain;
+  const y = b as Plain;
+  const ka = String(x.actuatorDeviceId);
+  const kb = String(y.actuatorDeviceId);
+  if (ka !== kb) return ka < kb ? -1 : 1;
+  return Number(x.channel) - Number(y.channel);
 }
 
 function objectNode(value: Plain, type: TypeName, inFlow: boolean): YAMLMap {

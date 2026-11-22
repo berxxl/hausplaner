@@ -31,16 +31,22 @@ const C1 = ["s1stich1", "s3zone02", "s4hoch01", "s5decke1"];
 describe("Wegvorschlag (5.1)", () => {
   test("kürzester Weg zwischen zusammenhängenden Geräten (Spec-Scenario „Automatischer Weg“)", () => {
     const p = m3();
-    expect(suggestPath(p, "d2schalt", "d3decke1")).toEqual(C1);
-    expect(suggestPath(p, "d3decke1", "d2schalt")).toEqual([...C1].reverse());
+    expect(suggestPath(p, { deviceId: "d2schalt" }, { deviceId: "d3decke1" })).toEqual(C1);
+    expect(suggestPath(p, { deviceId: "d3decke1" }, { deviceId: "d2schalt" })).toEqual(
+      [...C1].reverse(),
+    );
   });
 
   test("Weg über den Deckendurchbruch ins OG", () => {
-    expect(suggestPath(m3(), "d3decke1", "d7bodog1")).toEqual(["s8decke2", "s9kern01", "saboden1"]);
+    expect(suggestPath(m3(), { deviceId: "d3decke1" }, { deviceId: "d7bodog1" })).toEqual([
+      "s8decke2",
+      "s9kern01",
+      "saboden1",
+    ]);
   });
 
   test("ohne Verbindung kein Weg (Spec-Scenario „Kein Weg“)", () => {
-    expect(suggestPath(m3(), "d2schalt", "d1steck1")).toEqual([]);
+    expect(suggestPath(m3(), { deviceId: "d2schalt" }, { deviceId: "d1steck1" })).toEqual([]);
   });
 
   test("gleich lange Wege: lexikografisch kleinere Segmentfolge", () => {
@@ -51,7 +57,9 @@ describe("Wegvorschlag (5.1)", () => {
     store.execute(
       drawSegment({ segment: { id: "s0paral1", a: "n2zone01", b: "n1schalt", surface: W } }),
     );
-    expect(suggestPath(p(), "d2schalt", "d3decke1")[0]).toBe("s0paral1");
+    expect(suggestPath(p(), { deviceId: "d2schalt" }, { deviceId: "d3decke1" })[0]).toBe(
+      "s0paral1",
+    );
   });
 
   test("Zusammenhang und Kette ordnen", () => {
@@ -121,7 +129,7 @@ describe("Länge (5.3)", () => {
     };
     expect(routedLength(p, c)).toBe(8400);
     expect(formatCableLength(cableLength(p, c))).toBe("9,9 m");
-    p.settings.lengthAllowance = { perDeviceMm: 500, wastePercent: 0 };
+    p.settings.lengthAllowance = { perDeviceMm: 500, perBoardMm: 1500, wastePercent: 0 };
     expect(cableLength(p, c)).toBe(9400);
   });
 
@@ -149,7 +157,9 @@ describe("Länge (5.3)", () => {
 describe("Typen und Belegung (5.2, 6.1)", () => {
   test("Leitungstypen passend zu beiden Geräten", () => {
     const p = m3();
-    const ids = compatibleLineTypes(p, "d2schalt", "d3decke1").map((t) => t.id);
+    const ids = compatibleLineTypes(p, { deviceId: "d2schalt" }, { deviceId: "d3decke1" }).map(
+      (t) => t.id,
+    );
     expect(ids).toContain("nym-j-3x1-5");
     expect(ids).not.toContain("cat-7");
   });

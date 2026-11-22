@@ -1,4 +1,4 @@
-schemaVersion: 3
+schemaVersion: 4
 name: "Kleines Projekt"
 settings:
   northDeg: 0
@@ -6,4 +6,6 @@ settings:
     horizontalTop: [150, 450]
     horizontalBottom: [150, 450]
     verticalFromEdge: [100, 300]
-  lengthAllowance: {perDeviceMm: 300, wastePercent: 10}
+  lengthAllowance: {perDeviceMm: 300, perBoardMm: 1500, wastePercent: 10}
+  teReservePercent: 25
+  actuatorReservePercent: 20

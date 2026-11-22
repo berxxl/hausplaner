@@ -1,11 +1,11 @@
 /**
- * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, architektur.md „Datenmodell“).
+ * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“, architektur.md „Datenmodell“).
  * Dateischemata beschreiben genau den Inhalt einer Datei; alle Objekte sind strict.
  */
 import { z } from "zod";
 import { ID_PATTERN } from "./ids";
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 const id = z.string().regex(ID_PATTERN, "ID muss aus 8 Zeichen 0-9 und a-z bestehen");
 const mm = z.number().int("Längen sind ganze Millimeter");
@@ -34,6 +34,8 @@ export const InstallZonesSchema = z.strictObject({
 /** Zuschläge für Leitungslängen (design.md M3 „Leitungen“). */
 export const LengthAllowanceSchema = z.strictObject({
   perDeviceMm: nonNegativeMm,
+  /** Zuschlag je Verteilerendpunkt (ab M4). */
+  perBoardMm: nonNegativeMm,
   wastePercent: z.number().nonnegative("Wert darf nicht negativ sein"),
 });
 
@@ -41,6 +43,16 @@ export const SettingsSchema = z.strictObject({
   northDeg: deg,
   installZones: InstallZonesSchema,
   lengthAllowance: LengthAllowanceSchema,
+  /** Mindestreserve freier TE in Verteilerfeldern (M4). */
+  teReservePercent: z
+    .number()
+    .min(0, "Wert zwischen 0 und 100")
+    .max(100, "Wert zwischen 0 und 100"),
+  /** Reserve beim Aktorvorschlag (M4). */
+  actuatorReservePercent: z
+    .number()
+    .min(0, "Wert zwischen 0 und 100")
+    .max(100, "Wert zwischen 0 und 100"),
 });
 
 export const ProjectFileSchema = z.strictObject({
@@ -218,6 +230,14 @@ export const DevicePlacementSchema = z.discriminatedUnion("kind", [
     rotationDeg: deg,
   }),
   z.strictObject({ kind: z.literal("free"), x: mm, y: mm, z: mm }),
+  /** Reiheneinbau (M4): Reihe und Platz zählen ab 1. */
+  z.strictObject({
+    kind: z.literal("board"),
+    boardId: z.string().regex(ID_PATTERN, "ID muss aus 8 Zeichen 0-9 und a-z bestehen"),
+    fieldId: z.string().regex(ID_PATTERN, "ID muss aus 8 Zeichen 0-9 und a-z bestehen"),
+    row: z.number().int().min(1, "Reihen zählen ab 1"),
+    slot: z.number().int().min(1, "Plätze zählen ab 1"),
+  }),
 ]);
 
 export const DeviceSchema = z.strictObject({
@@ -226,6 +246,8 @@ export const DeviceSchema = z.strictObject({
   typeId: catalogId,
   status: z.enum(["planned", "installed", "verified"]),
   placement: DevicePlacementSchema,
+  circuitId: id.optional(),
+  knxLineId: id.optional(),
 });
 
 export const FurnitureSchema = z.strictObject({
@@ -250,6 +272,7 @@ export const AnchorSchema = z.strictObject({ surface: surfaceRef, u: mm, v: mm }
 export const RouteNodeSchema = z.strictObject({
   id,
   deviceId: id.optional(),
+  boardId: id.optional(),
   anchors: z.array(AnchorSchema).min(1, "Mindestens ein Anker"),
 });
 
@@ -275,7 +298,12 @@ export const RouteSegmentSchema = z
     },
   );
 
-export const EndpointSchema = z.strictObject({ deviceId: id });
+/** Genau eins von `deviceId` und `boardId` (design.md M4). */
+export const EndpointSchema = z
+  .strictObject({ deviceId: id.optional(), boardId: id.optional() })
+  .refine((e) => (e.deviceId === undefined) !== (e.boardId === undefined), {
+    message: "Endpunkt braucht genau eins von deviceId und boardId",
+  });
 
 export const CableSchema = z.strictObject({
   id,
@@ -288,6 +316,69 @@ export const CableSchema = z.strictObject({
 });
 
 export const CablesFileSchema = z.strictObject({ cables: z.array(CableSchema).optional() });
+
+// --- Verteiler, Stromkreise, KNX (M4) ---
+
+export const BOARD_KINDS = ["meter-cabinet", "sub-distribution", "media"] as const;
+export const FIELD_KINDS = [
+  "meter",
+  "apz",
+  "upper-connection",
+  "lower-connection",
+  "distribution",
+  "multimedia",
+] as const;
+
+export const BoardFieldSchema = z.strictObject({
+  id,
+  kind: z.enum(FIELD_KINDS),
+  rows: z.number().int().nonnegative("Wert darf nicht negativ sein"),
+  tePerRow: z.number().int().nonnegative("Wert darf nicht negativ sein"),
+});
+
+export const BoardSchema = z.strictObject({
+  id,
+  label: text,
+  kind: z.enum(BOARD_KINDS),
+  /** Nur Wandseiten (design.md M4 „Verteiler platzieren“). */
+  placement: z.strictObject({
+    surface: z.string().regex(/^wall:[0-9a-z]{8}:[LR]$/, "Verteiler nur auf Wandseiten"),
+    u: mm,
+    v: mm,
+  }),
+  mounting: z.enum(["flush", "surface"]),
+  widthMm: positiveMm,
+  heightMm: positiveMm,
+  depthMm: positiveMm,
+  parentBoardId: id.optional(),
+  feedCableId: id.optional(),
+  /** In Benutzerreihenfolge (links nach rechts); in der Datei weggelassen, wenn leer. */
+  fields: z.array(BoardFieldSchema).optional(),
+});
+
+export const CircuitSchema = z.strictObject({
+  id,
+  label: text,
+  boardId: id,
+  protectionDeviceId: id.optional(),
+  lineTypeId: catalogId.optional(),
+});
+
+export const KnxLineSchema = z.strictObject({ id, label: text, boardId: id.optional() });
+
+export const KnxAssignmentSchema = z.strictObject({
+  actuatorDeviceId: id,
+  channel: z.number().int().min(1, "Kanäle zählen ab 1"),
+  consumerDeviceId: id,
+});
+
+export const BoardsFileSchema = z.strictObject({
+  boards: z.array(BoardSchema).optional(),
+  devices: z.array(DeviceSchema).optional(),
+  circuits: z.array(CircuitSchema).optional(),
+  knxLines: z.array(KnxLineSchema).optional(),
+  knxAssignments: z.array(KnxAssignmentSchema).optional(),
+});
 
 export const WarningsFileSchema = z.strictObject({
   suppressedWarnings: z.array(z.string()).optional(),
@@ -309,3 +400,4 @@ export type StoreyFile = z.infer<typeof StoreyFileSchema>;
 export type CatalogFile = z.infer<typeof CatalogFileSchema>;
 export type WarningsFile = z.infer<typeof WarningsFileSchema>;
 export type CablesFile = z.infer<typeof CablesFileSchema>;
+export type BoardsFile = z.infer<typeof BoardsFileSchema>;

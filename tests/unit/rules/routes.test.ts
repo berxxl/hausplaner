@@ -302,7 +302,11 @@ describe("Leitungsbefehle (5.2)", () => {
       ok: false,
       error: "Typ wird von 3 Leitungen verwendet",
     });
-    expect(setLengthAllowance({ perDeviceMm: -1, wastePercent: 10 }).ok).toBe(false);
-    expect(setLengthAllowance({ perDeviceMm: 500, wastePercent: 5 }).ok).toBe(true);
+    expect(setLengthAllowance({ perDeviceMm: -1, perBoardMm: 1500, wastePercent: 10 }).ok).toBe(
+      false,
+    );
+    expect(setLengthAllowance({ perDeviceMm: 500, perBoardMm: 1500, wastePercent: 5 }).ok).toBe(
+      true,
+    );
   });
 });

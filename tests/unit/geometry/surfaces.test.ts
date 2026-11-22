@@ -46,12 +46,14 @@ function wall(
 
 function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     name: "T",
     settings: {
       northDeg,
       installZones: structuredClone(DEFAULT_INSTALL_ZONES),
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+      teReservePercent: 25,
+      actuatorReservePercent: 20,
     },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
@@ -59,6 +61,10 @@ function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
     routeNodes: [],
     routeSegments: [],
     cables: [],
+    boards: [],
+    circuits: [],
+    knxLines: [],
+    knxAssignments: [],
     suppressedWarnings: [],
     storeys: [
       {

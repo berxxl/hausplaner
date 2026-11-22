@@ -2,14 +2,13 @@
  * Warnungen zu Leitungen (design.md M3 „Warnungen“): ohne Weg bzw. Weg unterbrochen, Verweise ins
  * Leere (Typ, Gerät). Frei von React.
  */
-import { isPathConnected } from "../geometry/cables";
+import { endpointExists, isPathConnected } from "../geometry/cables";
 import type { Project } from "../model/types";
 import type { ProjectWarning } from "./index";
 
 export function cableWarnings(project: Project): ProjectWarning[] {
   const warnings: ProjectWarning[] = [];
   const types = new Set(project.catalog.lineTypes.map((t) => t.id));
-  const devices = new Set(project.devices.map((d) => d.id));
   for (const c of project.cables) {
     const remove = { kind: "cable" as const, id: c.id };
     if (!types.has(c.lineTypeId))
@@ -19,10 +18,10 @@ export function cableWarnings(project: Project): ProjectWarning[] {
         target: { kind: "none" },
         deletable: remove,
       });
-    if (!devices.has(c.from.deviceId) || !devices.has(c.to.deviceId)) {
+    if (!endpointExists(project, c.from) || !endpointExists(project, c.to)) {
       warnings.push({
         key: `cable-without-device:${c.id}`,
-        text: "Leitung an unbekanntem Gerät",
+        text: "Leitung an unbekanntem Gerät oder Verteiler",
         target: { kind: "none" },
         deletable: remove,
       });

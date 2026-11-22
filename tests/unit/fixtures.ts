@@ -19,9 +19,19 @@ export function readFixture(name: string): Record<string, string> {
   return files;
 }
 
+/** Fixture als M3-Projekt (Schemaversion 3, ohne Reserven und Verteilerzuschlag) für Migrationstests. */
+export function readV3Fixture(name: string): Record<string, string> {
+  const files = readFixture(name);
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 3")
+    .replace(/ perBoardMm: \d+,/, "")
+    .replace(/ {2}teReservePercent: .*\n/, "")
+    .replace(/ {2}actuatorReservePercent: .*\n/, "");
+  return files;
+}
+
 /** Fixture als M2-Projekt (Schemaversion 2, ohne Leitungszuschläge) für Migrationstests. */
 export function readV2Fixture(name: string): Record<string, string> {
-  const files = readFixture(name);
+  const files = readV3Fixture(name);
   files["projekt.yaml"] = files["projekt.yaml"]!.replace(
     "schemaVersion: 3",
     "schemaVersion: 2",

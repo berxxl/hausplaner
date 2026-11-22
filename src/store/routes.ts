@@ -174,5 +174,7 @@ export function addPenetration(spec: {
 /** Anzahl Leitungen, die beim Löschen dieser Geräte mitgelöscht werden. */
 export function dependentCableCount(project: Project, deviceIds: readonly string[]): number {
   const set = new Set(deviceIds);
-  return project.cables.filter((c) => set.has(c.from.deviceId) || set.has(c.to.deviceId)).length;
+  return project.cables.filter(
+    (c) => set.has(c.from.deviceId ?? "") || set.has(c.to.deviceId ?? ""),
+  ).length;
 }

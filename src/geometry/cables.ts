@@ -3,7 +3,16 @@
  * Kette ordnen, Länge, Belegung. Frei von React.
  */
 import { segmentLength } from "./routes";
-import type { Cable, LineType, Project, RouteNode, RouteSegment } from "../model/types";
+import { boardConnects } from "./boards";
+import type {
+  Cable,
+  Endpoint,
+  LineType,
+  Project,
+  RouteNode,
+  RouteSegment,
+  Trade,
+} from "../model/types";
 
 /** Füllgrad, ab dem ein Leerrohr als überfüllt gilt. */
 export const CONDUIT_FILL_LIMIT = 0.4;
@@ -58,8 +67,14 @@ export function routeGraph(project: Project): RouteGraph {
   return graph;
 }
 
-const deviceNodes = (g: RouteGraph, deviceId: string) =>
-  [...g.nodes.values()].filter((n) => n.deviceId === deviceId).map((n) => n.id);
+/** Knoten eines Endpunkts: Gerätknoten des Geräts bzw. Verteilerknoten des Verteilers (M4). */
+export function isEndpointNode(node: RouteNode | undefined, ep: Endpoint): boolean {
+  if (!node) return false;
+  return ep.deviceId !== undefined ? node.deviceId === ep.deviceId : node.boardId === ep.boardId;
+}
+
+const endpointNodes = (g: RouteGraph, ep: Endpoint) =>
+  [...g.nodes.values()].filter((n) => isEndpointNode(n, ep)).map((n) => n.id);
 
 /** Lexikografischer Vergleich zweier ID-Folgen. */
 function compareIds(a: readonly string[], b: readonly string[]): number {
@@ -73,16 +88,16 @@ function compareIds(a: readonly string[], b: readonly string[]): number {
 const EPS = 1e-6;
 
 /**
- * Kürzester Weg (Dijkstra) zwischen den Gerätknoten zweier Geräte; bei gleicher Länge gewinnt die
- * lexikografisch kleinere Folge der Segment-IDs. Leer, wenn es keinen Weg gibt.
+ * Kürzester Weg (Dijkstra) zwischen den Knoten zweier Endpunkte (Gerät oder Verteiler); bei
+ * gleicher Länge gewinnt die lexikografisch kleinere Folge der Segment-IDs. Leer ohne Weg.
  */
-export function suggestPath(project: Project, fromDeviceId: string, toDeviceId: string): string[] {
+export function suggestPath(project: Project, from: Endpoint, to: Endpoint): string[] {
   const g = routeGraph(project);
-  const targets = new Set(deviceNodes(g, toDeviceId));
+  const targets = new Set(endpointNodes(g, to));
   if (targets.size === 0) return [];
   const best = new Map<string, { dist: number; path: string[] }>();
   const open: string[] = [];
-  for (const n of deviceNodes(g, fromDeviceId)) {
+  for (const n of endpointNodes(g, from)) {
     best.set(n, { dist: 0, path: [] });
     open.push(n);
   }
@@ -113,10 +128,10 @@ export function suggestPath(project: Project, fromDeviceId: string, toDeviceId: 
   return result?.path ?? [];
 }
 
-/** Folge der Knoten entlang eines Wegs ab einem Gerätknoten des Startgeräts; null, wenn unterbrochen. */
+/** Folge der Knoten entlang eines Wegs ab einem Knoten des Startendpunkts; null, wenn unterbrochen. */
 function walk(g: RouteGraph, cable: Pick<Cable, "from" | "to">, path: readonly string[]) {
   if (path.length === 0) return null;
-  for (const start of deviceNodes(g, cable.from.deviceId)) {
+  for (const start of endpointNodes(g, cable.from)) {
     let at = start;
     let ok = true;
     for (const id of path) {
@@ -132,7 +147,7 @@ function walk(g: RouteGraph, cable: Pick<Cable, "from" | "to">, path: readonly s
         break;
       }
     }
-    if (ok && g.nodes.get(at)?.deviceId === cable.to.deviceId) return at;
+    if (ok && isEndpointNode(g.nodes.get(at), cable.to)) return at;
   }
   return null;
 }
@@ -153,7 +168,7 @@ export function orderChain(
 ): string[] | null {
   const g = routeGraph(project);
   const set = new Set(segmentIds);
-  for (const start of deviceNodes(g, cable.from.deviceId)) {
+  for (const start of endpointNodes(g, cable.from)) {
     const left = new Set(set);
     const order: string[] = [];
     let at = start;
@@ -164,7 +179,7 @@ export function orderChain(
       order.push(next[0]!.segment);
       at = next[0]!.other;
     }
-    if (left.size === 0 && g.nodes.get(at)?.deviceId === cable.to.deviceId) return order;
+    if (left.size === 0 && isEndpointNode(g.nodes.get(at), cable.to)) return order;
   }
   return null;
 }
@@ -176,12 +191,16 @@ export function routedLength(project: Project, cable: Cable): number | null {
   return cable.path.reduce((sum, id) => sum + g.lengths.get(id)!, 0);
 }
 
-/** Leitungslänge mit Zuschlägen in mm: (Trasse + 2 · Gerätezuschlag) · (1 + Verschnitt). */
+/**
+ * Leitungslänge mit Zuschlägen in mm: (Trasse + Zuschlag je Geräte- bzw. Verteilerendpunkt)
+ * · (1 + Verschnitt) (design.md M4 „Verteiler als Endpunkt“).
+ */
 export function cableLength(project: Project, cable: Cable): number | null {
   const routed = routedLength(project, cable);
   if (routed === null) return null;
-  const { perDeviceMm, wastePercent } = project.settings.lengthAllowance;
-  return (routed + 2 * perDeviceMm) * (1 + wastePercent / 100);
+  const { perDeviceMm, perBoardMm, wastePercent } = project.settings.lengthAllowance;
+  const allowance = (ep: Endpoint) => (ep.boardId !== undefined ? perBoardMm : perDeviceMm);
+  return (routed + allowance(cable.from) + allowance(cable.to)) * (1 + wastePercent / 100);
 }
 
 /** Länge in m mit einer Nachkommastelle und Komma: „9,9 m“; ohne Weg „–“. */
@@ -190,19 +209,38 @@ export function formatCableLength(mm: number | null): string {
   return `${(Math.round(mm / 100) / 10).toFixed(1).replace(".", ",")} m`;
 }
 
-/** Leitungstypen, deren Gewerk beide Geräte anschließen. */
-export function compatibleLineTypes(
-  project: Project,
-  deviceA: string,
-  deviceB: string,
-): LineType[] {
-  const tradesOf = (id: string) => {
-    const d = project.devices.find((x) => x.id === id);
-    return project.catalog.deviceTypes.find((t) => t.id === d?.typeId)?.connects ?? [];
-  };
-  const a = tradesOf(deviceA);
-  const b = tradesOf(deviceB);
-  return project.catalog.lineTypes.filter((t) => a.includes(t.trade) && b.includes(t.trade));
+/** Gewerke, die ein Endpunkt anschließt: `connects` des Gerätetyps bzw. nach Verteilerart. */
+export function endpointTrades(project: Project, ep: Endpoint): readonly Trade[] {
+  if (ep.boardId !== undefined) {
+    const board = project.boards.find((b) => b.id === ep.boardId);
+    return board ? boardConnects(board.kind) : [];
+  }
+  const d = project.devices.find((x) => x.id === ep.deviceId);
+  return project.catalog.deviceTypes.find((t) => t.id === d?.typeId)?.connects ?? [];
+}
+
+/** Bezeichnung eines Endpunkts (Gerät oder Verteiler); „?“ bei Verweis ins Leere. */
+export function endpointLabel(project: Project, ep: Endpoint): string {
+  if (ep.boardId !== undefined)
+    return project.boards.find((b) => b.id === ep.boardId)?.label ?? "?";
+  return project.devices.find((d) => d.id === ep.deviceId)?.label ?? "?";
+}
+
+/** Gibt es den Endpunkt im Projekt? */
+export function endpointExists(project: Project, ep: Endpoint): boolean {
+  return ep.boardId !== undefined
+    ? project.boards.some((b) => b.id === ep.boardId)
+    : project.devices.some((d) => d.id === ep.deviceId);
+}
+
+export const sameEndpoint = (a: Endpoint, b: Endpoint) =>
+  a.deviceId === b.deviceId && a.boardId === b.boardId;
+
+/** Leitungstypen, deren Gewerk beide Endpunkte anschließen. */
+export function compatibleLineTypes(project: Project, a: Endpoint, b: Endpoint): LineType[] {
+  const ta = endpointTrades(project, a);
+  const tb = endpointTrades(project, b);
+  return project.catalog.lineTypes.filter((t) => ta.includes(t.trade) && tb.includes(t.trade));
 }
 
 export interface Occupancy {

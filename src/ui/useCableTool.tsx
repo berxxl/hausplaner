@@ -4,7 +4,8 @@
  */
 import { useState } from "react";
 import { useStore } from "zustand";
-import { compatibleLineTypes } from "../geometry/cables";
+import { compatibleLineTypes, endpointLabel, sameEndpoint } from "../geometry/cables";
+import type { Endpoint } from "../model/types";
 import { allIds } from "../model/factory";
 import { newId } from "../model/ids";
 import { addCable, noMatchingLineMessage } from "../store/cables";
@@ -18,26 +19,25 @@ export function useCableTool(
   setMessage: (m: string) => void,
 ) {
   const cableFrom = useStore(view, (s) => s.cableFrom);
-  const [pending, setPending] = useState<{ from: string; to: string } | null>(null);
+  const [pending, setPending] = useState<{ from: Endpoint; to: Endpoint } | null>(null);
   const project = useStore(store, (s) => s.project);
 
-  /** Klick auf ein Gerät mit dem Werkzeug „Leitung“. */
-  const clickDevice = (deviceId: string | undefined) => {
-    if (!deviceId) return setMessage("Ein Gerät anklicken.");
-    if (!cableFrom) return view.setCableFrom(deviceId);
-    if (deviceId === cableFrom) return;
-    if (compatibleLineTypes(project, cableFrom, deviceId).length === 0) {
-      setMessage(noMatchingLineMessage(project, cableFrom, deviceId));
+  /** Klick auf ein Gerät oder einen Verteiler mit dem Werkzeug „Leitung“ (design.md M4). */
+  const clickEndpoint = (ep: Endpoint | undefined) => {
+    if (!ep) return setMessage("Ein Gerät oder einen Verteiler anklicken.");
+    if (!cableFrom) return view.setCableFrom(ep);
+    if (sameEndpoint(ep, cableFrom)) return;
+    if (compatibleLineTypes(project, cableFrom, ep).length === 0) {
+      setMessage(noMatchingLineMessage(project, cableFrom, ep));
       return;
     }
-    setPending({ from: cableFrom, to: deviceId });
+    setPending({ from: cableFrom, to: ep });
   };
 
-  const label = (id: string) => project.devices.find((d) => d.id === id)?.label ?? id;
   const dialog = pending ? (
     <CableDialog
       types={compatibleLineTypes(project, pending.from, pending.to)}
-      defaultLabel={`${label(pending.from)} – ${label(pending.to)}`}
+      defaultLabel={`${endpointLabel(project, pending.from)} – ${endpointLabel(project, pending.to)}`}
       onCancel={() => setPending(null)}
       onSubmit={({ lineTypeId, label: l }) => {
         const id = newId(new Set(allIds(project)));
@@ -45,8 +45,8 @@ export function useCableTool(
           id,
           label: l,
           lineTypeId,
-          from: { deviceId: pending.from },
-          to: { deviceId: pending.to },
+          from: pending.from,
+          to: pending.to,
         });
         setPending(null);
         view.setCableFrom(null);
@@ -56,5 +56,5 @@ export function useCableTool(
       }}
     />
   ) : null;
-  return { cableFrom, clickDevice, dialog };
+  return { cableFrom, clickEndpoint, dialog };
 }

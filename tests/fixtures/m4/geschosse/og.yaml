@@ -1,0 +1,86 @@
+storey:
+  id: "o9g1k2m3"
+  name: "OG"
+  slug: "og"
+  elevationMm: 2800
+  rawHeightMm: 2500
+  defaults: {floorBuildupMm: 120, plasterMm: 15, suspendedMm: 0}
+walls:
+  - id: "0aw1s0og"
+    kind: "exterior"
+    start: {x: 0, y: 0}
+    end: {x: 8000, y: 0}
+    thicknessMm: 300
+  - id: "0bw2o0og"
+    kind: "exterior"
+    start: {x: 8000, y: 0}
+    end: {x: 8000, y: 6000}
+    thicknessMm: 300
+  - id: "0cw3n0og"
+    kind: "exterior"
+    start: {x: 8000, y: 6000}
+    end: {x: 0, y: 6000}
+    thicknessMm: 300
+  - id: "0dw4w0og"
+    kind: "exterior"
+    start: {x: 0, y: 6000}
+    end: {x: 0, y: 0}
+    thicknessMm: 300
+  - id: "1aiv0eog"
+    kind: "interior"
+    start: {x: 4000, y: 0}
+    end: {x: 4000, y: 6000}
+    thicknessMm: 120
+  - id: "1bih0wog"
+    kind: "interior"
+    start: {x: 0, y: 3000}
+    end: {x: 4000, y: 3000}
+    thicknessMm: 120
+  - id: "1cih0oog"
+    kind: "interior"
+    start: {x: 4000, y: 3000}
+    end: {x: 8000, y: 3000}
+    thicknessMm: 120
+rooms:
+  - id: "r9kind01"
+    name: "Kind"
+    seed: {x: 2000, y: 1500}
+    polygon:
+      - {x: 150, y: 150}
+      - {x: 3940, y: 150}
+      - {x: 3940, y: 2940}
+      - {x: 150, y: 2940}
+devices:
+  - id: "d7bodog1"
+    label: "Bodendose Kind"
+    typeId: "socket"
+    status: "planned"
+    placement: {kind: "surface", surface: "floor:r9kind01", u: 1000, v: 500, rotationDeg: 0}
+    circuitId: "k2f2kind"
+  - id: "daroll01"
+    label: "Rollladen Kind"
+    typeId: "shutter-motor"
+    status: "planned"
+    placement: {kind: "surface", surface: "wall:0aw1s0og:L", u: 2000, v: 2300, rotationDeg: 0}
+    circuitId: "k2f2kind"
+routeNodes:
+  - id: "nadurch2"
+    anchors:
+      - {surface: "floor:r9kind01", u: 1000, v: 1000}
+  - id: "nbdose01"
+    deviceId: "d7bodog1"
+    anchors:
+      - {surface: "floor:r9kind01", u: 1000, v: 500}
+routeSegments:
+  - id: "s9kern01"
+    a: "nadurch2"
+    b: "n9durch1"
+    kind: "penetration"
+    penetration: {method: "core-drill", diameterMm: 65}
+    status: "planned"
+  - id: "saboden1"
+    a: "nadurch2"
+    b: "nbdose01"
+    kind: "surface"
+    surface: "floor:r9kind01"
+    status: "planned"

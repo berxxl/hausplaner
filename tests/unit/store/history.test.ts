@@ -7,12 +7,14 @@ import type { Project } from "../../../src/model/types";
 
 function emptyProject(): Project {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     name: "Test",
     settings: {
       northDeg: 0,
       installZones: structuredClone(DEFAULT_INSTALL_ZONES),
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
+      teReservePercent: 25,
+      actuatorReservePercent: 20,
     },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
@@ -20,6 +22,10 @@ function emptyProject(): Project {
     routeNodes: [],
     routeSegments: [],
     cables: [],
+    boards: [],
+    circuits: [],
+    knxLines: [],
+    knxAssignments: [],
     suppressedWarnings: [],
     storeys: [],
     walls: [],

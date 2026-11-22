@@ -124,23 +124,27 @@ describe("Ladeprüfung M3 (1.4)", () => {
 });
 
 describe("Migration 2 → 3 (1.5)", () => {
-  test("M2-Projekt: Standardzuschläge, nichts geschrieben bis zum ersten Befehl, sonst nur projekt.yaml", () => {
+  test("M2-Projekt: Standardzuschläge, nichts geschrieben bis zum ersten Befehl, sonst nur projekt.yaml (und katalog.yaml durch 3 → 4)", () => {
     const files = readV2Fixture("m2");
     const result = loadProject(files);
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.notice).toBe(
-      "Projekt auf Version 3 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 4 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     expect(result.contents).toEqual(files);
-    expect(result.project.settings.lengthAllowance).toEqual({ perDeviceMm: 300, wastePercent: 10 });
+    expect(result.project.settings.lengthAllowance).toEqual({
+      perDeviceMm: 300,
+      perBoardMm: 1500,
+      wastePercent: 10,
+    });
     const out = projectToFiles(result.project);
-    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 3\n/);
+    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 4\n/);
     expect(out["projekt.yaml"]).toContain(
-      "  lengthAllowance: {perDeviceMm: 300, wastePercent: 10}\n",
+      "  lengthAllowance: {perDeviceMm: 300, perBoardMm: 1500, wastePercent: 10}\n",
     );
-    for (const path of Object.keys(files).filter((x) => x !== "projekt.yaml"))
-      expect(out[path]).toBe(files[path]);
+    const unchanged = (x: string) => x !== "projekt.yaml" && x !== "katalog.yaml";
+    for (const path of Object.keys(files).filter(unchanged)) expect(out[path]).toBe(files[path]);
   });
 });
 

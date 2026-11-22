@@ -243,6 +243,7 @@ describe("Leitungen (5.3, 5.4)", () => {
     fireEvent.keyDown(f, { key: "Enter" });
     expect(store.getState().project.settings.lengthAllowance).toEqual({
       perDeviceMm: 300,
+      perBoardMm: 1500,
       wastePercent: 0,
     });
     expect(store.undoLabel()).toBe("Leitungszuschläge ändern");

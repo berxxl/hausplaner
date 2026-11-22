@@ -12,6 +12,8 @@ export function placementStorey(
   placement: DevicePlacement,
   fallbackStoreyId: string,
 ): string {
+  if (placement.kind === "board")
+    return project.boards.find((b) => b.id === placement.boardId)?.storeyId ?? fallbackStoreyId;
   return placement.kind === "free"
     ? fallbackStoreyId
     : (surfaceStoreyId(project, placement.surface) ?? fallbackStoreyId);

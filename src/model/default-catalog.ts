@@ -256,6 +256,48 @@ export const DEFAULT_DEVICE_TYPES: DeviceType[] = [
     connects: ["power", "knx"],
     knx: { provides: { function: "heating", channels: 6 } },
   }),
+  // M4 (design.md M4 „Katalog“); die Migration 3 → 4 ergänzt sie in bestehenden Projekten
+  device({
+    id: "knx-switch-actuator-16",
+    name: "Schaltaktor 16-fach",
+    trade: "knx",
+    symbol: labelBox("SA16", 24),
+    shape3d: rail(8),
+    mounting: ["din-rail"],
+    teWidth: 8,
+    connects: ["power", "knx"],
+    knx: { provides: { function: "switch", channels: 16 } },
+  }),
+  device({
+    id: "patch-panel",
+    name: "Patchfeld 6-fach",
+    trade: "data",
+    symbol: labelBox("PF"),
+    shape3d: rail(6),
+    mounting: ["din-rail"],
+    teWidth: 6,
+    connects: ["data"],
+  }),
+  device({
+    id: "network-switch",
+    name: "Switch 8 Port",
+    trade: "data",
+    symbol: labelBox("SW"),
+    shape3d: rail(6),
+    mounting: ["din-rail"],
+    teWidth: 6,
+    connects: ["data", "power"],
+  }),
+  device({
+    id: "power-supply",
+    name: "Netzteil",
+    trade: "power",
+    symbol: labelBox("24V", 24),
+    shape3d: rail(2),
+    mounting: ["din-rail"],
+    teWidth: 2,
+    connects: ["power"],
+  }),
   device({
     id: "ac-indoor",
     name: "Klima-Innengerät",
@@ -290,6 +332,7 @@ export const DEFAULT_LINE_TYPES: LineType[] = [
   },
   { id: "nym-j-3x2-5", name: "NYM-J 3×2,5", trade: "power", outerDiameterMm: 9, color: "#c62828" },
   { id: "nym-j-5x2-5", name: "NYM-J 5×2,5", trade: "power", outerDiameterMm: 11, color: "#8e0000" },
+  { id: "nym-j-5x10", name: "NYM-J 5×10", trade: "power", outerDiameterMm: 17, color: "#4e342e" },
   {
     id: "knx-bus",
     name: "KNX J-Y(St)Y 2×2×0,8",
@@ -425,4 +468,17 @@ export const DEFAULT_INSTALL_ZONES = {
 };
 
 /** Standardzuschläge für Leitungslängen (design.md M3 „Leitungen“). */
-export const DEFAULT_LENGTH_ALLOWANCE = { perDeviceMm: 300, wastePercent: 10 };
+export const DEFAULT_LENGTH_ALLOWANCE = { perDeviceMm: 300, perBoardMm: 1500, wastePercent: 10 };
+
+/** Standardreserven (design.md M4 „Schemaversion 4 und Migration“). */
+export const DEFAULT_TE_RESERVE_PERCENT = 25;
+export const DEFAULT_ACTUATOR_RESERVE_PERCENT = 20;
+
+/** Standardtypen, die mit M4 hinzukamen (Migration 3 → 4 ergänzt fehlende IDs). */
+export const M4_DEVICE_TYPE_IDS = [
+  "knx-switch-actuator-16",
+  "patch-panel",
+  "network-switch",
+  "power-supply",
+];
+export const M4_LINE_TYPE_IDS = ["nym-j-5x10"];

@@ -353,7 +353,10 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     if (e.button !== 0) return;
     const world = toWorld(e);
     if (tool === "route") return routeClick(world, e.shiftKey);
-    if (tool === "cable") return cableTool.clickDevice(hitDevice(world)?.id);
+    if (tool === "cable") {
+      const d = hitDevice(world);
+      return cableTool.clickEndpoint(d ? { deviceId: d.id } : undefined);
+    }
     if (tool === "penetration") {
       const point = toRoutePoint(snapRoute(world, true), new Set(allIds(project)));
       if (point.split)

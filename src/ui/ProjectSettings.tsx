@@ -98,6 +98,12 @@ export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClo
             onCommit={(perDeviceMm) => commitAllowance({ perDeviceMm })}
           />
           <MmField
+            label="Zuschlag je Verteilerendpunkt (mm)"
+            min={0}
+            value={allowance.perBoardMm}
+            onCommit={(perBoardMm) => commitAllowance({ perBoardMm })}
+          />
+          <MmField
             label="Verschnitt (%)"
             min={0}
             value={allowance.wastePercent}

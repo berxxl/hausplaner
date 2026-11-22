@@ -1,7 +1,12 @@
 /** Eigenschaften einer Leitung (design.md M3 „Leitungen“): Typ, Bezeichnung, Status, Länge, Weg. */
 import { useId, useState } from "react";
 import { useStore } from "zustand";
-import { cableLength, compatibleLineTypes, formatCableLength } from "../geometry/cables";
+import {
+  cableLength,
+  compatibleLineTypes,
+  endpointLabel,
+  formatCableLength,
+} from "../geometry/cables";
 import type { Cable, Project, Status } from "../model/types";
 import { deleteCables, editCable, setCablePath, suggestCablePath } from "../store/cables";
 import type { ProjectStore } from "../store/history";
@@ -25,8 +30,7 @@ export function CableProperties({
   const [error, setError] = useState<string | null>(null);
   const pathEdit = useStore(view, (s) => s.pathEdit);
   const editing = pathEdit?.cableId === cable.id;
-  const label = (id: string) => project.devices.find((d) => d.id === id)?.label ?? id;
-  const types = compatibleLineTypes(project, cable.from.deviceId, cable.to.deviceId);
+  const types = compatibleLineTypes(project, cable.from, cable.to);
   const current = project.catalog.lineTypes.find((t) => t.id === cable.lineTypeId);
   const shown = current && !types.includes(current) ? [current, ...types] : types;
   const change = (patch: Parameters<typeof editCable>[2]) => {
@@ -67,7 +71,7 @@ export function CableProperties({
         </select>
       </div>
       <p className="field-info">
-        Von „{label(cable.from.deviceId)}“ nach „{label(cable.to.deviceId)}“
+        Von „{endpointLabel(project, cable.from)}“ nach „{endpointLabel(project, cable.to)}“
       </p>
       <p className="field-info" aria-label="Leitungslänge">
         Länge: {formatCableLength(cableLength(project, cable))}
