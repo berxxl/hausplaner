@@ -52,7 +52,7 @@ import { useCableTool } from "../useCableTool";
 import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { warnedIds } from "../derived";
-import { isDeviceVisible } from "../filter";
+import { isCableVisible, isDeviceVisible } from "../filter";
 
 type Tool = SurfaceTool;
 type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
@@ -391,6 +391,16 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     if (segment && view.togglePathSegment(segment.id)) return;
     if (segment) {
       const sel = view.getState().selection;
+      if (e.altKey) {
+        // Alt-Klick wählt eine Leitung auf dem Segment, wiederholt die nächste (design.md M3 „Auswahl“)
+        const cables = project.cables
+          .filter((c) => c.path.includes(segment.id))
+          .filter((c) => isCableVisible(project, { hiddenTrades, furnitureHidden }, c))
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+        if (cables.length === 0) return view.select({ kind: "route-segment", id: segment.id });
+        const at = sel?.kind === "cable" ? cables.findIndex((c) => c.id === sel.id) : -1;
+        return view.select({ kind: "cable", id: cables[(at + 1) % cables.length]!.id });
+      }
       if (e.shiftKey && sel?.kind === "route-segment") {
         const ids = new Set(sel.ids ?? [sel.id]);
         if (ids.has(segment.id)) ids.delete(segment.id);

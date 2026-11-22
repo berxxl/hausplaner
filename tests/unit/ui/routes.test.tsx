@@ -166,6 +166,20 @@ describe("Auswahl und Eigenschaften (3.4)", () => {
       ids: ["s3zone02", "s2zone01"],
     });
   });
+
+  test("Alt-Klick auf ein Segment wählt eine Leitung darauf, wiederholt die nächste (Drift D1)", () => {
+    const { store, view, click } = openWall("m3");
+    const ids = store
+      .getState()
+      .project.cables.filter((c) => c.path.includes("s3zone02"))
+      .map((c) => c.id)
+      .sort();
+    expect(ids.length).toBeGreaterThan(0);
+    click(2700, 2065, { altKey: true });
+    expect(view.getState().selection).toEqual({ kind: "cable", id: ids[0] });
+    click(2700, 2065, { altKey: true });
+    expect(view.getState().selection).toEqual({ kind: "cable", id: ids[1 % ids.length] });
+  });
 });
 
 describe("Durchbruch (3.5)", () => {

@@ -149,6 +149,12 @@ Neue reine Module: `geometry/routes.ts` (Anker → Welt, Übergänge an Kanten, 
 - Unit-Tests für Übergänge (Ecke, Decke, Schräge), Gegenknoten (Innenwand, Außenwand, Decke), Längen, Dijkstra (gleich lange Wege deterministisch), Kette ordnen, Füllgrad, Zonenprüfung (alle vier Bedingungen und Diagonale), Teilen mit Pfadanpassung, Löschkaskaden, Normalisierung.
 - Playwright: Trasse von der oberen Zone zur Steckdose zeichnen, über die Ecke fortsetzen, Durchbruch durch die Innenwand, Leitung anlegen und Weg in 3D hervorgehoben, Zuschläge ändern ändert die Länge, speichern und neu laden.
 
+### Rückmeldungen während M3 (R.1–R.3)
+- **Nordpfeil (R.1):** Der Grundriss zeigt oben rechts einen Nordpfeil, gedreht um `settings.northDeg` (0 = +y, im Uhrzeigersinn). Der Plan wird nicht gedreht.
+- **Werkzeug „Öffnung“ (R.2):** Ein Druck auf eine vorhandene Öffnung wählt sie aus und verschiebt sie mit „Öffnung verschieben“ (ein Befehl). Ein Druck daneben legt wie bisher eine neue Öffnung an.
+- **Baum auf- und zuklappen (R.3, Befund aus 7.2):** Geschosse, Räume und „Flächen ohne Raum“ haben ein Pfeilsymbol; Pfeiltaste rechts klappt auf, links zu. Alles ist anfangs aufgeklappt. Die zugeklappten Einträge stehen als Liste von IDs (Geschoss-ID, Raum-ID, `<storeyId>:free`) unter `hausplaner.tree.collapsed` im `localStorage` des Browsers. Sie sind also Ansichtszustand und nicht Teil der Projektdateien. Ein zugeklappter Eintrag übernimmt die Markierung (`data-marked`), wenn darunter eine Fläche geöffnet, eine Wandansicht der ausgewählten Wand oder eine Fläche der ausgewählten Leitung liegt oder (beim Geschoss) ein Raum ausgewählt ist.
+- **Werkzeugleiste im Grundriss:** bricht um, statt die Zeichenfläche zu verbreitern (`f5841b2`, Linux-Schriften).
+
 ## Risks / Trade-offs
 
 - [Ableitung weiterer Anker nach jedem Befehl kostet Rechenzeit] → nur für Übergangsknoten, nur wenn Wände, Räume, Geschosse oder Knoten geändert wurden (wie beim Höhenbezug in M2)

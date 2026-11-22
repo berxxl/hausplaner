@@ -44,3 +44,10 @@ Das System SHALL Geschosse, Räume und „Flächen ohne Raum“ im Strukturbaum 
 #### Scenario: Markierung im zugeklappten Raum
 - **WHEN** der Raum „Küche“ zugeklappt ist und der Benutzer im Grundriss eine Wand der Küche auswählt
 - **THEN** ist der Eintrag „Küche“ markiert
+
+### Requirement: Nordpfeil im Grundriss
+Das System SHALL im Grundriss oben rechts einen Nordpfeil zeigen, der der Nordrichtung der Projekteinstellungen folgt. Der Plan selbst MUST dabei ungedreht bleiben.
+
+#### Scenario: Nordrichtung 30°
+- **WHEN** der Benutzer die Nordrichtung in den Projekteinstellungen auf 30° stellt
+- **THEN** zeigt der Nordpfeil um 30° im Uhrzeigersinn gedreht nach Norden, und Wände und Plan bleiben unverändert ausgerichtet
