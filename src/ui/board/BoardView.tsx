@@ -24,8 +24,7 @@ import { deleteDevices } from "../../store/devices";
 import type { ProjectStore } from "../../store/history";
 import type { ViewStore } from "../../store/view";
 import { isTextTarget } from "../shortcuts";
-import { BOARD_LAYOUT, boardLayout, slotAt, slotPosition, symbolText } from "./layout";
-import { circuitShortName } from "../../geometry/circuits";
+import { BOARD_LAYOUT, boardLayout, deviceCaption, slotAt, slotPosition } from "./layout";
 import { STATUS_COLORS } from "../labels";
 
 type Drag =
@@ -207,19 +206,8 @@ export function BoardView({ store, view }: { store: ProjectStore; view: ViewStor
             const selected = selectedIds.has(d.id);
             const highlighted = circuit?.protectionDeviceId === d.id;
             const channels = assignmentsOf(d.id);
-            // Beschriftung (7.2): schmale Geräte senkrecht; trägt ein Gerät noch den Typnamen, zeigt es
-            // seinen Stromkreis (LS) oder, wenn schmal, das Kürzel aus dem Symbol
-            const typeName = type?.name ?? d.typeId;
-            const protects = project.circuits.find((c) => c.protectionDeviceId === d.id);
-            const narrow = deviceTeWidth(type) < 3;
-            const shown =
-              d.label !== typeName
-                ? d.label
-                : protects
-                  ? circuitShortName(protects.label)
-                  : narrow
-                    ? (symbolText(type?.symbol) ?? d.label)
-                    : d.label;
+            // Beschriftung (7.2): schmale Geräte senkrecht, Kurzname bzw. Kürzel statt Typname
+            const { shown, typeName, narrow, protects } = deviceCaption(project, d);
             return (
               <g
                 key={d.id}

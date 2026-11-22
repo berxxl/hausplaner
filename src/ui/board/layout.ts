@@ -1,6 +1,8 @@
 /** Raster der Belegungsansicht (design.md M4 „Belegungsansicht“): Felder, Reihen, Plätze in px. */
 import { fieldHasRows, type Placement } from "../../geometry/boards";
-import type { Board } from "../../model/types";
+import { circuitShortName } from "../../geometry/circuits";
+import { deviceTeWidth } from "../../geometry/boards";
+import type { Board, Device, Project } from "../../model/types";
 
 /** Raster der Ansicht in px (1 TE = 18 mm, hier 22 px). */
 export const BOARD_LAYOUT = { te: 22, row: 56, head: 28, pad: 12, gap: 16, minTe: 6 } as const;
@@ -51,4 +53,25 @@ export function slotAt(board: Board, x: number, y: number): Placement | null {
 export function symbolText(symbol: string | undefined): string | null {
   const texts = [...(symbol ?? "").matchAll(/<text[^>]*>([^<]+)<\/text>/g)];
   return texts.length === 1 ? texts[0]![1]!.trim() : null;
+}
+
+/**
+ * Beschriftung eines Reiheneinbaugeräts (M4 R.7): schmale Geräte (< 3 TE) einzeilig; trägt ein
+ * Gerät noch den Typnamen, zeigt es den Kurznamen seines Stromkreises oder, wenn schmal, das
+ * Kürzel aus dem Symbol. Frei von React; auch für den PDF-Export.
+ */
+export function deviceCaption(project: Project, d: Device) {
+  const type = project.catalog.deviceTypes.find((t) => t.id === d.typeId);
+  const typeName = type?.name ?? d.typeId;
+  const protects = project.circuits.find((c) => c.protectionDeviceId === d.id);
+  const narrow = deviceTeWidth(type) < 3;
+  const shown =
+    d.label !== typeName
+      ? d.label
+      : protects
+        ? circuitShortName(protects.label)
+        : narrow
+          ? (symbolText(type?.symbol) ?? d.label)
+          : d.label;
+  return { shown, typeName, narrow, protects, teWidth: deviceTeWidth(type) };
 }
