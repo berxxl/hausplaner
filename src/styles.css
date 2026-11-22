@@ -403,6 +403,12 @@ button {
   stroke: rgb(0 113 227 / 0.4);
   stroke-linecap: butt;
 }
+.opening-preview {
+  fill: rgb(0 113 227 / 0.25);
+  stroke: #0071e3;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
 .handle {
   fill: #fff;
   stroke: #0071e3;

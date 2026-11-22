@@ -7,7 +7,12 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useStore } from "zustand";
-import { openingFootprint } from "../../geometry/openings";
+import {
+  alongWallMm,
+  drawnOpening,
+  movedOpeningOffset,
+  openingFootprint,
+} from "../../geometry/openings";
 import { pointInPolygon } from "../../geometry/polygon";
 import { detectRoom } from "../../geometry/rooms";
 import {
@@ -42,6 +47,7 @@ import {
   applyWallEdit,
   deleteRoom,
   deleteWall,
+  editOpening,
   redetectRoom,
   wallGeoms,
   type WallJoin,
@@ -114,7 +120,7 @@ const HINTS: Record<PlanTool, string> = {
   measure: "Zwei Punkte anklicken.",
   wall: "Anfangspunkt anklicken; jeder weitere Klick setzt eine Wand. Esc beendet.",
   room: "In eine von Wänden umschlossene Fläche klicken.",
-  opening: "Auf eine Wand klicken.",
+  opening: "Auf eine Wand klicken oder aufziehen.",
   slope: "Zwei Punkte der Grundlinie anklicken (Ecken des Raums rasten ein).",
   "redetect-room": "In die Fläche klicken, die der Raum künftig einnehmen soll.",
   device: "Gerätetyp wählen und klicken; jeder Klick setzt ein Gerät. Esc beendet.",
@@ -134,13 +140,20 @@ type Drag =
   | { kind: "move-underlay"; startWorld: Vec }
   | { kind: "endpoint"; wallId: string; end: WallEnd; result: WallEditResult | null }
   | { kind: "device"; deviceId: string }
-  | { kind: "furniture"; furnitureId: string; offset: Vec };
+  | { kind: "furniture"; furnitureId: string; offset: Vec }
+  | { kind: "opening-draw"; wallId: string; startMm: number; endMm: number }
+  | { kind: "opening"; openingId: string; wallId: string; grabMm: number };
 
 type Pending =
   | { kind: "distance"; p1: Vec; p2: Vec }
   | { kind: "angle"; pivot: Vec }
   | { kind: "room"; seed: Vec; polygon: Vec[] }
-  | { kind: "opening"; wallId: string; centerMm: number }
+  | {
+      kind: "opening";
+      wallId: string;
+      centerMm: number;
+      drawn: { offsetMm: number; widthMm: number } | null;
+    }
   | { kind: "slope"; roomId: string; p1: Vec; p2: Vec };
 
 function initialCamera(vp: Viewport, storey: Storey | undefined, walls: readonly Wall[]): Camera {
@@ -240,6 +253,10 @@ export function PlanView({ store, view }: PlanViewProps) {
   const [openEnds, setOpenEnds] = useState<EndRef[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
+  /** Aufgezogene Öffnung während des Ziehens (Vorschau). */
+  const [openingDraft, setOpeningDraft] = useState<{ wallId: string; a: number; b: number } | null>(
+    null,
+  );
   const drag = useRef<Drag | null>(null);
 
   useLayoutEffect(() => {
@@ -510,8 +527,21 @@ export function PlanView({ store, view }: PlanViewProps) {
         const opening = hitOpening(world);
         const wall = opening ? undefined : hitWall(world);
         const room = opening || wall ? undefined : hitRoom(world);
-        if (opening) view.select({ kind: "opening", id: opening.id });
-        else if (wall) view.select({ kind: "wall", id: wall.id });
+        if (opening) {
+          view.select({ kind: "opening", id: opening.id });
+          const w = geoms.find((x) => x.id === opening.wallId);
+          if (w) {
+            store.begin("Öffnung verschieben");
+            drag.current = {
+              kind: "opening",
+              openingId: opening.id,
+              wallId: w.id,
+              grabMm: alongWallMm(w, world),
+            };
+            capture();
+            return;
+          }
+        } else if (wall) view.select({ kind: "wall", id: wall.id });
         else if (room) view.select({ kind: "room", id: room.id });
         else view.select(null);
         drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
@@ -683,12 +713,11 @@ export function PlanView({ store, view }: PlanViewProps) {
           setMessage("Auf eine Wand klicken.");
           return;
         }
-        const proj = projectOnSegment(world, wall.start, wall.end);
-        setPending({
-          kind: "opening",
-          wallId: wall.id,
-          centerMm: proj.t * distance(wall.start, wall.end),
-        });
+        // Ziehen entlang der Wand legt Abstand und Breite fest, ein Klick nur die Mitte
+        const startMm = alongWallMm(wall, world);
+        drag.current = { kind: "opening-draw", wallId: wall.id, startMm, endMm: startMm };
+        setOpeningDraft({ wallId: wall.id, a: startMm, b: startMm });
+        capture();
         return;
       }
       case "slope": {
@@ -781,6 +810,22 @@ export function PlanView({ store, view }: PlanViewProps) {
           rotationDeg: snapped?.rotationDeg ?? pose.rotationDeg,
         }).run,
       );
+    } else if (d.kind === "opening-draw") {
+      const w = geoms.find((x) => x.id === d.wallId);
+      if (!w) return;
+      d.endMm = alongWallMm(w, world);
+      setOpeningDraft({ wallId: w.id, a: d.startMm, b: d.endMm });
+    } else if (d.kind === "opening" && storey) {
+      const base = store.getState().transaction?.base;
+      const o = base?.openings.find((x) => x.id === d.openingId);
+      const w = base && wallGeoms(base, storey.id).find((x) => x.id === d.wallId);
+      if (!o || !w) return;
+      const offsetMm = movedOpeningOffset(
+        distance(w.start, w.end),
+        o,
+        alongWallMm(w, world) - d.grabMm,
+      );
+      store.preview(editOpening(d.openingId, { field: "offsetMm", value: offsetMm }).run);
     } else if (d.kind === "endpoint" && storey) {
       const base = store.getState().transaction?.base;
       if (!base) return;
@@ -798,8 +843,22 @@ export function PlanView({ store, view }: PlanViewProps) {
   const onPointerUp = () => {
     const d = drag.current;
     drag.current = null;
-    if (d?.kind === "move-underlay" || d?.kind === "device" || d?.kind === "furniture")
+    if (
+      d?.kind === "move-underlay" ||
+      d?.kind === "device" ||
+      d?.kind === "furniture" ||
+      d?.kind === "opening"
+    )
       store.commit();
+    if (d?.kind === "opening-draw") {
+      setOpeningDraft(null);
+      setPending({
+        kind: "opening",
+        wallId: d.wallId,
+        centerMm: d.startMm,
+        drawn: drawnOpening(d.startMm, d.endMm),
+      });
+    }
     if (d?.kind === "endpoint") {
       store.commit();
       if (d.result && d.result.released.length > 0) setMessage("T-Anschluss gelöst.");
@@ -961,6 +1020,24 @@ export function PlanView({ store, view }: PlanViewProps) {
               selection={selection}
               invalid={invalidOpenings}
             />
+            {openingDraft &&
+              (() => {
+                const w = geoms.find((x) => x.id === openingDraft.wallId);
+                const drawn = drawnOpening(openingDraft.a, openingDraft.b);
+                return (
+                  w &&
+                  drawn && (
+                    <polygon
+                      className="opening-preview"
+                      data-testid="opening-preview"
+                      points={openingFootprint(w, drawn)
+                        .map((q) => `${q.x},${q.y}`)
+                        .join(" ")}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )
+                );
+              })()}
             <g data-testid="plan-furniture">
               {storeyFurniture.map((f) => (
                 <polygon
@@ -1102,6 +1179,7 @@ export function PlanView({ store, view }: PlanViewProps) {
       {pending?.kind === "opening" && storey && (
         <OpeningDialog
           centerMm={pending.centerMm}
+          drawn={pending.drawn}
           onCancel={() => setPending(null)}
           onSubmit={(values) => {
             const id = newId(new Set(allIds(project)));

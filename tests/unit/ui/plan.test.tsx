@@ -69,6 +69,67 @@ describe("Grundriss (6.1)", () => {
   });
 });
 
+describe("Öffnungen zeichnen und verschieben (9.2.1, 9.2.2)", () => {
+  const field = (name: string) => Number((screen.getByLabelText(name) as HTMLInputElement).value);
+  const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThanOrEqual(20);
+
+  test("Aufziehen legt Abstand und Breite fest; Art wechseln ändert beide nicht", () => {
+    const { store, view } = setup();
+    render(<PlanView store={store} view={view} />);
+    fireEvent.click(screen.getByRole("button", { name: "Öffnung" }));
+    const svg = screen.getByRole("img", { name: "Grundriss" });
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf(5200, 0) });
+    fireEvent.pointerMove(svg, screenOf(4000, 50));
+    expect(screen.getByTestId("opening-preview")).toBeTruthy();
+    fireEvent.pointerUp(svg);
+    const dialog = screen.getByRole("dialog", { name: "Öffnung setzen" });
+    const offset = field("Abstand vom Wandanfang");
+    const width = field("Breite");
+    near(offset, 4000);
+    near(width, 1200);
+    fireEvent.change(within(dialog).getByLabelText("Art"), { target: { value: "door" } });
+    expect(field("Abstand vom Wandanfang")).toBe(offset);
+    expect(field("Breite")).toBe(width);
+    expect(field("Höhe")).toBe(2135);
+    expect(field("Brüstung")).toBe(0);
+    fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    const added = store.getState().project.openings.at(-1)!;
+    expect(added).toMatchObject({ wallId: "0aw1s0ud", kind: "door", offsetMm: offset });
+    expect(added.widthMm).toBe(width);
+  });
+
+  test("Klick ohne Ziehen: Fenster mittig; Art wechseln lässt den Abstand stehen", () => {
+    const { store, view } = setup();
+    render(<PlanView store={store} view={view} />);
+    fireEvent.click(screen.getByRole("button", { name: "Öffnung" }));
+    const svg = screen.getByRole("img", { name: "Grundriss" });
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf(6000, 0) });
+    fireEvent.pointerUp(svg);
+    const dialog = screen.getByRole("dialog", { name: "Öffnung setzen" });
+    const offset = field("Abstand vom Wandanfang");
+    near(offset, 6000 - 505);
+    expect(field("Breite")).toBe(1010);
+    fireEvent.change(within(dialog).getByLabelText("Art"), { target: { value: "door" } });
+    expect(field("Abstand vom Wandanfang")).toBe(offset);
+    expect(field("Breite")).toBe(885);
+  });
+
+  test("Auswahlwerkzeug: Öffnung entlang der Wand ziehen ist ein Befehl", () => {
+    const { store, view } = setup();
+    render(<PlanView store={store} view={view} />);
+    const svg = screen.getByRole("img", { name: "Grundriss" });
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf(2000, 0) });
+    fireEvent.pointerMove(svg, screenOf(2500, 200));
+    fireEvent.pointerMove(svg, screenOf(3000, 200));
+    fireEvent.pointerUp(svg);
+    const o = store.getState().project.openings.find((x) => x.id === "o1fenstr")!;
+    near(o.offsetMm, 2495);
+    expect(store.undoLabel()).toBe("Öffnung verschieben");
+    act(() => store.undo());
+    expect(store.getState().project.openings.find((x) => x.id === "o1fenstr")!.offsetMm).toBe(1495);
+  });
+});
+
 describe("Raumeigenschaften (6.6)", () => {
   test("Name, Werte mit Standard aus dem Geschoss, fertige Fläche", () => {
     const { store, view } = setup();

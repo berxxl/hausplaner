@@ -71,20 +71,29 @@ export function RoomNameDialog({
 
 export type OpeningValues = Pick<Opening, "kind" | "offsetMm" | "widthMm" | "heightMm" | "sillMm">;
 
-/** Neue Öffnung in Rohbaumaßen; Abstand vom Wandanfang vorbelegt aus dem Klickpunkt. */
+/**
+ * Neue Öffnung in Rohbaumaßen. Aufgezogen: Abstand und Breite aus der Strecke; sonst Abstand aus
+ * dem Klickpunkt als Mitte eines Fensters. Ein Wechsel der Art ändert den Abstand nie und die
+ * Breite nur, wenn sie nicht aufgezogen wurde.
+ */
 export function OpeningDialog({
   centerMm,
+  drawn = null,
   onSubmit,
   onCancel,
 }: {
   centerMm: number;
+  drawn?: { offsetMm: number; widthMm: number } | null;
   onSubmit(values: OpeningValues): void;
   onCancel(): void;
 }) {
   const [kind, setKind] = useState<Opening["kind"]>("window");
-  const [dims, setDims] = useState(OPENING_DEFAULTS.window);
+  const [dims, setDims] = useState({
+    ...OPENING_DEFAULTS.window,
+    ...(drawn && { widthMm: drawn.widthMm }),
+  });
   const [offsetMm, setOffset] = useState(
-    Math.round(centerMm - OPENING_DEFAULTS.window.widthMm / 2),
+    drawn?.offsetMm ?? Math.round(centerMm - OPENING_DEFAULTS.window.widthMm / 2),
   );
   return (
     <Dialog
@@ -101,8 +110,7 @@ export function OpeningDialog({
           onChange={(e) => {
             const k = e.target.value as Opening["kind"];
             setKind(k);
-            setOffset(Math.round(offsetMm + dims.widthMm / 2 - OPENING_DEFAULTS[k].widthMm / 2));
-            setDims(OPENING_DEFAULTS[k]);
+            setDims({ ...OPENING_DEFAULTS[k], ...(drawn && { widthMm: dims.widthMm }) });
           }}
         >
           {(Object.keys(OPENING_LABELS) as Opening["kind"][]).map((k) => (

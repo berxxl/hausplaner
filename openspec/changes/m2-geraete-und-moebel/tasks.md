@@ -55,7 +55,14 @@
 ## 9. Integration
 
 - [x] 9.1 Playwright-Ablauf: M1-Projekt öffnen (Migration), Katalogtyp kopieren, Geräte in Wandansicht und Grundriss setzen, Kombination, Möbel davor, Warnung übergehen, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
-- [ ] 9.2 Manuell: banatstrasse10 migrieren, Steckdosen und Schalter im EG setzen, Küchenzeile und Betten stellen; Befunde als Folge-Tasks
+- [x] 9.2 Manuell: banatstrasse10 migrieren, Steckdosen und Schalter im EG setzen, Küchenzeile und Betten stellen; Befunde als Folge-Tasks
+
+### Folge-Tasks aus 9.2
+
+Befunde des Benutzers vom 2026-11-22 (beide betreffen Öffnungen aus M1; in banatstrasse10 wurden keine Geräte oder Möbel gespeichert):
+
+- [x] 9.2.1 Öffnung zeichnen: Mit dem Werkzeug „Öffnung“ legt Ziehen entlang einer Wand Abstand vom Wandanfang und Breite fest, der Dialog übernimmt beides; ein einfacher Klick verhält sich wie bisher. Mit dem Auswahlwerkzeug lässt sich eine Öffnung entlang ihrer Wand verschieben (ein Befehl). Vorschau beim Ziehen; Unit-Test für die Geometrie, Komponententest für Aufziehen und Verschieben
+- [x] 9.2.2 Öffnungsdialog: Ein Wechsel der Art ändert den Abstand vom Wandanfang nicht mehr; Höhe und Brüstung übernehmen die Standardwerte der Art, die Breite nur, wenn sie nicht aufgezogen wurde. Bisher hielt der Dialog die Mitte auf dem Klickpunkt fest und rechnete den Abstand bei jeder Art mit anderer Standardbreite neu aus. Komponententest
 
 ## Workflow follow-up
 

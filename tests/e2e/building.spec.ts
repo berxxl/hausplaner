@@ -129,6 +129,62 @@ test.describe("Wände, Räume, Öffnungen (6)", () => {
     );
   });
 
+  test("Öffnung aufziehen, Art wechseln, mit dem Auswahlwerkzeug verschieben (9.2.1, 9.2.2)", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "leer");
+    await drawRectangle(page);
+    await page.getByRole("button", { name: "Öffnung", exact: true }).click();
+    // Meldungen und Werkzeugoptionen verändern die Höhe der Kopfzeile; erst danach Positionen
+    await expect(page.getByRole("status", { name: "Meldung" })).toHaveCount(0);
+    // Die Wandoptionen verschwinden; das SVG übernimmt die neue Höhe erst nach dem ResizeObserver
+    await expect
+      .poll(() =>
+        page
+          .getByRole("img", { name: "Grundriss" })
+          .evaluate(
+            (e) =>
+              e.getBoundingClientRect().height === e.parentElement!.getBoundingClientRect().height,
+          ),
+      )
+      .toBe(true);
+    // Bildschirmhöhe der unteren Wand aus ihrem Element; x aus der Kamera
+    const boxes = await page
+      .locator("[data-wall]")
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON() as DOMRect));
+    const bottom = boxes.reduce((a, b) => (b.width > b.height && b.y > a.y ? b : a));
+    const y = bottom.y + bottom.height / 2;
+    const at = async (x: number) => ({ x: (await worldToPage(page, { x, y: 0 })).x, y });
+    const drag = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 5 });
+    };
+
+    await drag(await at(1000), await at(2200));
+    await expect(page.getByTestId("opening-preview")).toBeVisible();
+    await page.mouse.up();
+    const dialog = page.getByRole("dialog", { name: "Öffnung setzen" });
+    const offset = Number(await dialog.getByLabel("Abstand vom Wandanfang").inputValue());
+    const width = Number(await dialog.getByLabel("Breite").inputValue());
+    expect(Math.abs(width - 1200)).toBeLessThanOrEqual(20); // Pixelrundung
+    await dialog.getByLabel("Art").selectOption({ label: "Tür" });
+    await expect(dialog.getByLabel("Abstand vom Wandanfang")).toHaveValue(String(offset));
+    await expect(dialog.getByLabel("Breite")).toHaveValue(String(width));
+    await dialog.getByRole("button", { name: "OK" }).click();
+    await expect(page.locator("[data-opening]")).toHaveCount(1);
+
+    await page.getByRole("button", { name: "Auswählen", exact: true }).click();
+    await drag(await at(1600), await at(2600));
+    await page.mouse.up();
+    await saveNow(page);
+    const eg = await storeyFile(request, "eg");
+    expect(eg.openings).toHaveLength(1);
+    expect(eg.openings![0]).toMatchObject({ kind: "door", widthMm: width, heightMm: 2135 });
+    expect(Math.abs(eg.openings![0]!.offsetMm - (offset + 1000))).toBeLessThanOrEqual(20);
+  });
+
   test("Endpunkt ziehen: Eck-Nachbar folgt; Löschen mit Entf meldet offenen Raum, Rückgängig stellt her", async ({
     page,
     request,
