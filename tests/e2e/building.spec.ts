@@ -136,19 +136,9 @@ test.describe("Wände, Räume, Öffnungen (6)", () => {
     await openProject(page, request, "leer");
     await drawRectangle(page);
     await page.getByRole("button", { name: "Öffnung", exact: true }).click();
-    // Meldungen und Werkzeugoptionen verändern die Höhe der Kopfzeile; erst danach Positionen
+    // Meldungen verändern die Höhe der Kopfzeile; erst danach Positionen (worldToPage wartet auf das SVG)
     await expect(page.getByRole("status", { name: "Meldung" })).toHaveCount(0);
-    // Die Wandoptionen verschwinden; das SVG übernimmt die neue Höhe erst nach dem ResizeObserver
-    await expect
-      .poll(() =>
-        page
-          .getByRole("img", { name: "Grundriss" })
-          .evaluate(
-            (e) =>
-              e.getBoundingClientRect().height === e.parentElement!.getBoundingClientRect().height,
-          ),
-      )
-      .toBe(true);
+    await worldToPage(page, { x: 0, y: 0 }); // wartet, bis das SVG seine Höhe hat
     // Bildschirmhöhe der unteren Wand aus ihrem Element; x aus der Kamera
     const boxes = await page
       .locator("[data-wall]")

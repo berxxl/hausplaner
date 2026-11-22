@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { APIRequestContext, Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { parse } from "yaml";
 import type { StoreyFile } from "../../src/model/schema";
 
@@ -72,6 +72,15 @@ export async function worldToPage(
   world: { x: number; y: number },
 ): Promise<{ x: number; y: number }> {
   const svg = page.getByRole("img", { name: "Grundriss" });
+  // Werkzeugoptionen und Meldungen ändern die Höhe der Kopfzeile; das SVG übernimmt die neue Größe
+  // erst nach dem ResizeObserver. Vorher berechnete Punkte lägen um die halbe Differenz daneben.
+  await expect
+    .poll(() =>
+      svg.evaluate(
+        (e) => e.getBoundingClientRect().height === e.parentElement!.getBoundingClientRect().height,
+      ),
+    )
+    .toBe(true);
   const box = (await svg.boundingBox())!;
   const [cx, cy, zoom] = await Promise.all(
     ["data-cx", "data-cy", "data-zoom"].map(async (a) => Number(await svg.getAttribute(a))),
