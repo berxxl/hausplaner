@@ -34,6 +34,14 @@ export const STATUS_LABELS = {
   verified: "geprüft",
 } as const;
 
+/** Arten von Durchbrüchen (design.md M3 „Durchbrüche“). */
+export const PENETRATION_LABELS = {
+  drill: "Bohrung",
+  "core-drill": "Kernbohrung",
+  slot: "Schlitz",
+  conduit: "Leerrohr",
+} as const;
+
 export const WARNING_COLOR = "#d70015";
 
 /**

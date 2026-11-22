@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { OPENING_DEFAULTS, OPENING_LABELS } from "../../geometry/openings";
 import type { Opening } from "../../model/types";
 import { DegField, MmField } from "../fields";
+import { PENETRATION_LABELS } from "../labels";
 
 export function Dialog({
   title,
@@ -172,12 +173,6 @@ export function SlopeDialog({
 
 export type PenetrationMethod = "drill" | "core-drill" | "slot" | "conduit";
 
-const PENETRATION_LABELS: Record<PenetrationMethod, string> = {
-  drill: "Bohrung",
-  "core-drill": "Kernbohrung",
-  slot: "Schlitz",
-  conduit: "Leerrohr",
-};
 
 const PENETRATION_DEFAULTS: Record<PenetrationMethod, number> = {
   drill: 40,

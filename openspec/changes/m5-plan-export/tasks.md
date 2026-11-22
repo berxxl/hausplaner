@@ -2,16 +2,16 @@
 
 ## 1. Grundlagen
 
-- [ ] 1.1 Abhängigkeiten jsPDF und svg2pdf.js (auf sehr neue JS-APIs geprüft, design.md „Risks“); Modulgerüst `src/reports/`, `src/export/`; `docs/architektur.md`: Modulschnitt (`reports/`, `ui/` statt `views/`), `settings.defaultPlotScale` streichen, PDF-Export-Abschnitt mit Verweis auf dieses Design
+- [x] 1.1 Abhängigkeiten jsPDF und svg2pdf.js (auf sehr neue JS-APIs geprüft, design.md „Risks“); Modulgerüst `src/reports/`, `src/export/`; `docs/architektur.md`: Modulschnitt (`reports/`, `ui/` statt `views/`), `settings.defaultPlotScale` streichen, PDF-Export-Abschnitt mit Verweis auf dieses Design
 - [ ] 1.2 Editor „Listen“ als fünfter Tab (`EditorKind` `"lists"`), leere Ansicht mit Listenauswahl; Exporteinstellungen im `localStorage` `hausplaner.export` mit Standardwerten (1:50, A3 quer, Planstand „Entwurf“)
 
 ## 2. Listen (rein)
 
-- [ ] 2.1 `reports/filter.ts`: Zeilenmodell, Filter (Geschoss, Raum, Gewerk, Status; fehlende Werte schließen nicht aus), Sortierung (numerisch, deutsch, leere am Ende, stabil); Unit-Tests: Status „verlegt“ lässt nur verlegte Leitungen (Spec-Scenario „Nur Verlegtes“), F2 vor F10, absteigend
-- [ ] 2.2 `reports/connection.ts` und Geräteliste; Unit-Tests: Steckdose „Bad EG Waschtisch“ an „F7 Bad EG“ mit LS „F7“ in der UV EG zeigt „UV EG · F7 Bad EG (F7)“ (Spec-Scenario „Steckdose im Bad“), Rollladen an JA2.C zeigt „UV OG · JA2.C“ und seinen Stromkreis (Spec-Scenario „Rollladen am Aktor“), Netzwerkdose ohne Leitung „nicht angeschlossen“ und Filter (Spec-Scenario „Nicht angeschlossen“), Netzwerkdose mit Cat 7 zum Medienverteiler, durchgeschleifte Dose ohne Kreis, Reiheneinbaugeräte fehlen
-- [ ] 2.3 Stromkreisliste und KNX-Kanalliste; Unit-Tests: alle Kreise der UV EG nach Bezeichnung (Spec-Scenario „Liste UV EG“), 16-fach-Aktor mit 11 Zuordnungen zeigt 11 Zuordnungen und 5 freie Kanäle (Spec-Scenario „Freie Kanäle“), Räume und Geräteanzahl
-- [ ] 2.4 Leitungsliste mit Summen je Typ und Durchbruchsliste; Unit-Tests: 40 Leitungen NYM-J 3×1,5 ergeben deren Gesamtlänge in m (Spec-Scenario „Summe NYM-J 3×1,5“), „ohne Weg“, Filter über Endpunkte; nur Kernbohrungen mit Durchmesser und Lage (Spec-Scenario „Liste für Kernbohrer“), Bauteil und Lage für Wand und Decke, Leitungen durch den Durchbruch
-- [ ] 2.5 `reports/material.ts`; Unit-Tests: 85 Unterputzgeräte, davon 6 in zwei Dreifachkombinationen, ergeben Geräte je Typ, 85 Dosen je Tiefe und „Kombination 3-fach: 2“ (Spec-Scenario „Dosen zählen“), Leitungen je Typ, Leerrohre je Nenngröße aus Segmenten, Reiheneinbaugeräte mit TE
+- [x] 2.1 `reports/filter.ts`: Zeilenmodell, Filter (Geschoss, Raum, Gewerk, Status; fehlende Werte schließen nicht aus), Sortierung (numerisch, deutsch, leere am Ende, stabil); Unit-Tests: Status „verlegt“ lässt nur verlegte Leitungen (Spec-Scenario „Nur Verlegtes“), F2 vor F10, absteigend
+- [x] 2.2 `reports/connection.ts` und Geräteliste; Unit-Tests: Steckdose „Bad EG Waschtisch“ an „F7 Bad EG“ mit LS „F7“ in der UV EG zeigt „UV EG · F7 Bad EG (F7)“ (Spec-Scenario „Steckdose im Bad“), Rollladen an JA2.C zeigt „UV OG · JA2.C“ und seinen Stromkreis (Spec-Scenario „Rollladen am Aktor“), Netzwerkdose ohne Leitung „nicht angeschlossen“ und Filter (Spec-Scenario „Nicht angeschlossen“), Netzwerkdose mit Cat 7 zum Medienverteiler, durchgeschleifte Dose ohne Kreis, Reiheneinbaugeräte fehlen
+- [x] 2.3 Stromkreisliste und KNX-Kanalliste; Unit-Tests: alle Kreise der UV EG nach Bezeichnung (Spec-Scenario „Liste UV EG“), 16-fach-Aktor mit 11 Zuordnungen zeigt 11 Zuordnungen und 5 freie Kanäle (Spec-Scenario „Freie Kanäle“), Räume und Geräteanzahl
+- [x] 2.4 Leitungsliste mit Summen je Typ und Durchbruchsliste; Unit-Tests: 40 Leitungen NYM-J 3×1,5 ergeben deren Gesamtlänge in m (Spec-Scenario „Summe NYM-J 3×1,5“), „ohne Weg“, Filter über Endpunkte; nur Kernbohrungen mit Durchmesser und Lage (Spec-Scenario „Liste für Kernbohrer“), Bauteil und Lage für Wand und Decke, Leitungen durch den Durchbruch
+- [x] 2.5 `reports/material.ts`; Unit-Tests: 85 Unterputzgeräte, davon 6 in zwei Dreifachkombinationen, ergeben Geräte je Typ, 85 Dosen je Tiefe und „Kombination 3-fach: 2“ (Spec-Scenario „Dosen zählen“), Leitungen je Typ, Leerrohre je Nenngröße aus Segmenten, Reiheneinbaugeräte mit TE
 
 ## 3. Listen in der Oberfläche
 

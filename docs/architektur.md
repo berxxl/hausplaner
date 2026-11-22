@@ -153,7 +153,6 @@ interface Settings {
                   verticalFromEdge: [number, number] };   // [150,450], [150,450], [100,300]
   teReservePercent: number;    // 25 (M4)
   actuatorReservePercent: number; // 20 (M4)
-  defaultPlotScale: number;    // 50
 }
 
 interface Storey {
@@ -315,17 +314,19 @@ src/
   geometry/     Flächen, Projektionen, Schnitte, Längen (rein, gut testbar)
   rules/        Warnungsregeln (rein)
   store/        Zustand, Undo/Redo, Befehle
-  views/plan/   Grundriss-Editor
-  views/surface/Wandansicht, Deckenspiegel, Bodenansicht
-  views/board/  Verteiler-Belegung
-  views/3d/     3D-Ansicht
-  views/lists/  Listen
-  export/       PDF
+  reports/      Listen und Mengen als Zeilen (rein, ab M5)
+  export/       PDF-Blätter als reines Modell; nur export/pdf.ts nutzt jsPDF und svg2pdf.js (ab M5)
+  ui/plan/      Grundriss-Editor
+  ui/surface/   Wandansicht, Deckenspiegel, Bodenansicht
+  ui/board/     Verteiler-Belegung
+  ui/three/     3D-Ansicht
+  ui/lists/     Listen (ab M5)
+  ui/export/    Exportdialoge (ab M5)
   io/           Serialisierung YAML <-> Project, Schemaprüfung, Client-API zum Server
 server/         lokaler Node-Server: statische App, Dateizugriff im Projektordner, Dateibeobachtung
 ```
 
-`geometry/`, `rules/` und die Serialisierung in `io/` hängen nicht von React ab. Der Server darf nur innerhalb des beim Start angegebenen Projektordners lesen und schreiben.
+`geometry/`, `rules/`, `reports/`, `export/` (außer `export/pdf.ts`) und die Serialisierung in `io/` hängen nicht von React ab. Exporteinstellungen (Maßstab, Format, Planstand, Filter) sind Ansichtszustand im Browser, nicht Teil der Projektdateien; Blattaufbau, Plankopf und Seitenzuordnung der Baustellen-PDF beschreibt `openspec/changes/m5-plan-export/design.md`. Der Server darf nur innerhalb des beim Start angegebenen Projektordners lesen und schreiben.
 
 ## Meilensteine
 

@@ -9,14 +9,9 @@ import type { ProjectStore } from "../store/history";
 import { deleteRoute, editSegments, moveNode } from "../store/routes";
 import type { ViewStore } from "../store/view";
 import { MmField } from "./fields";
-import { STATUS_LABELS } from "./labels";
+import { PENETRATION_LABELS, STATUS_LABELS } from "./labels";
 
-const METHOD_LABELS = {
-  drill: "Bohrung",
-  "core-drill": "Kernbohrung",
-  slot: "Schlitz",
-  conduit: "Leerrohr",
-} as const;
+const METHOD_LABELS = PENETRATION_LABELS;
 
 export function RouteNodeProperties({
   node,
