@@ -173,7 +173,6 @@ export function SlopeDialog({
 
 export type PenetrationMethod = "drill" | "core-drill" | "slot" | "conduit";
 
-
 const PENETRATION_DEFAULTS: Record<PenetrationMethod, number> = {
   drill: 40,
   "core-drill": 65,
