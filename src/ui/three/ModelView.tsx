@@ -13,6 +13,8 @@ import {
 import { sortedStoreys } from "../../io/project-files";
 import type { Device, Furniture, Project } from "../../model/types";
 import { deviceWorld } from "../../geometry/devices";
+import { boardWorld } from "../../geometry/boards";
+import type { Board } from "../../model/types";
 import { segmentWorldEnds } from "../../geometry/routes";
 import { furnitureBaseZ } from "../../geometry/furniture";
 import { STATUS_COLORS, WARNING_COLOR } from "../labels";
@@ -102,7 +104,31 @@ interface SceneFurniture {
   at: { x: number; y: number; z: number };
 }
 
+interface SceneBoard {
+  board: Board;
+  geometry: THREE.BufferGeometry;
+  matrix: THREE.Matrix4;
+  at: { x: number; y: number; z: number };
+}
+
+/** Verteiler als Quader: Unterputz in der Wand, Aufputz vor der Wand (design.md M4). */
+function boardMesh(project: Project, board: Board, elevationMm: number): SceneBoard | null {
+  const w = boardWorld(project, board);
+  if (!w) return null;
+  const geometry = new THREE.BoxGeometry(board.widthMm * M, board.heightMm * M, board.depthMm * M);
+  const zAxis = new THREE.Vector3(w.normal.x, 0, -w.normal.y).normalize();
+  const yAxis = new THREE.Vector3(0, 1, 0);
+  const xAxis = new THREE.Vector3().crossVectors(yAxis, zAxis).normalize();
+  const sign = board.mounting === "flush" ? -1 : 1;
+  const center = toThree(w.x, w.y, w.z + elevationMm).add(
+    zAxis.clone().multiplyScalar((sign * board.depthMm * M) / 2),
+  );
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis).setPosition(center);
+  return { board, geometry, matrix, at: { x: w.x, y: w.y, z: w.z + elevationMm } };
+}
+
 interface SceneData {
+  boards: SceneBoard[];
   walls: { solid: WallSolid; geometry: THREE.BufferGeometry }[];
   polys: { poly: PlanarPolygon; geometry: THREE.BufferGeometry }[];
   devices: SceneDevice[];
@@ -187,6 +213,7 @@ function buildScene(project: Project, upTo: string | null): SceneData {
   const devices: SceneDevice[] = [];
   const furniture: SceneFurniture[] = [];
   const routes: SceneRoute[] = [];
+  const boards: SceneBoard[] = [];
   const nodes = new Map(project.routeNodes.map((n) => [n.id, n]));
   const bounds = new THREE.Box3();
   for (const storey of visibleStoreys(project, upTo)) {
@@ -206,12 +233,16 @@ function buildScene(project: Project, upTo: string | null): SceneData {
     }
     for (const f of project.furniture.filter((x) => x.storeyId === storey.id))
       furniture.push(furnitureMesh(project, f, storey.elevationMm));
+    for (const b of project.boards.filter((x) => x.storeyId === storey.id)) {
+      const mesh = boardMesh(project, b, storey.elevationMm);
+      if (mesh) boards.push(mesh);
+    }
     for (const seg of project.routeSegments.filter((x) => x.storeyId === storey.id)) {
       const mesh = routeMesh(project, seg, nodes);
       if (mesh) routes.push(mesh);
     }
   }
-  return { walls, polys, devices, furniture, routes, bounds };
+  return { boards, walls, polys, devices, furniture, routes, bounds };
 }
 
 /** Testhilfe: Projektion eines Weltpunkts (mm) auf Seitenkoordinaten. */
@@ -260,6 +291,7 @@ const COLORS = {
   ceiling: "#f2f2f7",
   slope: "#e5d7c2",
   furniture: "#b08458",
+  board: "#9e9e9e",
   selected: "#0071e3",
 };
 
@@ -296,6 +328,7 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
       scene.devices.forEach((d) => d.geometry.dispose());
       scene.furniture.forEach((f) => f.geometry.dispose());
       scene.routes.forEach((r) => r.geometry.dispose());
+      scene.boards.forEach((b) => b.geometry.dispose());
     },
     [scene],
   );
@@ -358,6 +391,13 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
         data-walls={summary}
         data-devices={deviceSummary}
         data-furniture={furnitureSummary}
+        data-boards={scene.boards
+          .map(
+            ({ board, at }) =>
+              `${board.id}:${Math.round(at.x)},${Math.round(at.y)},${Math.round(at.z)}`,
+          )
+          .sort()
+          .join(";")}
         data-routes={routes.length}
         data-highlighted={routes
           .filter((r) => highlighted.has(r.id))
@@ -419,6 +459,19 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
                       ? WARNING_COLOR
                       : STATUS_COLORS[device.status]
                 }
+              />
+            </mesh>
+          ))}
+          {scene.boards.map(({ board, geometry, matrix }) => (
+            <mesh
+              key={board.id}
+              geometry={geometry}
+              matrix={matrix}
+              matrixAutoUpdate={false}
+              onClick={pick({ kind: "board", id: board.id })}
+            >
+              <meshStandardMaterial
+                color={isSel(selection, "board", board.id) ? COLORS.selected : COLORS.board}
               />
             </mesh>
           ))}

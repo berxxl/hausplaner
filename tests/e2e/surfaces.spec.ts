@@ -33,7 +33,7 @@ test.describe("Navigation zwischen Flächen (7.7)", () => {
     request,
   }) => {
     await openProject(page, request);
-    await dblclickWorld(page, 2000, -300);
+    await dblclickWorld(page, 2000, -200);
     await expect(title(page)).toHaveText("Süd außen");
     await expect(page.getByText("Rohbau ab Oberkante Rohfußboden")).toBeVisible();
   });
@@ -105,7 +105,7 @@ test.describe("Wandansicht (7.3)", () => {
     ).toHaveCount(1);
     await expect(page.getByTestId("dims-o1fenstr").locator('[data-dim="width"]')).toHaveText("980");
     await page.getByRole("tab", { name: "Grundriss" }).click();
-    await dblclickWorld(page, 2000, -300);
+    await dblclickWorld(page, 2000, -200);
     await expect(
       page.getByRole("img", { name: "Flächenansicht" }).locator('[data-opening="o1fenstr"]'),
     ).toHaveCount(1);

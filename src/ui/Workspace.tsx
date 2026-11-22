@@ -137,5 +137,9 @@ function selectionExists(project: Project, sel: Selection): boolean {
       return (sel.ids ?? [sel.id]).every((id) => project.routeSegments.some((x) => x.id === id));
     case "cable":
       return project.cables.some((x) => x.id === sel.id);
+    case "board":
+      return project.boards.some((x) => x.id === sel.id);
+    case "circuit":
+      return project.circuits.some((x) => x.id === sel.id);
   }
 }

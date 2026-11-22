@@ -3,7 +3,7 @@ import { OPENING_DEFAULTS, OPENING_LABELS } from "../../geometry/openings";
 import type { Opening } from "../../model/types";
 import { DegField, MmField } from "../fields";
 
-function Dialog({
+export function Dialog({
   title,
   children,
   canSubmit,

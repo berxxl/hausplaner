@@ -4,7 +4,8 @@ import { routeSurfaceTarget } from "./warnings";
 import { sortedStoreys } from "../io/project-files";
 import { addStorey } from "../store/commands";
 import type { ProjectStore } from "../store/history";
-import type { SurfaceTarget, ViewStore } from "../store/view";
+import type { Selection, SurfaceTarget, ViewStore } from "../store/view";
+import type { Project } from "../model/types";
 import { AddStoreyDialog } from "./AddStoreyDialog";
 import { freeSurfacesOf, roomViewsOf } from "./derived";
 
@@ -131,6 +132,91 @@ function Item({
   );
 }
 
+/**
+ * Baum „Verteiler“ (design.md M4 „Verteiler platzieren“): Verteiler nach Hierarchie, Geschwister
+ * nach Bezeichnung, unter jedem Verteiler seine Kinder und Stromkreise.
+ */
+function BoardItems({
+  project,
+  parentId,
+  level,
+  selection,
+  collapsed,
+  toggle,
+  view,
+}: {
+  project: Project;
+  parentId: string | undefined;
+  level: number;
+  selection: Selection | null;
+  collapsed: Set<string>;
+  toggle(key: string, open?: boolean): void;
+  view: ViewStore;
+}) {
+  const ids = new Set(project.boards.map((b) => b.id));
+  const boards = project.boards
+    .filter((b) =>
+      parentId === undefined
+        ? b.parentBoardId === undefined || !ids.has(b.parentBoardId)
+        : b.parentBoardId === parentId,
+    )
+    .sort((a, b) => a.label.localeCompare(b.label, "de", { numeric: true }));
+  const selectedCircuit =
+    selection?.kind === "circuit" ? project.circuits.find((c) => c.id === selection.id) : undefined;
+  // Verteiler, unter denen die Auswahl liegt (für zugeklappte Einträge)
+  const contains = (boardId: string): boolean =>
+    (selection?.kind === "board" && selection.id === boardId) ||
+    selectedCircuit?.boardId === boardId ||
+    project.boards.some((b) => b.parentBoardId === boardId && b.id !== boardId && contains(b.id));
+  return (
+    <>
+      {boards.map((b) => {
+        const circuits = project.circuits
+          .filter((c) => c.boardId === b.id)
+          .sort((x, y) => x.label.localeCompare(y.label, "de", { numeric: true }));
+        const hasChildren =
+          circuits.length > 0 || project.boards.some((x) => x.parentBoardId === b.id);
+        return (
+          <Item
+            key={b.id}
+            level={level}
+            label={b.label}
+            selected={selection?.kind === "board" && selection.id === b.id}
+            marked={selectedCircuit?.boardId === b.id}
+            expanded={hasChildren ? !collapsed.has(b.id) : undefined}
+            onToggle={hasChildren ? (o) => toggle(b.id, o) : undefined}
+            containsMark={contains(b.id)}
+            onActivate={() => view.select({ kind: "board", id: b.id })}
+          >
+            {hasChildren ? (
+              <>
+                <BoardItems
+                  project={project}
+                  parentId={b.id}
+                  level={level + 1}
+                  selection={selection}
+                  collapsed={collapsed}
+                  toggle={toggle}
+                  view={view}
+                />
+                {circuits.map((c) => (
+                  <Item
+                    key={c.id}
+                    level={level + 1}
+                    label={c.label}
+                    selected={selection?.kind === "circuit" && selection.id === c.id}
+                    onActivate={() => view.select({ kind: "circuit", id: c.id })}
+                  />
+                ))}
+              </>
+            ) : undefined}
+          </Item>
+        );
+      })}
+    </>
+  );
+}
+
 /** Strukturbaum: Geschosse, Räume mit Wandansichten, Decke, Boden, Schrägen, dazu „Flächen ohne Raum“. */
 export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) {
   const project = useStore(store, (s) => s.project);
@@ -250,6 +336,19 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
           );
         })}
       </ul>
+      {project.boards.length > 0 && (
+        <ul role="tree" aria-label="Verteiler">
+          <BoardItems
+            project={project}
+            parentId={undefined}
+            level={1}
+            selection={selection}
+            collapsed={collapsed}
+            toggle={toggle}
+            view={view}
+          />
+        </ul>
+      )}
       <button type="button" className="tree__add" onClick={() => setAdding(true)}>
         Geschoss hinzufügen
       </button>

@@ -78,6 +78,11 @@ export function activateWarning(
     view.select({ kind: "device", id: target.id });
     if (!device) return;
     view.setActiveStorey(device.storeyId);
+    if (device.placement.kind === "board") {
+      view.openBoard(device.placement.boardId);
+      view.select({ kind: "device", id: target.id });
+      return;
+    }
     const surface = deviceSurfaceTarget(project, device);
     if (surface) view.openSurface(surface, device.storeyId);
     else view.setEditor("plan");
@@ -89,6 +94,15 @@ export function activateWarning(
     view.openSurface(place.surface, place.storeyId);
   } else if (target.kind === "cable") {
     view.select({ kind: "cable", id: target.id });
+  } else if (target.kind === "board") {
+    const board = project.boards.find((b) => b.id === target.id);
+    if (board) view.setActiveStorey(board.storeyId);
+    if (target.open) view.openBoard(target.id);
+    else view.select({ kind: "board", id: target.id });
+  } else if (target.kind === "board-device") {
+    const d = project.devices.find((x) => x.id === target.id);
+    if (d?.placement.kind === "board") view.openBoard(d.placement.boardId);
+    view.select({ kind: "device", id: target.id });
   } else if (target.kind === "opening") {
     const opening = project.openings.find((o) => o.id === target.id);
     view.select({ kind: "opening", id: target.id });
@@ -184,6 +198,22 @@ function describe(project: Project, w: ProjectWarning): { element: string; place
   if (t.kind === "cable") {
     const c = project.cables.find((x) => x.id === t.id);
     return { element: c?.label ?? "Leitung", place: {} };
+  }
+  if (t.kind === "board") {
+    const b = project.boards.find((x) => x.id === t.id);
+    return { element: b?.label ?? "Verteiler", place: { storeyId: b?.storeyId } };
+  }
+  if (t.kind === "circuit") {
+    const c = project.circuits.find((x) => x.id === t.id);
+    return { element: c?.label ?? "Stromkreis", place: {} };
+  }
+  if (t.kind === "board-device") {
+    const d = project.devices.find((x) => x.id === t.id);
+    const b =
+      d?.placement.kind === "board"
+        ? project.boards.find((x) => x.id === (d.placement as { boardId: string }).boardId)
+        : undefined;
+    return { element: d?.label ?? "Gerät", place: { storeyId: d?.storeyId, view: b?.label } };
   }
   const f = project.furniture.find((x) => x.id === t.id);
   return {

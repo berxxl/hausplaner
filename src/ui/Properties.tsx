@@ -8,6 +8,8 @@ import { FurnitureProperties } from "./FurnitureProperties";
 import { OpeningProperties, RoomProperties, WallProperties } from "./BuildingProperties";
 import { CableProperties } from "./CableProperties";
 import { RouteNodeProperties, RouteSegmentProperties } from "./RouteProperties";
+import { BoardProperties } from "./BoardProperties";
+import { CircuitProperties } from "./CircuitProperties";
 
 const KIND_LABELS = {
   storey: "Geschoss",
@@ -20,6 +22,8 @@ const KIND_LABELS = {
   "route-node": "Trassenknoten",
   "route-segment": "Trassensegment",
   cable: "Leitung",
+  board: "Verteiler",
+  circuit: "Stromkreis",
 } as const;
 
 /** Eigenschaften der Auswahl. */
@@ -78,6 +82,16 @@ export function Properties({
     const c = project.cables.find((x) => x.id === selection.id);
     if (c)
       body = <CableProperties key={c.id} cable={c} project={project} store={store} view={view} />;
+  } else if (selection?.kind === "board") {
+    const b = project.boards.find((x) => x.id === selection.id);
+    if (b)
+      body = <BoardProperties key={b.id} board={b} project={project} store={store} view={view} />;
+  } else if (selection?.kind === "circuit") {
+    const c = project.circuits.find((x) => x.id === selection.id);
+    if (c)
+      body = (
+        <CircuitProperties key={c.id} circuit={c} project={project} store={store} view={view} />
+      );
   } else if (selection?.kind === "opening") {
     const opening = project.openings.find((o) => o.id === selection.id);
     if (opening) body = <OpeningProperties key={opening.id} opening={opening} store={store} />;

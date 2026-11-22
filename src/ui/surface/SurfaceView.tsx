@@ -53,6 +53,10 @@ import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { warnedIds } from "../derived";
 import { isCableVisible, isDeviceVisible } from "../filter";
+import { boardFrontRect, boardNodeAnchor, BOARD_DEFAULTS } from "../../geometry/boards";
+import { addBoard, boardCascade, deleteBoards, moveBoard } from "../../store/boards";
+import { BoardDialog } from "../board/dialogs";
+import { circuitShortName } from "../../geometry/circuits";
 
 type Tool = SurfaceTool;
 type SurfacePlacement = Extract<DevicePlacement, { kind: "surface" }>;
@@ -98,12 +102,14 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     | { kind: "pan"; last: Vec }
     | { kind: "device"; id: string; start: Vec; base: SurfacePlacement }
     | { kind: "node"; id: string; transition: boolean }
+    | { kind: "board"; id: string; start: Vec; base: { surface: string; u: number; v: number } }
     | null
   >(null);
   /** Letzter Punkt des laufenden Trassenzugs (design.md M3 „Trassen zeichnen“). */
   const [routePrev, setRoutePrev] = useState<RoutePoint | null>(null);
   const [routeCursor, setRouteCursor] = useState<{ u: number; v: number } | null>(null);
   const [pendingPenetration, setPendingPenetration] = useState<RoutePoint | null>(null);
+  const [pendingBoard, setPendingBoard] = useState<{ u: number; v: number } | null>(null);
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setMessage(null), 5000);
@@ -116,6 +122,21 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       if (e.key === "Escape") {
         setRoutePrev(null);
         view.setCableFrom(null);
+        return;
+      }
+      const sel = view.getState().selection;
+      if ((e.key === "Delete" || e.key === "Backspace") && sel?.kind === "board") {
+        e.preventDefault();
+        void (async () => {
+          const c = boardCascade(store.getState().project, [sel.id]);
+          const msg = cascadeMessage(c.devices, c.cables, { circuits: c.circuits });
+          if (
+            msg &&
+            !(await confirm({ title: "Verteiler löschen?", message: msg, confirmLabel: "Löschen" }))
+          )
+            return;
+          store.execute(deleteBoards([sel.id]));
+        })();
         return;
       }
       const ids = view.selectedDevices();
@@ -220,6 +241,25 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   // Möbel vor dieser Raumansicht als halbtransparente Silhouette (design.md M2 „Möbel“)
   const silhouettes =
     model.roomView && !furnitureHidden ? sectionSilhouettes(project, model.roomView) : [];
+  // Verteiler dieser Wandseite (design.md M4 „Verteiler platzieren“); ganze Wandseite in Rohbauhöhen
+  const shownBoards = project.boards.flatMap((board) => {
+    if (board.placement.surface !== model.ref) return [];
+    const { u } = board.placement;
+    if (model.uRange && (u < model.uRange[0] || u > model.uRange[1])) return [];
+    const probe = {
+      storeyId: board.storeyId,
+      placement: { kind: "surface", surface: board.placement.surface, u, v: 0, rotationDeg: 0 },
+    } as Device;
+    const dv = model.kind === "wall-side" ? wallDeviceBuildup(project, probe) : 0;
+    const r = boardFrontRect(board);
+    return [{ board, dv, rect: { ...r, vFrom: r.vFrom + dv, vTo: r.vTo + dv } }];
+  });
+  const hitBoard = (p: Vec) =>
+    [...shownBoards]
+      .reverse()
+      .find(
+        ({ rect }) => p.x >= rect.uFrom && p.x <= rect.uTo && p.y >= rect.vFrom && p.y <= rect.vTo,
+      );
   const warned = warnedIds(project);
   const snap = (p: Vec): Vec => {
     let best: Vec | null = null;
@@ -284,12 +324,19 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       },
     );
   /** Punkt eines Zugs aus einem Fang: vorhandener Knoten oder neuer Knoten (ggf. mit Teilung). */
-  const toRoutePoint = (snap: RouteSnap, taken: Set<string>): RoutePoint => {
+  const toRoutePoint = (snap: RouteSnap | BoardSnap, taken: Set<string>): RoutePoint => {
     const fresh = () => {
       const id = newId(taken);
       taken.add(id);
       return id;
     };
+    if (snap.kind === "board") {
+      const b = project.boards.find((x) => x.id === snap.boardId)!;
+      const existing = project.routeNodes.find((n) => n.boardId === b.id);
+      if (existing) return { at: snap.at, nodeId: existing.id };
+      const node = { ...makeNode(project, fresh(), [boardNodeAnchor(b)]), boardId: b.id };
+      return { at: snap.at, nodeId: node.id, newNode: node };
+    }
     if (snap.kind === "node") return { at: snap.at, nodeId: snap.nodeId };
     if (snap.kind === "device") {
       const existing = project.routeNodes.find((n) => n.deviceId === snap.deviceId);
@@ -310,9 +357,18 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       };
     return { at: snap.at, nodeId: node.id, newNode: node };
   };
+  /** Fang auf den Verteilerknoten: Klick ins Rechteck eines Verteilers (design.md M4). */
+  const snapWithBoard = (world: Vec, shift: boolean): RouteSnap | BoardSnap => {
+    const hit = hitBoard(world);
+    if (hit && !hitDevice(world)) {
+      const a = boardNodeAnchor(hit.board);
+      return { kind: "board", boardId: hit.board.id, at: { u: a.u, v: a.v + hit.dv } };
+    }
+    return snapRoute(world, shift);
+  };
   const routeClick = (world: Vec, shift: boolean) => {
     const taken = new Set(allIds(project));
-    const point = toRoutePoint(snapRoute(world, shift), taken);
+    const point = toRoutePoint(snapWithBoard(world, shift), taken);
     if (!routePrev) return setRoutePrev(point);
     if (
       point.nodeId === routePrev.nodeId ||
@@ -355,7 +411,21 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     if (tool === "route") return routeClick(world, e.shiftKey);
     if (tool === "cable") {
       const d = hitDevice(world);
-      return cableTool.clickEndpoint(d ? { deviceId: d.id } : undefined);
+      const b = d ? undefined : hitBoard(world);
+      return cableTool.clickEndpoint(
+        d ? { deviceId: d.id } : b ? { boardId: b.board.id } : undefined,
+      );
+    }
+    if (tool === "board") {
+      if (!model.ref.startsWith("wall:")) return setMessage("Verteiler nur auf Wandseiten");
+      const dv =
+        model.kind === "wall-side"
+          ? wallDeviceBuildup(project, {
+              storeyId: model.storeyId,
+              placement: { kind: "surface", surface: model.ref, u: world.x, v: 0, rotationDeg: 0 },
+            } as Device)
+          : 0;
+      return setPendingBoard({ u: Math.round(world.x), v: Math.round(world.y - dv) });
     }
     if (tool === "penetration") {
       const point = toRoutePoint(snapRoute(world, true), new Set(allIds(project)));
@@ -375,6 +445,19 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       view.select({ kind: "device", id: device.id });
       store.begin("Gerät verschieben");
       drag.current = { kind: "device", id: device.id, start: world, base: device.placement };
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      return;
+    }
+    const boardHit = hitBoard(world);
+    if (boardHit) {
+      view.select({ kind: "board", id: boardHit.board.id });
+      store.begin("Verteiler verschieben");
+      drag.current = {
+        kind: "board",
+        id: boardHit.board.id,
+        start: world,
+        base: { ...boardHit.board.placement },
+      };
       e.currentTarget.setPointerCapture?.(e.pointerId);
       return;
     }
@@ -458,6 +541,17 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       store.preview(moveNode(d.id, viewToAnchor(project, model, at)).run);
       return;
     }
+    if (d.kind === "board") {
+      const w = toWorld(e);
+      store.preview(
+        moveBoard(d.id, {
+          ...d.base,
+          u: Math.round(d.base.u + w.x - d.start.x),
+          v: Math.round(d.base.v + w.y - d.start.y),
+        }).run,
+      );
+      return;
+    }
     if (d.kind === "device") {
       const w = toWorld(e);
       const u = Math.round(d.base.u + w.x - d.start.x);
@@ -476,7 +570,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     setCamera((c) => panBy(c ?? cam, delta));
   };
   const onPointerUp = () => {
-    if (drag.current?.kind === "device" || drag.current?.kind === "node") store.commit();
+    const k = drag.current?.kind;
+    if (k === "device" || k === "node" || k === "board") store.commit();
     drag.current = null;
   };
 
@@ -563,6 +658,9 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           </button>
           <button type="button" aria-pressed={tool === "cable"} onClick={() => setTool("cable")}>
             Leitung
+          </button>
+          <button type="button" aria-pressed={tool === "board"} onClick={() => setTool("board")}>
+            Verteiler
           </button>
           {model.roomView && (
             <>
@@ -686,6 +784,23 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 ))}
               </g>
             )}
+            <g data-testid="surface-boards">
+              {shownBoards.map(({ board, rect }) => (
+                <g
+                  key={board.id}
+                  data-board={board.id}
+                  className={`surface__board surface__board--${board.mounting}${selection?.kind === "board" && selection.id === board.id ? " surface__board--selected" : ""}${warned.has(board.id) ? " surface__board--warned" : ""}`}
+                >
+                  <rect
+                    x={rect.uFrom}
+                    y={rect.vFrom}
+                    width={rect.uTo - rect.uFrom}
+                    height={rect.vTo - rect.vFrom}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              ))}
+            </g>
             <RoutesLayer
               geometry={routes}
               zoom={cam.zoom}
@@ -787,6 +902,39 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
               </text>
             );
           })}
+          {shownBoards.map(({ board, rect }) => {
+            const p = s((rect.uFrom + rect.uTo) / 2, (rect.vFrom + rect.vTo) / 2);
+            return (
+              <text
+                key={board.id}
+                className="surface__board-label"
+                x={p.x}
+                y={p.y}
+                textAnchor="middle"
+                pointerEvents="none"
+              >
+                {board.label}
+              </text>
+            );
+          })}
+          {shownDevices.map(({ device, rect }) => {
+            const c = project.circuits.find((x) => x.id === device.circuitId);
+            if (!c) return null;
+            const p = s((rect.uMin + rect.uMax) / 2, rect.vMin);
+            return (
+              <text
+                key={device.id}
+                data-circuit-label={device.id}
+                className="circuit-label"
+                x={p.x}
+                y={p.y + 11}
+                textAnchor="middle"
+                pointerEvents="none"
+              >
+                {circuitShortName(c.label)}
+              </text>
+            );
+          })}
           {measure && (
             <g className="measure">
               {measureB && (
@@ -821,6 +969,38 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       )}
       {confirmDialog}
       {cableTool.dialog}
+      {pendingBoard && (
+        <BoardDialog
+          storeyName={project.storeys.find((x) => x.id === model.storeyId)?.name ?? ""}
+          onCancel={() => setPendingBoard(null)}
+          onSubmit={(v) => {
+            const at = pendingBoard;
+            setPendingBoard(null);
+            const taken = new Set(allIds(project));
+            const fresh = () => {
+              const id = newId(taken);
+              taken.add(id);
+              return id;
+            };
+            const id = fresh();
+            store.execute(
+              addBoard({
+                id,
+                label: v.label,
+                kind: v.kind,
+                placement: { surface: model.ref, u: at.u, v: at.v },
+                mounting: v.mounting,
+                widthMm: v.widthMm,
+                heightMm: v.heightMm,
+                depthMm: v.depthMm,
+                fields: BOARD_DEFAULTS[v.kind].fields.map((f) => ({ ...f, id: fresh() })),
+                storeyId: model.storeyId,
+              }),
+            );
+            view.select({ kind: "board", id });
+          }}
+        />
+      )}
       {pendingPenetration && (
         <PenetrationDialog
           onCancel={() => setPendingPenetration(null)}
@@ -850,6 +1030,13 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       )}
     </div>
   );
+}
+
+/** Fang auf einen Verteilerknoten (design.md M4 „Verteiler als Endpunkt“). */
+interface BoardSnap {
+  kind: "board";
+  boardId: string;
+  at: { u: number; v: number };
 }
 
 /** Punkt eines Trassenzugs: vorhandener oder neuer Knoten, ggf. mit Teilung eines Segments. */

@@ -15,7 +15,9 @@ export type SelectableKind =
   | "furniture"
   | "route-node"
   | "route-segment"
-  | "cable";
+  | "cable"
+  | "board"
+  | "circuit";
 
 export interface Selection {
   kind: SelectableKind;
@@ -28,9 +30,10 @@ export interface Selection {
 }
 
 /** Werkzeug der Flächenansicht. */
-export type SurfaceTool = "select" | "measure" | "device" | "route" | "penetration" | "cable";
+export type SurfaceTool =
+  "select" | "measure" | "device" | "route" | "penetration" | "cable" | "board";
 
-export type EditorKind = "plan" | "surface" | "3d";
+export type EditorKind = "plan" | "surface" | "3d" | "board";
 
 /** Was die Flächenansicht zeigt. */
 export type SurfaceTarget =
@@ -76,6 +79,8 @@ export interface ViewState {
   lastThicknessMm: number;
   /** Offene Fläche im Editor „Fläche“. */
   surface: SurfaceTarget | null;
+  /** Verteiler der Belegungsansicht (zuletzt ausgewählter Verteiler, design.md M4). */
+  boardId: string | null;
   surfaceTool: SurfaceTool;
   /** Gerätetyp der Werkzeuge „Gerät“ in Grundriss und Flächenansicht. */
   deviceTypeId: string | null;
@@ -102,6 +107,8 @@ export interface ViewStore extends StoreApi<ViewState> {
   setLastThickness(mm: number): void;
   /** Öffnet eine Fläche im Editor „Fläche“. */
   openSurface(target: SurfaceTarget, storeyId?: string): void;
+  /** Öffnet die Belegungsansicht eines Verteilers und wählt ihn aus. */
+  openBoard(boardId: string): void;
   /** Entfernt eine Auswahl, deren Objekt nicht mehr existiert. */
   prune(exists: (selection: Selection) => boolean): void;
   /** Shift-Klick auf ein Gerät: hinzufügen oder entfernen (nur Geräte derselben Fläche, prüft der Aufrufer). */
@@ -133,6 +140,7 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     toolRoomId: null,
     lastThicknessMm: 240,
     surface: null,
+    boardId: null,
     surfaceTool: "select",
     deviceTypeId: null,
     furnitureTypeId: null,
@@ -145,7 +153,9 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
   }));
   return Object.assign(store, {
     select(selection: Selection | null) {
-      store.setState({ selection });
+      // Die Belegungsansicht zeigt den zuletzt ausgewählten Verteiler
+      if (selection?.kind === "board") store.setState({ selection, boardId: selection.id });
+      else store.setState({ selection });
     },
     isSelected(kind: SelectableKind, id: string) {
       const s = store.getState().selection;
@@ -227,6 +237,9 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
         editor: "surface",
         ...(storeyId ? { activeStoreyId: storeyId } : {}),
       });
+    },
+    openBoard(boardId: string) {
+      store.setState({ boardId, editor: "board", selection: { kind: "board", id: boardId } });
     },
     prune(exists: (selection: Selection) => boolean) {
       const s = store.getState().selection;

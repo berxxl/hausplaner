@@ -36,12 +36,27 @@ export const STATUS_LABELS = {
 
 export const WARNING_COLOR = "#d70015";
 
-/** „2 Geräte und 1 Leitung werden mitgelöscht.“ (design.md M2/M3 „Löschen“); null, wenn nichts. */
-export function cascadeMessage(devices: number, cables: number): string | null {
-  const parts: string[] = [];
-  if (devices > 0) parts.push(`${devices} ${devices === 1 ? "Gerät" : "Geräte"}`);
-  if (cables > 0) parts.push(`${cables} ${cables === 1 ? "Leitung" : "Leitungen"}`);
+/**
+ * „2 Geräte und 1 Leitung werden mitgelöscht.“ (design.md M2/M3/M4 „Löschen“); null, wenn nichts.
+ * `extra`: Verteiler und Stromkreise (M4).
+ */
+export function cascadeMessage(
+  devices: number,
+  cables: number,
+  extra: { boards?: number; circuits?: number } = {},
+): string | null {
+  const counts: [number, string, string][] = [
+    [extra.boards ?? 0, "Verteiler", "Verteiler"],
+    [devices, "Gerät", "Geräte"],
+    [extra.circuits ?? 0, "Stromkreis", "Stromkreise"],
+    [cables, "Leitung", "Leitungen"],
+  ];
+  const parts = counts
+    .filter(([n]) => n > 0)
+    .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);
   if (parts.length === 0) return null;
-  const singular = parts.length === 1 && (devices === 1 || cables === 1);
-  return `${parts.join(" und ")} ${singular ? "wird" : "werden"} mitgelöscht.`;
+  const total = counts.reduce((s, [n]) => s + n, 0);
+  const text =
+    parts.length === 1 ? parts[0]! : `${parts.slice(0, -1).join(", ")} und ${parts.at(-1)!}`;
+  return `${text} ${total === 1 ? "wird" : "werden"} mitgelöscht.`;
 }

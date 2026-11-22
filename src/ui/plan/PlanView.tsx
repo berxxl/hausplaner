@@ -93,6 +93,9 @@ import {
 import { warnedIds, warningsOf } from "../derived";
 import { isDeviceVisible } from "../filter";
 import { dependentDeviceIds } from "../../store/building";
+import { boardPlanRect } from "../../geometry/boards";
+import { circuitShortName } from "../../geometry/circuits";
+import { boardCascade, boardsOnWalls, deleteBoards } from "../../store/boards";
 import { dependentCableCount } from "../../store/routes";
 import { cascadeMessage } from "../labels";
 import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
@@ -220,6 +223,16 @@ export function PlanView({ store, view }: PlanViewProps) {
         .map((d) => ({ device: d, at: planSymbol(project, d) }))
         .filter((x): x is { device: Device; at: NonNullable<typeof x.at> } => x.at !== null),
     [project, storeyDevices],
+  );
+  const storeyBoards = useMemo(
+    () =>
+      project.boards
+        .filter((b) => b.storeyId === activeStoreyId)
+        .flatMap((b) => {
+          const rect = boardPlanRect(project, b);
+          return rect ? [{ board: b, rect }] : [];
+        }),
+    [project, activeStoreyId],
   );
   const storeyFurniture = useMemo(
     () => (furnitureHidden ? [] : project.furniture.filter((f) => f.storeyId === activeStoreyId)),
@@ -391,14 +404,28 @@ export function PlanView({ store, view }: PlanViewProps) {
   const deleteSelection = async () => {
     const sel = view.getState().selection;
     if (!sel) return;
+    if (sel.kind === "board") {
+      const c = boardCascade(project, [sel.id]);
+      const message = cascadeMessage(c.devices, c.cables, { circuits: c.circuits });
+      if (
+        message &&
+        !(await confirm({ title: "Verteiler löschen?", message, confirmLabel: "Löschen" }))
+      )
+        return;
+      store.execute(deleteBoards([sel.id]));
+      return;
+    }
     if (sel.kind === "wall" || sel.kind === "room" || sel.kind === "device") {
       const ids =
         sel.kind === "device"
           ? view.selectedDevices()
           : dependentDeviceIds(project, sel.kind, sel.id);
+      const boards = sel.kind === "wall" ? boardsOnWalls(project, [sel.id]) : [];
+      const bc = boardCascade(project, boards);
       const message = cascadeMessage(
-        sel.kind === "device" ? 0 : ids.length,
-        dependentCableCount(project, ids),
+        (sel.kind === "device" ? 0 : ids.length) + bc.devices,
+        dependentCableCount(project, ids) + bc.cables,
+        { boards: boards.length, circuits: bc.circuits },
       );
       if (message) {
         const ok = await confirm({
@@ -473,8 +500,11 @@ export function PlanView({ store, view }: PlanViewProps) {
   /** Endpunkt für das Werkzeug „Leitung“: Gerät, ab M4 auch Verteiler. */
   const endpointAt = (p: Vec): Endpoint | undefined => {
     const d = hitDevice(p);
-    return d ? { deviceId: d.id } : undefined;
+    if (d) return { deviceId: d.id };
+    const b = hitBoard(p);
+    return b ? { boardId: b.id } : undefined;
   };
+  const hitBoard = (p: Vec) => storeyBoards.find(({ rect }) => pointInPolygon(p, rect))?.board;
   const hitFurniture = (p: Vec) =>
     [...storeyFurniture].reverse().find((f) => pointInPolygon(p, footprint(f)));
   const hitRoom = (p: Vec) =>
@@ -554,16 +584,9 @@ export function PlanView({ store, view }: PlanViewProps) {
         }
         const device = hitDevice(world);
         if (device) {
+          // ab M4 auch über Flächen hinweg (design.md M4 „Mehrfachauswahl über Flächen“)
           if (e.shiftKey) {
-            const current = view.selectedDevices();
-            const first = project.devices.find((d) => d.id === current[0]);
-            const sameSurface =
-              !first ||
-              (first.placement.kind === "surface" &&
-                device.placement.kind === "surface" &&
-                first.placement.surface === device.placement.surface);
-            if (sameSurface) view.toggleDevice(device.id);
-            else setMessage("Mehrfachauswahl nur für Geräte derselben Fläche.");
+            view.toggleDevice(device.id);
             return;
           }
           view.select({ kind: "device", id: device.id });
@@ -577,6 +600,13 @@ export function PlanView({ store, view }: PlanViewProps) {
             drag.current = { kind: "device", deviceId: device.id };
             capture();
           }
+          return;
+        }
+        const board = hitBoard(world);
+        if (board) {
+          view.select({ kind: "board", id: board.id });
+          drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
+          capture();
           return;
         }
         const furniture = hitFurniture(world);
@@ -1107,6 +1137,19 @@ export function PlanView({ store, view }: PlanViewProps) {
                   )
                 );
               })()}
+            <g data-testid="plan-boards">
+              {storeyBoards.map(({ board, rect }) => (
+                <polygon
+                  key={board.id}
+                  data-board={board.id}
+                  className={`plan-board plan-board--${board.mounting}${selection?.kind === "board" && selection.id === board.id ? " plan-board--selected" : ""}${warned.has(board.id) ? " plan-board--warned" : ""}`}
+                  points={rect.map((q) => `${q.x},${q.y}`).join(" ")}
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>{board.label}</title>
+                </polygon>
+              ))}
+            </g>
             <g data-testid="plan-furniture">
               {storeyFurniture.map((f) => (
                 <polygon
@@ -1180,6 +1223,25 @@ export function PlanView({ store, view }: PlanViewProps) {
             {slopeP1 && <CalibrationMarker world={slopeP1} zoom={cam.zoom} />}
           </g>
           <RoomLabels rooms={rooms} storey={storey} cam={cam} vp={vp} />
+          <g className="circuit-labels" pointerEvents="none">
+            {deviceSymbols.map(({ device, at }) => {
+              const c = project.circuits.find((x) => x.id === device.circuitId);
+              if (!c) return null;
+              const p = worldToScreen(cam, vp, { x: at.x, y: at.y - PLAN_SYMBOL_MM / 2 });
+              return (
+                <text
+                  key={device.id}
+                  data-circuit-label={device.id}
+                  className="circuit-label"
+                  x={p.x}
+                  y={p.y + 11}
+                  textAnchor="middle"
+                >
+                  {circuitShortName(c.label)}
+                </text>
+              );
+            })}
+          </g>
           <NorthArrow northDeg={project.settings.northDeg} vp={vp} />
           {measure && (
             <MeasureOverlay

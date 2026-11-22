@@ -4,6 +4,7 @@
  */
 import { pointInPolygon } from "./polygon";
 import { wallDeviceRoom } from "./devices";
+import { boardDevices } from "./boards";
 import type { Cable, Circuit, Device, Project, Room } from "../model/types";
 
 /** „F12“ aus „F12 Küche Steckdosen“: Text bis zum ersten Leerzeichen. */
@@ -109,4 +110,12 @@ export function nextCircuitLabel(project: Project): string {
     .filter((n): n is string => n !== undefined)
     .map(Number);
   return `F${numbers.length > 0 ? Math.max(...numbers) + 1 : 1}`;
+}
+
+/** Schutzgeräte: Reiheneinbaugeräte des Verteilers, Gewerk Strom, kein Aktor. */
+export function protectionDevices(project: Project, boardId: string): Device[] {
+  return boardDevices(project, boardId).filter((d) => {
+    const t = project.catalog.deviceTypes.find((x) => x.id === d.typeId);
+    return t?.trade === "power" && !t.knx?.provides;
+  });
 }

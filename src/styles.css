@@ -677,3 +677,144 @@ button {
   line-height: 1;
   cursor: pointer;
 }
+
+/* Verteiler (M4) */
+.surface__board rect,
+.plan-board {
+  fill: rgba(120, 120, 128, 0.25);
+  stroke: #555;
+  stroke-width: 1.5;
+}
+.surface__board--flush rect,
+.plan-board--flush {
+  stroke-dasharray: 6 3;
+}
+.surface__board--selected rect,
+.plan-board--selected {
+  fill: rgba(0, 113, 227, 0.2);
+  stroke: #0071e3;
+  stroke-width: 2.5;
+}
+.surface__board--warned rect,
+.plan-board--warned {
+  stroke: #d70015;
+}
+.surface__board-label {
+  font-size: 12px;
+  fill: #333;
+}
+.circuit-label {
+  font-size: 9px;
+  fill: #6a1b9a;
+}
+.board-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+.board-view__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.5rem 1rem;
+}
+.board-view__head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.board-view__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.board-view__palette {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  border-right: 1px solid #d2d2d7;
+  min-width: 11rem;
+}
+.board-view__palette button {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0.25rem;
+  cursor: grab;
+  touch-action: none;
+}
+.board-view__svg {
+  flex: none;
+  user-select: none;
+  touch-action: none;
+}
+.board-view__field {
+  fill: #fafafa;
+  stroke: #999;
+}
+.board-view__title {
+  font-size: 12px;
+  font-weight: 600;
+}
+.board-view__slot {
+  fill: #fff;
+  stroke: #ddd;
+}
+.board-view__slot--hover {
+  fill: #e3efff;
+}
+.board-view__device text {
+  font-size: 11px;
+  pointer-events: none;
+}
+.board-view__device .board-view__type {
+  fill: #666;
+  font-size: 10px;
+}
+.board-view__device {
+  cursor: grab;
+}
+.board-view__device--selected rect {
+  stroke: #0071e3;
+  stroke-width: 3;
+}
+.board-view__device--highlighted rect {
+  stroke: #ff8a00;
+  stroke-width: 3;
+}
+.board-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+}
+.board-fields,
+.board-knx {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.board-fields td,
+.board-knx td,
+.board-knx th,
+.board-fields th {
+  padding: 0.15rem 0.25rem;
+  text-align: left;
+}
+.board-fields input {
+  width: 3.5rem;
+}
+.board-fields .field {
+  margin: 0;
+}
+.board-fields__actions button {
+  padding: 0 0.35rem;
+}
+.board-fields label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

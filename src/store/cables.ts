@@ -127,6 +127,17 @@ export function detachNode(nodeId: string): Command {
   };
 }
 
+/** Aktion „Vom Verteiler lösen“ der Warnung `route-node-without-board` (design.md M4). */
+export function detachBoardNode(nodeId: string): Command {
+  return {
+    label: "Vom Verteiler lösen",
+    run(draft) {
+      const n = draft.routeNodes.find((x) => x.id === nodeId);
+      if (n) delete n.boardId;
+    },
+  };
+}
+
 /** „Leitungszuschläge ändern“ mit Prüfung ≥ 0. */
 export function setLengthAllowance(allowance: LengthAllowance): Checked {
   if (allowance.perDeviceMm < 0 || allowance.perBoardMm < 0 || allowance.wastePercent < 0)
