@@ -111,3 +111,27 @@ export async function writeFiles(
 }
 
 export { fixtureFiles };
+
+/** Bildschirmposition (Seite) eines (u, v)-Punkts in der Flächenansicht. */
+export async function surfaceToPage(
+  page: Page,
+  u: number,
+  v: number,
+): Promise<{ x: number; y: number }> {
+  const svg = page.getByRole("img", { name: "Flächenansicht" });
+  await expect
+    .poll(() =>
+      svg.evaluate(
+        (e) => e.getBoundingClientRect().height === e.parentElement!.getBoundingClientRect().height,
+      ),
+    )
+    .toBe(true);
+  const box = (await svg.boundingBox())!;
+  const [cx, cy, zoom] = await Promise.all(
+    ["data-cx", "data-cy", "data-zoom"].map(async (a) => Number(await svg.getAttribute(a))),
+  );
+  return {
+    x: box.x + box.width / 2 + (u - cx!) * zoom!,
+    y: box.y + box.height / 2 - (v - cy!) * zoom!,
+  };
+}
