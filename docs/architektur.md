@@ -55,7 +55,7 @@ Die Planungsdaten liegen in einem eigenen, privaten Git-Repository, getrennt vom
 haus-daten/
   projekt.yaml          schemaVersion, Name, Einstellungen (Geschosse werden über geschosse/*.yaml gefunden)
   katalog.yaml          deviceTypes, lineTypes, furnitureTypes
-  geschosse/<slug>.yaml je Geschoss: storey, walls, rooms, openings, devices*, furniture, routeNodes, routeSegments
+  geschosse/<slug>.yaml je Geschoss: storey, walls, roomBoundaries (ab M4), rooms, openings, devices*, furniture, routeNodes, routeSegments
   verteiler.yaml        boards, Reiheneinbaugeräte (devices mit placement board), circuits, knxLines, knxAssignments (ab M4, nur mit Inhalt)
   leitungen.yaml        cables
   warnungen.yaml        suppressedWarnings
@@ -131,6 +131,7 @@ interface Project {
   catalog: Catalog;
   storeys: Storey[];
   walls: Wall[];
+  roomBoundaries: RoomBoundary[];            // gedachte Raumgrenzen (ab M4)
   rooms: Room[];
   openings: Opening[];
   devices: Device[];          // alle Geräte, auch Reiheneinbaugeräte und Verbraucher
@@ -169,6 +170,10 @@ interface Wall {
   thicknessMm: number; kind: "exterior" | "interior";
   rawHeightMm?: number;                       // Standard: storey.rawHeightMm
   outsideSide?: "L" | "R";                    // nur wenn die Außenseite nicht aus den Räumen folgt; Standard L
+}
+
+interface RoomBoundary {                      // gedachte Raumgrenze ohne Wand (ab M4, z. B. Flur/Treppe)
+  id: Id; storeyId: Id; start: Pt; end: Pt;   // storeyId beim Laden gesetzt; zählt bei der Raumerkennung als 2 mm breiter Körper
 }
 
 interface Room {

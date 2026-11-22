@@ -50,7 +50,7 @@
 ## 7. Integration
 
 - [x] 7.1 Playwright-Ablauf: M3-Projekt öffnen (Migration), UV setzen, Belegung öffnen und Aktor einsetzen, Trasse zur UV, Leitung mit Verteilerzuschlag, Stromkreis anlegen und Geräte zuweisen, hervorheben, Aktorvorschlag übernehmen, Kanäle automatisch zuordnen, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
-- [ ] 7.2 Manuell: banatstrasse10 migrieren, UV EG und Zählerschrank setzen, einen Stromkreis mit Geräten anlegen, Aktorvorschlag prüfen; Befunde als Folge-Tasks
+- [x] 7.2 Manuell: banatstrasse10 migrieren, UV EG und Zählerschrank setzen, einen Stromkreis mit Geräten anlegen, Aktorvorschlag prüfen; Befunde als Folge-Tasks (2026-11-22 vom Benutzer: „Bedienung passt erstmal“; Befunde R.6, R.7; Wunsch Geräteliste mit Anschluss im Verteiler → m5 `reports`; eigene Bezeichnungen und Präsenzmelder/Accesspoint waren schon vorhanden; Türhöhen im Datenrepo angepasst)
 
 ### Rückmeldungen des Benutzers während m4
 
