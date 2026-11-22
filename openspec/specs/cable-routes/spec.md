@@ -7,7 +7,7 @@ Bildet die physischen Wege, auf denen Leitungen aller Gewerke durch das Gebäude
 ## Requirements
 
 ### Requirement: Trassen zeichnen
-Das System SHALL in jeder Flächenansicht Trassen als Linienzüge aus Knoten und geraden Segmenten zeichnen lassen. Knoten MUST an Geräten und bestehenden Knoten einrasten (an Verteilern ab `m4-verteiler-und-stromkreise`).
+Das System SHALL in jeder Flächenansicht Trassen als Linienzüge aus Knoten und geraden Segmenten zeichnen lassen. Knoten MUST an Geräten, Verteilern und bestehenden Knoten einrasten.
 
 #### Scenario: Trasse zur Steckdose
 - **WHEN** der Benutzer in der Wandansicht von der oberen Zone senkrecht zur Steckdose zeichnet
@@ -16,6 +16,10 @@ Das System SHALL in jeder Flächenansicht Trassen als Linienzüge aus Knoten und
 #### Scenario: Abzweig
 - **WHEN** der Benutzer auf ein bestehendes Segment klickt
 - **THEN** wird das Segment dort geteilt und ein Abzweigknoten entsteht
+
+#### Scenario: Trasse zum Verteiler
+- **WHEN** der Benutzer eine Trasse bis an die UV EG zeichnet
+- **THEN** endet sie in einem Knoten am Verteiler
 
 ### Requirement: Übergänge an Kanten
 Das System SHALL einen Knoten auf der Kante zwischen zwei angrenzenden Flächen desselben Raums (Wand–Wand, Wand–Decke, Wand–Boden, Wand–Schräge) beiden Flächen zugleich zuordnen, sodass die Trasse in beiden Ansichten zusammenhängt.

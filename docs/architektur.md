@@ -65,7 +65,7 @@ haus-daten/
 
 \* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` in der Datei ihres Geschosses (`storeyId` wird wie bei Wänden beim Laden gesetzt, nicht geschrieben).
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“; M4: `openspec/changes/m4-verteiler-und-stromkreise/design.md`, Abschnitt „Dateiformat M4“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“; M4: `openspec/changes/archive/2026-11-22-m4-verteiler-und-stromkreise/design.md`, Abschnitt „Dateiformat M4“).
 
 Regeln für deterministisches Schreiben:
 

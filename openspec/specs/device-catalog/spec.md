@@ -7,7 +7,7 @@ Beschreibt alle planbaren Geräte, Leitungen und Möbel als Daten, damit neue Ty
 ## Requirements
 
 ### Requirement: Katalog im Projekt
-Das System SHALL Gerätetypen, Leitungstypen und Möbeltypen als Teil des Projekts speichern. Ein neues Projekt MUST mit einem Standardkatalog beginnen.
+Das System SHALL Gerätetypen, Leitungstypen und Möbeltypen als Teil des Projekts speichern. Ein neues Projekt MUST mit einem Standardkatalog beginnen. Die Migration auf eine neue Schemaversion MUST neue Standardtypen ergänzen, deren ID im Projektkatalog fehlt, und MUST NOT vorhandene Typen ändern.
 
 #### Scenario: Projekt aus M1
 - **WHEN** der Benutzer ein Projekt ohne Katalog öffnet, das mit M1 angelegt wurde
@@ -15,7 +15,11 @@ Das System SHALL Gerätetypen, Leitungstypen und Möbeltypen als Teil des Projek
 
 #### Scenario: Standardkatalog
 - **WHEN** der Benutzer ein neues Projekt anlegt
-- **THEN** enthält der Katalog mindestens Steckdose, Doppelsteckdose, Schalter, KNX-Taster, Präsenzmelder, Deckenauslass, Wandauslass, Spot, Rollladenmotor, Netzwerkdose, WLAN-Accesspoint, Router, LS, FI/LS, RCD, SPD, KNX-Netzteil, Schalt-, Dimm-, Jalousie- und Heizungsaktor, Klima-Innen- und Außengerät sowie NYM-J 3×1,5, NYM-J 5×1,5, NYM-J 3×2,5, NYM-J 5×2,5, KNX-Busleitung, Cat 7, Leerrohr M20/M25, Kältemittelleitungspaar und Kondensatleitung
+- **THEN** enthält der Katalog mindestens Steckdose, Doppelsteckdose, Schalter, KNX-Taster, Präsenzmelder, Deckenauslass, Wandauslass, Spot, Rollladenmotor, Netzwerkdose, WLAN-Accesspoint, Router, LS, FI/LS, RCD, SPD, KNX-Netzteil, Schalt- (8- und 16-fach), Dimm-, Jalousie- und Heizungsaktor, Patchfeld, Switch, Netzteil, Klima-Innen- und Außengerät sowie NYM-J 3×1,5, NYM-J 5×1,5, NYM-J 3×2,5, NYM-J 5×2,5, NYM-J 5×10, KNX-Busleitung, Cat 7, Leerrohr M20/M25, Kältemittelleitungspaar und Kondensatleitung
+
+#### Scenario: Projekt aus M3
+- **WHEN** der Benutzer ein Projekt aus M3 öffnet, dessen Katalog einen geänderten Schaltaktor enthält
+- **THEN** ergänzt das System Schaltaktor 16-fach, Patchfeld, Switch, Netzteil und NYM-J 5×10, lässt den geänderten Schaltaktor unverändert und schreibt den Katalog erst beim nächsten Speichern
 
 ### Requirement: Gerätetyp-Eigenschaften
 Ein Gerätetyp SHALL Name, Gewerk, 2D-Symbol, einfache 3D-Form, zulässige Montagearten, Standardhöhe über OKFF, Unterputz-Dosentiefe, TE-Breite, anschließbare Gewerke und optionale KNX-, Licht- und Kältemittelangaben haben.
