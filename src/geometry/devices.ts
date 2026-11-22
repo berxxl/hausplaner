@@ -130,13 +130,22 @@ export interface DeviceWorld {
 }
 
 export function deviceWorld(project: Project, device: Device): DeviceWorld | null {
-  const p = device.placement;
+  return placementWorld(project, device.storeyId, device.placement);
+}
+
+/** Weltposition (z über Rohfußboden des Geschosses) einer Platzierung; auch für Trassenanker. */
+export function placementWorld(
+  project: Project,
+  storeyId: string,
+  p: DevicePlacement,
+): DeviceWorld | null {
+  const device = { storeyId, placement: p } as Device;
   if (p.kind === "free") return { x: p.x, y: p.y, z: p.z, normal: { x: 0, y: 0, z: 1 } };
-  const storey = project.storeys.find((s) => s.id === device.storeyId);
+  const storey = project.storeys.find((s) => s.id === storeyId);
   if (!storey) return null;
   const [kind, id, extra] = p.surface.split(":");
   if (kind === "wall") {
-    const side = wallSides(project, device.storeyId).find((s) => s.ref === p.surface);
+    const side = wallSides(project, storeyId).find((s) => s.ref === p.surface);
     if (!side) return null;
     const room = wallDeviceRoom(project, device);
     const pl = room ? plaster(room, storey) : 0;
@@ -238,38 +247,8 @@ export function planPlacement(
     (r) => r.storeyId === storeyId && r.polygon.length >= 3 && pointInPolygon(p, r.polygon),
   );
   if (room && storey && allows("ceiling")) {
-    const h = roomHeights(room, storey);
-    const flat = h.rawHeightMm - h.suspendedMm;
-    let lowest: { id: string; h: number } | null = null;
-    for (const s of room.slopes ?? []) {
-      if (!isSlopeValid(s, room.polygon)) continue;
-      const hs = slopeHeight(s, room.polygon, p);
-      if (hs < flat && (!lowest || hs < lowest.h)) lowest = { id: s.id, h: hs };
-    }
-    if (lowest) {
-      const slope = room.slopes!.find((s) => s.id === lowest.id)!;
-      const uv = slopeFrame(room, slope).toUV(p);
-      return {
-        ok: true,
-        placement: {
-          kind: "surface",
-          surface: `slope:${room.id}:${slope.id}`,
-          u: Math.round(uv.u),
-          v: Math.round(uv.v),
-          rotationDeg: 0,
-        },
-      };
-    }
-    return {
-      ok: true,
-      placement: {
-        kind: "surface",
-        surface: `ceiling:${room.id}`,
-        u: Math.round(-p.x) || 0,
-        v: Math.round(p.y),
-        rotationDeg: 0,
-      },
-    };
+    const top = upperSurfaceAt(room, storey, p);
+    return { ok: true, placement: { kind: "surface", ...top, rotationDeg: 0 } };
   }
   if (room && allows("floor"))
     return {
@@ -285,6 +264,35 @@ export function planPlacement(
   if (allows("free"))
     return { ok: true, placement: { kind: "free", x: Math.round(p.x), y: Math.round(p.y), z: 0 } };
   return { ok: false, error: mountingMessage(type) };
+}
+
+/**
+ * Fläche über einem Grundrisspunkt im Raum: die Schräge, die dort am tiefsten liegt, sonst die
+ * Decke; mit gerundeten Flächenkoordinaten.
+ */
+export function upperSurfaceAt(
+  room: Room,
+  storey: Storey,
+  p: Vec,
+): { surface: string; u: number; v: number } {
+  const h = roomHeights(room, storey);
+  const flat = h.rawHeightMm - h.suspendedMm;
+  let lowest: { id: string; h: number } | null = null;
+  for (const s of room.slopes ?? []) {
+    if (!isSlopeValid(s, room.polygon)) continue;
+    const hs = slopeHeight(s, room.polygon, p);
+    if (hs < flat && (!lowest || hs < lowest.h)) lowest = { id: s.id, h: hs };
+  }
+  if (lowest) {
+    const slope = room.slopes!.find((s) => s.id === lowest.id)!;
+    const uv = slopeFrame(room, slope).toUV(p);
+    return {
+      surface: `slope:${room.id}:${slope.id}`,
+      u: Math.round(uv.u),
+      v: Math.round(uv.v),
+    };
+  }
+  return { surface: `ceiling:${room.id}`, u: Math.round(-p.x) || 0, v: Math.round(p.y) };
 }
 
 /** Platzierung per Klick in einer Flächenansicht. `kind` ist die Art der Fläche der Ansicht. */

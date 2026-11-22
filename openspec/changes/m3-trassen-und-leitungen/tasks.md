@@ -11,10 +11,10 @@
 
 ## 2. Trassengeometrie
 
-- [ ] 2.1 `geometry/routes.ts`: `anchorWorld` für alle Flächenarten (gemeinsam mit `deviceWorld`), Segmentlänge in (u, v); Unit-Tests: Wand, Decke (gespiegelt), Boden, Schräge
-- [ ] 2.2 Übergänge an Kanten: Raumecke links/rechts, Wand–Decke (auch unter Schräge auf die Schräge), Wand–Boden; Ableitung weiterer Anker aus dem ersten; Unit-Tests: Knoten an der rechten Ecke liegt in der rechten Nachbaransicht bei deren linker fertiger Ecke (Spec-Scenario „Über Eck“), Knoten an der Oberkante erscheint im Deckenspiegel am Wandrand (Spec-Scenario „Zur Decke“), unterschiedliche Fußbodenaufbauten, Kante entfällt
-- [ ] 2.3 Gegenknoten von Durchbrüchen und Durchbruchlänge: Innenwand gespiegelt, Außenwand zur Außenseite, Boden → Decke darunter, Decke → Boden darüber, ohne Raum abgelehnt; Unit-Tests: 40-mm-Bohrung in der Küchenwand ergibt Knoten auf der Flurseite an gespiegelter Position (Spec-Scenario „Durch die Innenwand“), Boden OG → Decke EG (Spec-Scenario „Durch die Geschossdecke“), Kernbohrung 65 mm Außenwand (Spec-Scenario „Kernbohrung nach außen“), Längen
-- [ ] 2.4 Segment teilen an einem Punkt inkl. Pfadanpassung in Wegrichtung; Unit-Test: Leitung über das geteilte Segment hat danach beide Teile in richtiger Reihenfolge
+- [x] 2.1 `geometry/routes.ts`: `anchorWorld` für alle Flächenarten (gemeinsam mit `deviceWorld`), Segmentlänge in (u, v); Unit-Tests: Wand, Decke (gespiegelt), Boden, Schräge
+- [x] 2.2 Übergänge an Kanten: Raumecke links/rechts, Wand–Decke (auch unter Schräge auf die Schräge), Wand–Boden; Ableitung weiterer Anker aus dem ersten; Unit-Tests: Knoten an der rechten Ecke liegt in der rechten Nachbaransicht bei deren linker fertiger Ecke (Spec-Scenario „Über Eck“), Knoten an der Oberkante erscheint im Deckenspiegel am Wandrand (Spec-Scenario „Zur Decke“), unterschiedliche Fußbodenaufbauten, Kante entfällt
+- [x] 2.3 Gegenknoten von Durchbrüchen und Durchbruchlänge: Innenwand gespiegelt, Außenwand zur Außenseite, Boden → Decke darunter, Decke → Boden darüber, ohne Raum abgelehnt; Unit-Tests: 40-mm-Bohrung in der Küchenwand ergibt Knoten auf der Flurseite an gespiegelter Position (Spec-Scenario „Durch die Innenwand“), Boden OG → Decke EG (Spec-Scenario „Durch die Geschossdecke“), Kernbohrung 65 mm Außenwand (Spec-Scenario „Kernbohrung nach außen“), Längen
+- [x] 2.4 Segment teilen an einem Punkt inkl. Pfadanpassung in Wegrichtung; Unit-Test: Leitung über das geteilte Segment hat danach beide Teile in richtiger Reihenfolge
 
 ## 3. Trassen zeichnen und bearbeiten
 
