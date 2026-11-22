@@ -4,7 +4,7 @@
  * `geometry/reserve.ts`. Frei von React.
  */
 import { placementWorld } from "./devices";
-import { wallSides } from "./surfaces";
+import { wallSides, type WallSide } from "./surfaces";
 import { add, scale, type Vec } from "./vec";
 import type {
   Board,
@@ -126,6 +126,16 @@ export function boardFrontRect(board: Board) {
     vFrom: v - board.heightMm / 2,
     vTo: v + board.heightMm / 2,
   };
+}
+
+/**
+ * u der Mitte beim Ziehen entlang der Wandseite (R.5): auf die Seitenfläche begrenzt, sodass der
+ * Verteiler ganz darauf bleibt; ist die Seite schmaler als der Verteiler, in ihre Mitte. Ganze mm.
+ */
+export function boardUOnSide(side: Pick<WallSide, "uMin" | "uMax">, widthMm: number, u: number) {
+  const lo = side.uMin + widthMm / 2;
+  const hi = side.uMax - widthMm / 2;
+  return Math.round(lo <= hi ? Math.min(hi, Math.max(lo, u)) : (side.uMin + side.uMax) / 2);
 }
 
 /** Anker des Verteilerknotens: Mitte der Oberkante (design.md M4 „Verteiler als Endpunkt“). */

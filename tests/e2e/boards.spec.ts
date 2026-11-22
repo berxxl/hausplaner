@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openProject, projectFiles, saveNow } from "./helpers";
+import { openProject, projectFiles, saveNow, surfaceToPage, worldToPage } from "./helpers";
 
 async function open3d(page: Page) {
   await page.getByRole("tab", { name: "3D" }).click();
@@ -85,5 +85,63 @@ test.describe("Verteiler (M4)", () => {
     await open3d(page);
     await expect(page.getByTestId("scene")).toHaveAttribute("data-boards", /b2uveg01:/);
     await expect(page.getByTestId("scene")).toHaveAttribute("data-devices", "");
+  });
+
+  test("Verteiler per Maus verschieben: im Grundriss entlang der Wand, in der Flächenansicht frei auf der Wandseite (R.5)", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "m4");
+    // Lage der UV EG aus verteiler.yaml; Ziele auf ±1 Bildschirmpixel genau (Rundung der Zeigerposition)
+    const uvEg = async () => {
+      const m = /placement: \{surface: "(wall:[^"]+)", u: (-?\d+), v: (-?\d+)\}/.exec(
+        (await projectFiles(request))["verteiler.yaml"]!.split('- id: "b2uveg01"')[1]!,
+      )!;
+      return { surface: m[1], u: Number(m[2]), v: Number(m[3]) };
+    };
+    const near = (value: number, target: number, mmPerPx: number) =>
+      expect(Math.abs(value - target)).toBeLessThanOrEqual(Math.ceil(mmPerPx) + 1);
+    const mmPerPx = async (name: string) =>
+      1 / Number(await page.getByRole("img", { name }).getAttribute("data-zoom"));
+    const drag = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 8 });
+      await page.mouse.up();
+    };
+    // Grundriss EG: UV EG auf Wand (4000,3000)→(8000,3000), u = 2000 → x = 6000; quer zur Wand
+    // gezogen bleibt sie auf ihrer Wandseite
+    await expect(page.getByTestId("plan-boards").locator('[data-board="b2uveg01"]')).toHaveCount(1);
+    await drag(
+      await worldToPage(page, { x: 6000, y: 3000 }),
+      await worldToPage(page, { x: 6500, y: 3400 }),
+    );
+    await expect(
+      page.getByTestId("plan-boards").locator('[data-board="b2uveg01"].plan-board--selected'),
+    ).toHaveCount(1);
+    await saveNow(page);
+    let uv = await uvEg();
+    expect(uv).toMatchObject({ surface: "wall:1cih0ost:R", v: 1500 });
+    near(uv.u, 2500, await mmPerPx("Grundriss"));
+    // Flächenansicht Wohnen › Wand Nord: u und v
+    await page
+      .getByRole("tree", { name: "Geschosse" })
+      .getByRole("treeitem", { name: "Wohnen" })
+      .getByRole("treeitem", { name: "Wand Nord" })
+      .click();
+    await expect(page.getByTestId("surface-boards").locator('[data-board="b2uveg01"]')).toHaveCount(
+      1,
+    );
+    const before = uv;
+    await drag(
+      await surfaceToPage(page, before.u, 1500),
+      await surfaceToPage(page, before.u - 200, 1700),
+    );
+    await saveNow(page);
+    uv = await uvEg();
+    const px = await mmPerPx("Flächenansicht");
+    expect(uv.surface).toBe("wall:1cih0ost:R");
+    near(uv.u, before.u - 200, px);
+    near(uv.v, 1700, px);
   });
 });

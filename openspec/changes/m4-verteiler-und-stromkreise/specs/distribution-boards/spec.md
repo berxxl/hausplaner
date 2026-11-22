@@ -13,6 +13,10 @@ Das System SHALL Verteiler der Arten Zählerschrank, Unterverteilung und Medienv
 - **WHEN** der Benutzer eine Unterputz-UV 550 × 1100 × 120 mm im Flur OG setzt
 - **THEN** erscheint sie in Wandansicht, Grundriss, 3D und im Strukturbaum unter „Verteiler“
 
+#### Scenario: Verteiler per Maus verschieben
+- **WHEN** der Benutzer eine UV im Grundriss mit dem Auswahlwerkzeug entlang ihrer Wand zieht
+- **THEN** wandert sie auf derselben Wandseite mit gleicher Höhe, bleibt ganz auf der Seitenfläche, ihr Verteilerknoten folgt, und Undo stellt die alte Lage in einem Schritt her
+
 ### Requirement: Felder und Reihen
 Das System SHALL je Verteiler Felder der Arten Zählerfeld, APZ-Feld, oberer und unterer Anschlussraum, Verteilerfeld und Multimediafeld mit Anzahl Reihen und TE je Reihe verwalten.
 

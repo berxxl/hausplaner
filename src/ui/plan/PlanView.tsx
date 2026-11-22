@@ -98,9 +98,9 @@ import {
   deleteRoomBoundaries,
   dependentDeviceIds,
 } from "../../store/building";
-import { boardPlanRect } from "../../geometry/boards";
+import { boardPlanRect, boardUOnSide } from "../../geometry/boards";
 import { circuitShortName } from "../../geometry/circuits";
-import { boardCascade, boardsOnWalls, deleteBoards } from "../../store/boards";
+import { boardCascade, boardsOnWalls, deleteBoards, moveBoard } from "../../store/boards";
 import { dependentCableCount } from "../../store/routes";
 import { cascadeMessage } from "../labels";
 import { addDevice, deleteDevices, moveDevice, placementStorey } from "../../store/devices";
@@ -159,6 +159,7 @@ type Drag =
   | { kind: "move-underlay"; startWorld: Vec }
   | { kind: "endpoint"; wallId: string; end: WallEnd; result: WallEditResult | null }
   | { kind: "device"; deviceId: string }
+  | { kind: "board"; boardId: string; grabMm: number }
   | { kind: "furniture"; furnitureId: string; offset: Vec }
   | { kind: "opening-draw"; wallId: string; startMm: number; endMm: number }
   | { kind: "opening"; openingId: string; wallId: string; grabMm: number };
@@ -630,7 +631,18 @@ export function PlanView({ store, view }: PlanViewProps) {
         const board = hitBoard(world);
         if (board) {
           view.select({ kind: "board", id: board.id });
-          drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
+          // Ziehen entlang der Wandseite (R.5), Greifpunkt bleibt unter dem Zeiger
+          const side =
+            storey &&
+            wallSides(project, storey.id).find((sd) => sd.ref === board.placement.surface);
+          if (side) {
+            store.begin("Verteiler verschieben");
+            drag.current = {
+              kind: "board",
+              boardId: board.id,
+              grabMm: sideU(side, world) - board.placement.u,
+            };
+          } else drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
           capture();
           return;
         }
@@ -932,6 +944,14 @@ export function PlanView({ store, view }: PlanViewProps) {
         const u = Math.round(Math.min(side.uMax, Math.max(side.uMin, sideU(side, world))));
         store.preview(moveDevice(d.deviceId, { ...p, u }).run);
       }
+    } else if (d.kind === "board" && storey) {
+      const base = store.getState().transaction?.base;
+      const board = base?.boards.find((x) => x.id === d.boardId);
+      const side =
+        board && wallSides(base!, storey.id).find((sd) => sd.ref === board.placement.surface);
+      if (!board || !side) return;
+      const u = boardUOnSide(side, board.widthMm, sideU(side, world) - d.grabMm);
+      store.preview(moveBoard(d.boardId, { ...board.placement, u }).run);
     } else if (d.kind === "furniture" && storey) {
       const base = store.getState().transaction?.base;
       const f = base?.furniture.find((x) => x.id === d.furnitureId);
@@ -983,6 +1003,7 @@ export function PlanView({ store, view }: PlanViewProps) {
     if (
       d?.kind === "move-underlay" ||
       d?.kind === "device" ||
+      d?.kind === "board" ||
       d?.kind === "furniture" ||
       d?.kind === "opening"
     )

@@ -181,6 +181,7 @@ Neue reine Module: `geometry/boards.ts` (Weltlage, Rechteck im Grundriss, Gerät
 ### Rückmeldungen während M4
 - **Wandende rastet auf die Achse (R.2):** Liegt ein Punkt beim Wandzeichnen im Körper einer vorhandenen Wand (Abstand zur Achse ≤ halbe Dicke + Fangradius), legt der Fang ihn auf die Achse; Wandenden haben weiter Vorrang, und zwar bis halbe Dicke + Fangradius. Grund: Im OG von banatstrasse10 endeten alle Wände an Oberflächen und waren nicht verbunden.
 - **Keine Wandansichten ≤ 0 mm (R.3):** Raumansichten, deren fertige Breite nicht größer als 1 mm ist, entstehen nicht (bisher z. B. „Wand Nord 1 −28“ an Kerben nicht verbundener Wände).
+- **Verteiler per Maus verschieben (R.5):** Im Grundriss zieht das Auswahlwerkzeug einen Verteiler entlang seiner Wandseite (nur u; v, Wandseite und Montage bleiben, ein Wechsel auf eine andere Wand geht über die Eigenschaften). Der Greifpunkt bleibt unter dem Zeiger. In Grundriss und Flächenansicht wird u so begrenzt, dass der Verteiler ganz auf der Seitenfläche bleibt (`boardUOnSide`; ist die Seite schmaler, steht er in ihrer Mitte); v ist in der Flächenansicht frei. Ein Zug ist ein Befehl „Verteiler verschieben“, ein Klick ohne Bewegung erzeugt keinen Undo-Schritt; der Verteilerknoten folgt über `normalizeAfterCommand`.
 
 ## Risks / Trade-offs
 

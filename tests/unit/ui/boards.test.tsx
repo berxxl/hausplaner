@@ -1,11 +1,14 @@
 // Verteiler in der Oberfläche (Tasks 2.3–2.5): Werkzeug, Felder, Belegungsansicht, Baum
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { boardNodeAnchor } from "../../../src/geometry/boards";
+import { wallSides } from "../../../src/geometry/surfaces";
 import { loadProject } from "../../../src/io/load";
 import type { Project } from "../../../src/model/types";
 import { createProjectStore } from "../../../src/store/history";
 import { createViewStore } from "../../../src/store/view";
 import { BoardView } from "../../../src/ui/board/BoardView";
 import { slotPosition } from "../../../src/ui/board/layout";
+import { PlanView } from "../../../src/ui/plan/PlanView";
 import { Properties } from "../../../src/ui/Properties";
 import { SurfaceView } from "../../../src/ui/surface/SurfaceView";
 import { Tree } from "../../../src/ui/Tree";
@@ -123,6 +126,102 @@ describe("Werkzeug „Verteiler“ und Felder (2.3)", () => {
     fireEvent.pointerMove(svg, at(2300, 1620));
     fireEvent.pointerUp(svg, at(2300, 1620));
     expect(P(store).boards.find((b) => b.id === "b2uveg01")!.placement.u).toBe(2300);
+    expect(store.undoLabel()).toBe("Verteiler verschieben");
+  });
+});
+
+describe("Verteiler per Maus verschieben (R.5)", () => {
+  const EG = "e0g1k2m3";
+  const UV = "b2uveg01";
+  const SIDE = "wall:1cih0ost:R";
+  function withNode() {
+    const store = load("m4");
+    // Verteilerknoten der UV EG mit einem Segment (Anker setzt die Normalisierung)
+    store.execute({
+      label: "Knoten",
+      run(d) {
+        d.routeNodes.push({
+          id: "nuveg001",
+          storeyId: EG,
+          boardId: UV,
+          anchors: [{ surface: SIDE, u: 0, v: 0 }],
+        });
+        d.routeNodes.push({
+          id: "nuveg002",
+          storeyId: EG,
+          anchors: [{ surface: SIDE, u: 2000, v: 2400 }],
+        });
+        d.routeSegments.push({
+          id: "suveg001",
+          storeyId: EG,
+          a: "nuveg002",
+          b: "nuveg001",
+          kind: "surface",
+          surface: SIDE,
+          status: "planned",
+        });
+      },
+    });
+    return store;
+  }
+  const screenOf = (name: string, x: number, y: number) => {
+    const svg = screen.getByRole("img", { name });
+    const [cx, cy, zoom] = ["data-cx", "data-cy", "data-zoom"].map((a) =>
+      Number(svg.getAttribute(a)),
+    );
+    return { clientX: 400 + (x - cx!) * zoom!, clientY: 300 - (y - cy!) * zoom! };
+  };
+  const uv = (s: ReturnType<typeof load>) => P(s).boards.find((b) => b.id === UV)!;
+  const node = (s: ReturnType<typeof load>) => P(s).routeNodes.find((n) => n.id === "nuveg001")!;
+
+  test("im Grundriss entlang der Wand ziehen: ein Befehl, Greifpunkt bleibt, v und Wandseite bleiben, Knoten folgt", () => {
+    const store = withNode();
+    const view = createViewStore({ activeStoreyId: EG });
+    render(<PlanView store={store} view={view} />);
+    const plan = screen.getByRole("img", { name: "Grundriss" });
+    const undoBefore = store.undoLabel();
+    // UV EG: Wand (4000,3000)→(8000,3000), u = 2000 → Mitte bei x = 6000; 100 mm rechts davon greifen
+    fireEvent.pointerDown(plan, { button: 0, ...screenOf("Grundriss", 6100, 3000) });
+    expect(view.getState().selection).toEqual({ kind: "board", id: UV });
+    fireEvent.pointerMove(plan, screenOf("Grundriss", 6400, 2800));
+    fireEvent.pointerMove(plan, screenOf("Grundriss", 6600, 3200));
+    fireEvent.pointerUp(plan, screenOf("Grundriss", 6600, 3200));
+    expect(uv(store).placement).toEqual({ surface: SIDE, u: 2500, v: 1500 });
+    expect(node(store).anchors).toEqual([boardNodeAnchor(uv(store))]);
+    expect(store.undoLabel()).toBe("Verteiler verschieben");
+    store.undo();
+    expect(uv(store).placement.u).toBe(2000);
+    expect(store.undoLabel()).toBe(undoBefore);
+  });
+
+  test("Grundriss: über das Wandende hinaus bleibt der Verteiler ganz auf der Wandseite; Klick ohne Ziehen ändert nichts", () => {
+    const store = withNode();
+    const view = createViewStore({ activeStoreyId: EG });
+    render(<PlanView store={store} view={view} />);
+    const plan = screen.getByRole("img", { name: "Grundriss" });
+    const undoBefore = store.undoLabel();
+    fireEvent.pointerDown(plan, { button: 0, ...screenOf("Grundriss", 6000, 3000) });
+    fireEvent.pointerUp(plan, screenOf("Grundriss", 6000, 3000));
+    expect(store.undoLabel()).toBe(undoBefore);
+    fireEvent.pointerDown(plan, { button: 0, ...screenOf("Grundriss", 6000, 3000) });
+    fireEvent.pointerMove(plan, screenOf("Grundriss", 12000, 3000));
+    fireEvent.pointerUp(plan, screenOf("Grundriss", 12000, 3000));
+    const side = wallSides(P(store), EG).find((s) => s.ref === SIDE)!;
+    expect(uv(store).placement.u).toBe(Math.round(side.uMax - 275));
+  });
+
+  test("Flächenansicht: Ziehen über das Wandende hinaus begrenzt u, v folgt frei; Knoten folgt", () => {
+    const store = withNode();
+    const view = createViewStore({ surface: { kind: "wall-side", ref: SIDE }, editor: "surface" });
+    render(<SurfaceView store={store} view={view} />);
+    const svg = screen.getByRole("img", { name: "Flächenansicht" });
+    // ganze Wandseite in Rohbauhöhen (+120 mm Aufbau Wohnen)
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf("Flächenansicht", 2000, 1620) });
+    fireEvent.pointerMove(svg, screenOf("Flächenansicht", -3000, 1720));
+    fireEvent.pointerUp(svg, screenOf("Flächenansicht", -3000, 1720));
+    const side = wallSides(P(store), EG).find((s) => s.ref === SIDE)!;
+    expect(uv(store).placement).toEqual({ surface: SIDE, u: Math.round(side.uMin + 275), v: 1600 });
+    expect(node(store).anchors).toEqual([boardNodeAnchor(uv(store))]);
     expect(store.undoLabel()).toBe("Verteiler verschieben");
   });
 });

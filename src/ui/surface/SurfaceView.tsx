@@ -53,7 +53,13 @@ import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { highlightOf, warnedIds } from "../derived";
 import { isCableVisible, isDeviceVisible } from "../filter";
-import { boardFrontRect, boardNodeAnchor, BOARD_DEFAULTS } from "../../geometry/boards";
+import {
+  boardFrontRect,
+  boardNodeAnchor,
+  boardUOnSide,
+  BOARD_DEFAULTS,
+} from "../../geometry/boards";
+import { wallSides } from "../../geometry/surfaces";
 import { addBoard, boardCascade, deleteBoards, moveBoard } from "../../store/boards";
 import { BoardDialog } from "../board/dialogs";
 import { circuitShortName } from "../../geometry/circuits";
@@ -543,10 +549,16 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     }
     if (d.kind === "board") {
       const w = toWorld(e);
+      const base = store.getState().transaction?.base;
+      const board = base?.boards.find((x) => x.id === d.id);
+      const side =
+        board && wallSides(base!, board.storeyId).find((sd) => sd.ref === d.base.surface);
+      const u = d.base.u + w.x - d.start.x;
       store.preview(
         moveBoard(d.id, {
           ...d.base,
-          u: Math.round(d.base.u + w.x - d.start.x),
+          // auf der Wandseite bleiben (R.5)
+          u: board && side ? boardUOnSide(side, board.widthMm, u) : Math.round(u),
           v: Math.round(d.base.v + w.y - d.start.y),
         }).run,
       );

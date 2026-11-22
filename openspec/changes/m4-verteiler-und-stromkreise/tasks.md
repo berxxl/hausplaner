@@ -59,7 +59,7 @@
 - [x] R.3 Keine Raumansichten mit fertiger Breite ≤ 1 mm; Unit-Test
 - [x] R.4 banatstrasse10 OG: Wandenden auf die Achsen legen, `aoytki8w` (Flurabgrenzung mit gleich großer Öffnung) durch eine Raumgrenze ersetzen, Räume neu erkennen; Diff dem Benutzer zeigen (2026-11-22 über Store-Befehle geschrieben, nur `geschosse/og.yaml`; Stub `6e59j4hq` bleibt wie im EG frei, `r84ym8kl` offen – Rückfrage; Wandstärke `kmqewfc4` 230 mm vom Benutzer bestätigt)
 
-- [ ] R.5 Verteiler nach dem Platzieren per Maus verschieben: im Grundriss entlang der Wand ziehen (bisher nur auswählen), in der Flächenansicht prüfen (Ziehen ist dort umgesetzt); ein Befehl „Verteiler verschieben“, Verteilerknoten folgt; Komponententest und Playwright
+- [x] R.5 Verteiler nach dem Platzieren per Maus verschieben: im Grundriss entlang der Wand ziehen (bisher nur auswählen), in der Flächenansicht prüfen (Ziehen ist dort umgesetzt; ergänzt: u auf die Seitenfläche begrenzt); ein Befehl „Verteiler verschieben“, Verteilerknoten folgt; Komponententest und Playwright (Spec-Scenario „Verteiler per Maus verschieben“)
 
 ## Workflow follow-up
 

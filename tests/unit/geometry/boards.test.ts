@@ -2,6 +2,7 @@
 import { loadProject } from "../../../src/io/load";
 import {
   boardPlanRect,
+  boardUOnSide,
   deviceTeWidth,
   findFreeSlot,
   fieldAccepts,
@@ -107,6 +108,16 @@ function cable(from: string, to: Cable["to"], lineTypeId = "nym-j-3x1-5"): Cable
     path: [],
   };
 }
+
+describe("Ziehen entlang der Wandseite (R.5)", () => {
+  test("u bleibt so, dass der Verteiler ganz auf der Seitenfläche liegt; schmale Seite: Mitte", () => {
+    const side = { uMin: -60, uMax: 4060 };
+    expect(boardUOnSide(side, 550, 2000.4)).toBe(2000);
+    expect(boardUOnSide(side, 550, -500)).toBe(215);
+    expect(boardUOnSide(side, 550, 9000)).toBe(3785);
+    expect(boardUOnSide({ uMin: 0, uMax: 400 }, 550, 50)).toBe(200);
+  });
+});
 
 describe("Belegung und Platzprüfung (2.1)", () => {
   test("8-TE-Aktor in Reihe 3 ab Platz 1 belegt die Plätze 1–8 (Spec-Scenario „Aktor einsetzen“)", () => {
