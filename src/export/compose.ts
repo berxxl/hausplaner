@@ -134,3 +134,13 @@ export function composeSheet(
 }
 
 export { legendEntries };
+
+/** Dateiname aus Projekt, optional Planinhalt, und Datum; nur Buchstaben, Ziffern, Leerzeichen, „-“, „_“. */
+export function pdfFileName(project: string, date: string, content?: string): string {
+  const clean = (s: string) =>
+    s
+      .replace(/[^\p{L}\p{N} _-]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  return `${[clean(project), content ? clean(content) : null, clean(date)].filter(Boolean).join(" ")}.pdf`;
+}

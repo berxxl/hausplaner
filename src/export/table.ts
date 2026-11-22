@@ -23,6 +23,7 @@ import {
 } from "../reports/rows";
 import { composeSheet, type ContentFilter, type ExportOptions, type SheetResult } from "./compose";
 import {
+  CHAR_WIDTH,
   drawingArea,
   LINE,
   pdfText,
@@ -42,14 +43,14 @@ export interface TableBlock {
 
 const ROW_H = 4.5;
 const TITLE_H = 7;
-const PAD = 2;
+const PAD = 3;
 const SIZE = TEXT.normal;
 
 /** Text auf eine Breite kürzen (geschätzte Zeichenbreite). */
 export function fitText(s: string, widthMm: number, size: number = SIZE): string {
-  const max = Math.floor(widthMm / (size * 0.5));
+  const max = Math.floor(widthMm / (size * CHAR_WIDTH));
   if (s.length <= max) return s;
-  return max <= 1 ? "…" : `${s.slice(0, max - 1)}…`;
+  return max <= 1 ? "…" : `${s.slice(0, max - 1).trimEnd()}…`;
 }
 
 /** Spaltenbreiten proportional zur längsten Zelle, mindestens die Kopfbreite, gesamt ≤ Breite. */

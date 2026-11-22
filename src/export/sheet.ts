@@ -202,8 +202,11 @@ export function formatDate(d: Date): string {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-/** Geschätzte Textbreite in mm (Helvetica, Mittelwert). */
-export const textWidth = (s: string, size: number) => s.length * size * 0.5;
+/** Mittlere Zeichenbreite von Helvetica in Schriftgrößen (fette Köpfe eingeschlossen). */
+export const CHAR_WIDTH = 0.55;
+
+/** Geschätzte Textbreite in mm. */
+export const textWidth = (s: string, size: number) => s.length * size * CHAR_WIDTH;
 
 // --- Plankopf ---
 

@@ -30,8 +30,8 @@
 
 ## 6. PDF und Exportdialog
 
-- [ ] 6.1 `export/pdf.ts` (jsPDF, svg2pdf.js, eine Seite je Blatt, Download mit Dateiname); `ui/export/ExportDialog.tsx` mit Inhaltsbaum, Maßstab, Format, Planstand, Gewerken, Status, Bestandsplan-Hinweis, Passmeldungen, Fortschritt; Knopf „Exportieren …“ in der Kopfzeile; Komponententests: Passmeldung sperrt „Exportieren“, Bestandsplan-Hinweis, Standardauswahl Grundriss des aktiven Geschosses
-- [ ] 6.2 Playwright: Grundriss EG 1:50 A3 quer exportieren, PDF mit pdf.js lesen: Seitengröße A3 quer, Raumnamen und Plankopf als Text (Spec-Scenario „Zoomen im PDF“: Vektor und Text, keine Bilder), Lage einer bekannten Beschriftung in Papiermaß; Export mehrerer Inhalte ergibt die erwartete Seitenzahl
+- [x] 6.1 `export/pdf.ts` (jsPDF, svg2pdf.js, eine Seite je Blatt, Download mit Dateiname); `ui/export/ExportDialog.tsx` mit Inhaltsbaum, Maßstab, Format, Planstand, Gewerken, Status, Bestandsplan-Hinweis, Passmeldungen, Fortschritt; Knopf „Exportieren …“ in der Kopfzeile; Komponententests: Passmeldung sperrt „Exportieren“, Bestandsplan-Hinweis, Standardauswahl Grundriss des aktiven Geschosses
+- [x] 6.2 Playwright: Grundriss EG 1:50 A3 quer exportieren, PDF mit pdf.js lesen: Seitengröße A3 quer, Raumnamen und Plankopf als Text (Spec-Scenario „Zoomen im PDF“: Vektor und Text, keine Bilder), Lage einer bekannten Beschriftung in Papiermaß; Export mehrerer Inhalte ergibt die erwartete Seitenzahl
 
 ## 7. Baustellen-PDF
 

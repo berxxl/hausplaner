@@ -84,7 +84,7 @@ describe("Listen als Tabellenblätter (5.3)", () => {
   });
 
   test("Spaltenbreiten passen in die Breite, zu lange Zellen enden mit „…“", () => {
-    expect(fitText("Netzwerkdose Wohnen – Medienverteiler", 20)).toBe("Netzwerkdose Wo…");
+    expect(fitText("Netzwerkdose Wohnen – Medienverteiler", 20)).toBe("Netzwerkdose…");
     const block = {
       columns: [
         { key: "a", label: "A" },
