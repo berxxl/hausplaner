@@ -3,9 +3,11 @@
  * (design.md M2 „Store und Befehle“, M3 „Store und Befehle“, „Löschen und abhängige Änderungen“):
  * Höhenbezug von Wandgeräten bei geänderter Raumzuordnung, Trassen (Anker auf gelöschten Flächen,
  * Gerätknoten, Übergangsanker, verwaiste Segmente und Knoten, Leitungen gelöschter Geräte, Pfade),
- * Bereinigen übergangener Warnungen, zu denen keine Warnung mehr berechnet wird. Frei von React.
+ * Verteiler (M4: Löschkaskaden, Verteilerknoten, optionale Verweise), Bereinigen übergangener
+ * Warnungen, zu denen keine Warnung mehr berechnet wird. Frei von React.
  */
 import { current, type Draft } from "immer";
+import { boardNodeAnchor } from "../geometry/boards";
 import { deviceHeightAdjustments } from "../geometry/devices";
 import { rederivedAnchors, sameAnchors } from "../geometry/routes";
 import type { Anchor, Project } from "../model/types";
@@ -13,6 +15,7 @@ import { computeWarnings } from "../rules";
 
 export function normalizeAfterCommand(base: Project, draft: Draft<Project>): void {
   rebaseDeviceHeights(base, draft);
+  normalizeBoards(base, draft);
   normalizeRoutes(base, draft);
   pruneSuppressedWarnings(draft);
 }
@@ -114,6 +117,91 @@ function normalizeRoutes(base: Project, draft: Draft<Project>): void {
   const segIds = new Set(after.routeSegments.map((s) => s.id));
   for (const c of draft.cables)
     if (c.path.some((id) => !segIds.has(id))) c.path = c.path.filter((id) => segIds.has(id));
+}
+
+const hasBoardData = (p: Project) =>
+  p.boards.length + p.circuits.length + p.knxLines.length + p.knxAssignments.length > 0 ||
+  p.devices.some((d) => d.circuitId !== undefined || d.knxLineId !== undefined);
+
+/**
+ * Verteiler (design.md M4 „Löschen und abhängige Änderungen“): Verteiler auf gelöschten Wänden,
+ * Kaskade gelöschter Verteiler, Bereinigung optionaler Verweise, Verteilerknoten nachführen.
+ */
+function normalizeBoards(base: Project, draft: Draft<Project>): void {
+  if (!hasBoardData(base) && !hasBoardData(current(draft) as Project)) return;
+  let after = current(draft) as Project;
+
+  // 1. Verteiler auf Wänden, die dieser Befehl gelöscht hat
+  if (after.walls !== base.walls) {
+    const walls = new Set(after.walls.map((w) => w.id));
+    const baseWalls = new Set(base.walls.map((w) => w.id));
+    const gone = (b: Project["boards"][number]) => {
+      const wallId = b.placement.surface.split(":")[1]!;
+      return baseWalls.has(wallId) && !walls.has(wallId);
+    };
+    if (after.boards.some(gone)) draft.boards = draft.boards.filter((b) => !gone(b as never));
+  }
+
+  // 2. Kaskade gelöschter Verteiler
+  after = current(draft) as Project;
+  const deletedBoards = new Set(
+    base.boards.filter((b) => !after.boards.some((x) => x.id === b.id)).map((b) => b.id),
+  );
+  if (deletedBoards.size > 0) {
+    draft.devices = draft.devices.filter(
+      (d) => d.placement.kind !== "board" || !deletedBoards.has(d.placement.boardId),
+    );
+    draft.circuits = draft.circuits.filter((c) => !deletedBoards.has(c.boardId));
+    draft.cables = draft.cables.filter(
+      (c) => !deletedBoards.has(c.from.boardId ?? "") && !deletedBoards.has(c.to.boardId ?? ""),
+    );
+    for (const n of draft.routeNodes)
+      if (n.boardId && deletedBoards.has(n.boardId)) delete n.boardId;
+  }
+
+  // 3. Optionale Verweise ins Leere gelten als nicht gesetzt und werden entfernt
+  after = current(draft) as Project;
+  const boards = new Set(after.boards.map((b) => b.id));
+  const devices = new Set(after.devices.map((d) => d.id));
+  const circuits = new Set(after.circuits.map((c) => c.id));
+  const lines = new Set(after.knxLines.map((l) => l.id));
+  const cables = new Set(after.cables.map((c) => c.id));
+  for (const b of draft.boards) {
+    if (b.parentBoardId !== undefined && !boards.has(b.parentBoardId)) {
+      delete b.parentBoardId;
+      delete b.feedCableId;
+    }
+    if (b.feedCableId !== undefined && !cables.has(b.feedCableId)) delete b.feedCableId;
+  }
+  for (const d of draft.devices) {
+    if (d.circuitId !== undefined && !circuits.has(d.circuitId)) delete d.circuitId;
+    if (d.knxLineId !== undefined && !lines.has(d.knxLineId)) delete d.knxLineId;
+  }
+  for (const c of draft.circuits)
+    if (c.protectionDeviceId !== undefined && !devices.has(c.protectionDeviceId))
+      delete c.protectionDeviceId;
+  for (const l of draft.knxLines)
+    if (l.boardId !== undefined && !boards.has(l.boardId)) delete l.boardId;
+  if (
+    after.knxAssignments.some(
+      (a) => !devices.has(a.actuatorDeviceId) || !devices.has(a.consumerDeviceId),
+    )
+  )
+    draft.knxAssignments = draft.knxAssignments.filter(
+      (a) => devices.has(a.actuatorDeviceId) && devices.has(a.consumerDeviceId),
+    );
+
+  // 4. Verteilerknoten folgen ihrem Verteiler (ein Anker, Mitte der Oberkante)
+  after = current(draft) as Project;
+  for (const n of draft.routeNodes) {
+    if (!n.boardId) continue;
+    const b = after.boards.find((x) => x.id === n.boardId);
+    if (!b) continue;
+    const want = boardNodeAnchor(b);
+    const a = n.anchors[0]!;
+    if (n.anchors.length !== 1 || a.surface !== want.surface || a.u !== want.u || a.v !== want.v)
+      n.anchors = [want];
+  }
 }
 
 function rebaseDeviceHeights(base: Project, draft: Draft<Project>): void {

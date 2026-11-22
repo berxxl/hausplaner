@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { loadProject } from "../../../src/io/load";
 import { projectToFiles } from "../../../src/io/project-files";
 import type { Board, Device, Project } from "../../../src/model/types";
+import { defaultCatalog } from "../../../src/model/default-catalog";
 import { createProjectStore } from "../../../src/store/history";
 import { readV3Fixture } from "../fixtures";
 
@@ -61,6 +62,12 @@ export function buildM4(): Project {
   store.execute({
     label: "M4-Fixture",
     run(d) {
+      // alle Standardtypen, die die M2/M3-Teilkatalog-Fixture nicht hat (eigene Typen bleiben)
+      const std = defaultCatalog();
+      for (const key of ["deviceTypes", "lineTypes", "furnitureTypes"] as const) {
+        const have = new Set(d.catalog[key].map((t) => t.id));
+        for (const t of std[key]) if (!have.has(t.id)) (d.catalog[key] as { id: string }[]).push(t);
+      }
       const eg = "e0g1k2m3";
       const og = "o9g1k2m3";
       const boards: Omit<Board, "storeyId">[] = [
