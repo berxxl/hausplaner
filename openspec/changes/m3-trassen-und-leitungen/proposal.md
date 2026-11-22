@@ -23,6 +23,8 @@ Leitungswege bestimmen Material, Schlitz- und Bohrarbeiten und sind nach dem Ver
 
 ### Modified Capabilities
 
+- `workspace`: Auswahl von Knoten, Segmenten und Leitungen; Gewerkfilter mit Kategorie Trassen
+
 ## Impact
 
-Neue Modellteile `routeNodes`, `routeSegments`, `cables`; Graphalgorithmen (kürzester Weg) in `geometry/`; neue Regeln. Setzt `m2-geraete-und-moebel` voraus.
+Neue Modellteile `routeNodes`, `routeSegments`, `cables`; Graphalgorithmen (kürzester Weg) in `geometry/`; neue Regeln. Setzt `m2-geraete-und-moebel` voraus. Verteiler als Endpunkte, der Verteilerzuschlag und „mehrere Leitungen zu einem Verteiler“ folgen mit `m4-verteiler-und-stromkreise` (Entscheidung vom 2026-11-22); in m3 enden Leitungen an Geräten.

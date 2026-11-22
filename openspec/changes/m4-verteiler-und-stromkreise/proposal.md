@@ -11,6 +11,7 @@ Mit KNX steigt der Platzbedarf in den Unterverteilungen deutlich: Für jeden ges
 - Verteilerhierarchie mit Zuleitungen
 - Stromkreise mit Schutzgerät und zugeordneten Geräten
 - KNX: Aktorkanäle Verbrauchern zuordnen, Aktorbedarf aus dem Plan ableiten
+- Verteiler als Endpunkte von Trassen und Leitungen, Zuschlag je Verteilerendpunkt, mehrere Leitungen zu einem Verteiler in einem Schritt (aus m3 verschoben, Entscheidung vom 2026-11-22)
 
 ## Capabilities
 
@@ -21,6 +22,9 @@ Mit KNX steigt der Platzbedarf in den Unterverteilungen deutlich: Für jeden ges
 - `knx-planning`: Aktorkanalzuordnung und Aktorbedarf je Verteiler
 
 ### Modified Capabilities
+
+- `cables`: Verteiler als Endpunkt, Verteilerzuschlag, mehrere Leitungen gleichzeitig
+- `cable-routes`: Knoten rasten an Verteilern ein
 
 ## Impact
 

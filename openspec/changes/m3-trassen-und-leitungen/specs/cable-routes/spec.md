@@ -7,7 +7,7 @@ Bildet die physischen Wege, auf denen Leitungen aller Gewerke durch das Gebäude
 ## ADDED Requirements
 
 ### Requirement: Trassen zeichnen
-Das System SHALL in jeder Flächenansicht Trassen als Linienzüge aus Knoten und geraden Segmenten zeichnen lassen. Knoten MUST an Geräten, Verteilern und bestehenden Knoten einrasten.
+Das System SHALL in jeder Flächenansicht Trassen als Linienzüge aus Knoten und geraden Segmenten zeichnen lassen. Knoten MUST an Geräten und bestehenden Knoten einrasten (an Verteilern ab `m4-verteiler-und-stromkreise`).
 
 #### Scenario: Trasse zur Steckdose
 - **WHEN** der Benutzer in der Wandansicht von der oberen Zone senkrecht zur Steckdose zeichnet
