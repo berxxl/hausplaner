@@ -102,6 +102,7 @@ import { isTextTarget } from "../shortcuts";
 import { surfaceAt } from "./navigate";
 import { useCableTool } from "../useCableTool";
 import { RoutesPlanLayer } from "./RoutesPlanLayer";
+import { segmentWorldEnds } from "../../geometry/routes";
 
 const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "select", label: "Auswählen" },
@@ -509,6 +510,19 @@ export function PlanView({ store, view }: PlanViewProps) {
     }
     switch (tool) {
       case "select": {
+        // „Weg bearbeiten“: Boden- und Deckensegmente im Grundriss an- und abwählen
+        if (view.getState().pathEdit && storey) {
+          const nodes = new Map(project.routeNodes.map((n) => [n.id, n]));
+          const r = 6 / cam.zoom;
+          const hit = project.routeSegments.find((s) => {
+            if (s.kind !== "surface" || !s.surface || s.surface.startsWith("wall:")) return false;
+            const ends = segmentWorldEnds(project, s, nodes);
+            if (!ends || ends.a.storeyId !== storey.id) return false;
+            const q = projectOnSegment(world, ends.a, ends.b);
+            return q.t >= 0 && q.t <= 1 && q.distance <= r;
+          });
+          if (hit && view.togglePathSegment(hit.id)) return;
+        }
         const handle = hitHandle(world);
         if (handle && storey) {
           store.begin("Endpunkt verschieben");

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useStore } from "zustand";
+import { routeSurfaceTarget } from "./warnings";
 import { sortedStoreys } from "../io/project-files";
 import { addStorey } from "../store/commands";
 import type { ProjectStore } from "../store/history";
@@ -66,6 +67,16 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
   const [adding, setAdding] = useState(false);
   const roomViews = roomViewsOf(project);
   const markedWall = selection?.kind === "wall" ? selection.id : null;
+  // Flächen, über die eine ausgewählte Leitung läuft (design.md M3 „Leitungen“)
+  const cable =
+    selection?.kind === "cable" ? project.cables.find((c) => c.id === selection.id) : null;
+  const cableSurfaces = new Set(
+    (cable?.path ?? []).flatMap((id) => {
+      const t = routeSurfaceTarget(project, { kind: "route-segment", id });
+      return t ? [JSON.stringify(t.surface)] : [];
+    }),
+  );
+  const onCable = (t: SurfaceTarget) => cableSurfaces.has(JSON.stringify(t));
   const open = (t: SurfaceTarget, storeyId: string) => view.openSurface(t, storeyId);
   const isOpen = (t: SurfaceTarget) => editor === "surface" && sameTarget(surface, t);
 
@@ -108,7 +119,7 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
                         level={3}
                         label={v.name}
                         selected={isOpen(t)}
-                        marked={v.wallId === markedWall}
+                        marked={v.wallId === markedWall || onCable(t)}
                         onActivate={() => open(t, storey.id)}
                       />
                     );
@@ -117,12 +128,14 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
                     level={3}
                     label="Decke"
                     selected={isOpen({ kind: "ceiling", roomId: room.id })}
+                    marked={onCable({ kind: "ceiling", roomId: room.id })}
                     onActivate={() => open({ kind: "ceiling", roomId: room.id }, storey.id)}
                   />
                   <Item
                     level={3}
                     label="Boden"
                     selected={isOpen({ kind: "floor", roomId: room.id })}
+                    marked={onCable({ kind: "floor", roomId: room.id })}
                     onActivate={() => open({ kind: "floor", roomId: room.id }, storey.id)}
                   />
                   {(room.slopes ?? []).map((s, i) => {
@@ -133,6 +146,7 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
                         level={3}
                         label={`Schräge ${i + 1}`}
                         selected={isOpen(t)}
+                        marked={onCable(t)}
                         onActivate={() => open(t, storey.id)}
                       />
                     );
@@ -153,7 +167,7 @@ export function Tree({ store, view }: { store: ProjectStore; view: ViewStore }) 
                         level={3}
                         label={f.name}
                         selected={isOpen(t)}
-                        marked={f.wallId === markedWall}
+                        marked={f.wallId === markedWall || onCable(t)}
                         onActivate={() => open(t, storey.id)}
                       />
                     );

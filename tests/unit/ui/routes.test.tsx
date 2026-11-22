@@ -278,3 +278,43 @@ describe("Warnungen und Filter (4.3, 6.3)", () => {
     ).toBeNull();
   });
 });
+
+describe("Baum und Grundriss bei ausgewählter Leitung (5.4)", () => {
+  test("Baum markiert die Flächen, über die die Leitung läuft", async () => {
+    const { Tree } = await import("../../../src/ui/Tree");
+    const store = load("m3");
+    const view = createViewStore({ selection: { kind: "cable", id: "c2og0001" } });
+    render(<Tree store={store} view={view} />);
+    const marked = screen
+      .getAllByRole("treeitem")
+      .filter((x) => x.getAttribute("data-marked") === "true")
+      .map((x) => x.querySelector(".tree__item")?.textContent ?? x.textContent);
+    // Küchendecke (EG) und Boden im Kinderzimmer (OG, auch für den Deckendurchbruch)
+    expect(marked).toEqual(["Decke", "Boden"]);
+  });
+
+  test("Weg bearbeiten: Klick auf ein Deckensegment im Grundriss nimmt es heraus", async () => {
+    const { PlanView } = await import("../../../src/ui/plan/PlanView");
+    const store = load("m3");
+    const view = createViewStore({
+      activeStoreyId: "e0g1k2m3",
+      selection: { kind: "cable", id: "c1licht1" },
+      pathEdit: {
+        cableId: "c1licht1",
+        segmentIds: ["s1stich1", "s3zone02", "s4hoch01", "s5decke1"],
+      },
+    });
+    render(<PlanView store={store} view={view} />);
+    const svg = screen.getByRole("img", { name: "Grundriss" });
+    const [cx, cy, zoom] = ["data-cx", "data-cy", "data-zoom"].map((a) =>
+      Number(svg.getAttribute(a)),
+    );
+    // s5decke1 läuft im Grundriss von (2000, 2925) nach (2000, 1500)
+    fireEvent.pointerDown(svg, {
+      button: 0,
+      clientX: 400 + (2000 - cx!) * zoom!,
+      clientY: 300 - (2200 - cy!) * zoom!,
+    });
+    expect(view.getState().pathEdit!.segmentIds).toEqual(["s1stich1", "s3zone02", "s4hoch01"]);
+  });
+});
