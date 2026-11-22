@@ -65,6 +65,48 @@ describe("Eigenschaften eines Geräts (3.5)", () => {
     expect(d.label).toBe("Licht Küche");
   });
 
+  test("Deckengerät: Abstände zur nächsten fertigen Wand je Achse, editierbar (design.md „Bezug und Bemaßung“)", () => {
+    const store = load();
+    const view = createViewStore({
+      activeStoreyId: EG,
+      selection: { kind: "device", id: "d3decke1" },
+    });
+    render(<Properties store={store} view={view} />);
+    const props = screen.getByRole("complementary", { name: "Eigenschaften" });
+    // Küche 150..3940 × 150..2940 roh, Putz 15 mm; Auslass bei x 2000 (u = −2000), y 1500
+    const left = within(props).getByLabelText("Abstand zur Wand links (Grundriss)");
+    expect(left).toHaveValue(String(2000 - 165));
+    expect(within(props).getByLabelText("Abstand zur Wand unten (Grundriss)")).toHaveValue(
+      String(1500 - 165),
+    );
+    commit(left, "1000");
+    let placement = store.getState().project.devices.find((d) => d.id === "d3decke1")!.placement;
+    expect(placement).toMatchObject({ u: -1165, v: 1500 });
+    expect(store.undoLabel()).toBe("Gerät verschieben");
+    commit(within(props).getByLabelText("Abstand zur Wand unten (Grundriss)"), "500");
+    placement = store.getState().project.devices.find((d) => d.id === "d3decke1")!.placement;
+    expect(placement).toMatchObject({ u: -1165, v: 665 });
+  });
+
+  test("Bodengerät: Abstand zur näheren Wand rechts", () => {
+    const store = load((p) => {
+      const d = p.devices.find((x) => x.id === "d4boden1")!;
+      if (d.placement.kind === "surface") d.placement.u = 7000;
+    });
+    const view = createViewStore({
+      activeStoreyId: EG,
+      selection: { kind: "device", id: "d4boden1" },
+    });
+    render(<Properties store={store} view={view} />);
+    const props = screen.getByRole("complementary", { name: "Eigenschaften" });
+    // Wohnen 4060..7850 roh: fertige Wand rechts bei 7835
+    const right = within(props).getByLabelText("Abstand zur Wand rechts (Grundriss)");
+    expect(right).toHaveValue(String(7835 - 7000));
+    commit(right, "600");
+    const placement = store.getState().project.devices.find((d) => d.id === "d4boden1")!.placement;
+    expect(placement).toMatchObject({ u: 7235 });
+  });
+
   test("Mehrfachauswahl: Kombinieren und Löschen", () => {
     const store = load((p) => {
       const base = p.devices.find((x) => x.id === "d1steck1")!;

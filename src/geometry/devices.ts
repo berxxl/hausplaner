@@ -3,6 +3,7 @@
  * „Höhenbezug bei geänderter Raumzuordnung“). Frei von React.
  */
 import { rawCeilingAt, roomHeights, isSlopeValid, slopeHeight } from "./ceiling";
+import { fromPath, offset, toPath } from "./clipper";
 import { pointInPolygon } from "./polygon";
 import {
   sections,
@@ -329,4 +330,52 @@ export function planSymbol(
       frame: "wall",
     };
   return { x: w.x, y: w.y, frame: kind === "floor" ? "floor" : "ceiling" };
+}
+
+/** Richtungen im Grundriss: links −x, rechts +x, oben +y, unten −y. */
+export type PlanDirection = "left" | "right" | "up" | "down";
+
+const PLAN_RAYS: Record<PlanDirection, Vec> = {
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  up: { x: 0, y: 1 },
+  down: { x: 0, y: -1 },
+};
+
+/**
+ * Abstände eines Punkts zur fertigen Wandoberfläche des Raums in den vier Grundrissrichtungen
+ * (Rohbaukontur um den Putz nach innen versetzt). null: kein Treffer in dieser Richtung.
+ */
+export function finishedWallDistances(
+  polygon: readonly Vec[],
+  plasterMm: number,
+  q: Vec,
+): Record<PlanDirection, number | null> {
+  const contours =
+    plasterMm > 0 ? offset([toPath(polygon)], -plasterMm).map(fromPath) : [[...polygon]];
+  const result = { left: null, right: null, up: null, down: null } as Record<
+    PlanDirection,
+    number | null
+  >;
+  for (const [dir, r] of Object.entries(PLAN_RAYS) as [PlanDirection, Vec][]) {
+    for (const c of contours)
+      for (let i = 0; i < c.length; i++) {
+        const a = c[i]!;
+        const b = c[(i + 1) % c.length]!;
+        const t = rayHit(q, r, a, b);
+        if (t !== null && (result[dir] === null || t < result[dir]!)) result[dir] = t;
+      }
+  }
+  return result;
+}
+
+/** Abstand entlang des Strahls q + t·r bis zur Strecke a–b, oder null. */
+function rayHit(q: Vec, r: Vec, a: Vec, b: Vec): number | null {
+  const s = sub(b, a);
+  const den = r.x * s.y - r.y * s.x;
+  if (Math.abs(den) < 1e-12) return null;
+  const qa = sub(a, q);
+  const t = (qa.x * s.y - qa.y * s.x) / den;
+  const w = (qa.x * r.y - qa.y * r.x) / den;
+  return t >= 0 && w >= 0 && w <= 1 ? t : null;
 }

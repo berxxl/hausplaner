@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
-import { rawHeightOf } from "../geometry/devices";
+import { finishedWallDistances, rawHeightOf, type PlanDirection } from "../geometry/devices";
 import { OPENING_LABELS } from "../geometry/openings";
 import type { RoomView } from "../geometry/surfaces";
 import { mountingForSurface, surfaceKind } from "../model/devices";
@@ -48,6 +48,52 @@ function referenceEdges(view: RoomView | undefined): ReferenceEdge[] {
     edges.push({ key: `${o.id}:r`, label: `${name}, rechte Laibung`, u: o.uTo });
   });
   return edges;
+}
+
+const DIRECTION_LABELS: Record<PlanDirection, string> = {
+  left: "links",
+  right: "rechts",
+  up: "oben",
+  down: "unten",
+};
+
+/**
+ * Abstände eines Decken- oder Bodengeräts zur nächsten fertigen Wandoberfläche je Achse im
+ * Grundriss (design.md M2 „Bezug und Bemaßung“). Decke: u läuft gespiegelt (x = −u).
+ */
+function wallDistanceFields(project: Project, device: Device) {
+  const p = device.placement;
+  if (p.kind !== "surface") return [];
+  const [kind, roomId] = p.surface.split(":");
+  if (kind !== "ceiling" && kind !== "floor") return [];
+  const room = project.rooms.find((r) => r.id === roomId);
+  const storey = project.storeys.find((s) => s.id === device.storeyId);
+  if (!room || !storey) return [];
+  const sign = kind === "ceiling" ? -1 : 1;
+  const q = { x: sign * p.u, y: p.v };
+  const d = finishedWallDistances(room.polygon, room.plasterMm ?? storey.defaults.plasterMm, q);
+  const pick = (a: PlanDirection, b: PlanDirection): PlanDirection | null =>
+    d[a] === null ? (d[b] === null ? null : b) : d[b] === null || d[a]! <= d[b]! ? a : b;
+  const fields: { dir: PlanDirection; value: number; placement(mm: number): typeof p }[] = [];
+  const x = pick("left", "right");
+  if (x) {
+    const edge = x === "left" ? q.x - d.left! : q.x + d.right!;
+    fields.push({
+      dir: x,
+      value: Math.round(d[x]!),
+      placement: (mm) => ({ ...p, u: Math.round(sign * (x === "left" ? edge + mm : edge - mm)) }),
+    });
+  }
+  const y = pick("down", "up");
+  if (y) {
+    const edge = y === "down" ? q.y - d.down! : q.y + d.up!;
+    fields.push({
+      dir: y,
+      value: Math.round(d[y]!),
+      placement: (mm) => ({ ...p, v: Math.round(y === "down" ? edge + mm : edge - mm) }),
+    });
+  }
+  return fields;
 }
 
 /** Eigenschaften eines Geräts bzw. einer Mehrfachauswahl (design.md M2 „Bezug und Bemaßung“). */
@@ -147,8 +193,18 @@ function SingleDevice({
       </>
     );
   } else {
+    const distances = wallDistanceFields(project, device);
     positionFields = (
       <>
+        {distances.map((f) => (
+          <MmField
+            key={f.dir}
+            label={`Abstand zur Wand ${DIRECTION_LABELS[f.dir]} (Grundriss)`}
+            min={0}
+            value={f.value}
+            onCommit={(mm) => edit({ placement: f.placement(mm) }, "Gerät verschieben")}
+          />
+        ))}
         <MmField
           label="u (Fläche)"
           value={p.u}

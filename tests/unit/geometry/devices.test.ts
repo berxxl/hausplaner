@@ -1,6 +1,7 @@
 // Geräte (3.1–3.3, 3.7): Platzierung, Weltlage, Befehle, Mitlöschen, Höhenbezug, Kombinieren
 import {
   deviceWorld,
+  finishedWallDistances,
   frontRect,
   planPlacement,
   rawHeightOf,
@@ -289,5 +290,35 @@ describe("Kombinieren (3.7)", () => {
       error: "Kombinieren nur auf einer Fläche",
     });
     expect(combineDevices(p, ["d1steck1"], "horizontal").ok).toBe(false);
+  });
+});
+
+describe("Abstände zur fertigen Wand (design.md „Bezug und Bemaßung“)", () => {
+  const square = [
+    { x: 0, y: 0 },
+    { x: 4000, y: 0 },
+    { x: 4000, y: 3000 },
+    { x: 0, y: 3000 },
+  ];
+
+  test("vier Richtungen, um den Putz versetzt", () => {
+    const d = finishedWallDistances(square, 15, { x: 1000, y: 2000 });
+    expect(d.left).toBeCloseTo(985, 3);
+    expect(d.right).toBeCloseTo(2985, 3);
+    expect(d.down).toBeCloseTo(1985, 3);
+    expect(d.up).toBeCloseTo(985, 3);
+  });
+
+  test("L-förmiger Raum: nächste Wand in Strahlrichtung", () => {
+    const l = [
+      { x: 0, y: 0 },
+      { x: 4000, y: 0 },
+      { x: 4000, y: 1000 },
+      { x: 2000, y: 1000 },
+      { x: 2000, y: 3000 },
+      { x: 0, y: 3000 },
+    ];
+    const d = finishedWallDistances(l, 0, { x: 3000, y: 500 });
+    expect(d).toEqual({ left: 3000, right: 1000, up: 500, down: 500 });
   });
 });

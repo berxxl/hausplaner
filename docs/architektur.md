@@ -173,6 +173,7 @@ interface Wall {
 
 interface Room {
   id: Id; storeyId: Id; name: string;
+  rawHeightMm?: number;                       // Rohbauhöhe nur dieses Raums (ab M2); Standard: storey.rawHeightMm
   seed: Pt;                                   // Klickpunkt der Raumerkennung
   polygon: Pt[];                              // Rohbau-Innenkontur, aus Wänden erkannt, kanonisch (gegen Uhrzeigersinn, Start bei kleinstem y, dann x), bleibt bei offenem oder verschmolzenem Raum erhalten
   floorBuildupMm?: number; plasterMm?: number;  // Standard: storey.defaults
@@ -194,10 +195,11 @@ type SurfaceRef = string;  // "wall:<wallId>:L" | "wall:<wallId>:R" (Seite bezog
 
 interface Device {
   id: Id; typeId: Id; label: string; status: Status;
+  storeyId: Id;                                // Geschoss der Fläche bzw. bei free das Geschoss; beim Laden gesetzt, nicht geschrieben
   placement:
     | { kind: "surface"; surface: SurfaceRef; u: number; v: number; rotationDeg: number }
     | { kind: "board"; boardId: Id; fieldId: Id; row: number; slot: number }   // Reiheneinbau
-    | { kind: "free"; storeyId: Id; x: number; y: number; z: number };        // z. B. Klima-Außengerät; storeyId nicht geschrieben
+    | { kind: "free"; x: number; y: number; z: number };                      // z. B. Klima-Außengerät; z über Rohfußboden
   circuitId?: Id;
   knxLineId?: Id;                              // nur Busteilnehmer
   props?: Record<string, unknown>;             // typabhängig, z. B. Leistung; ab Bedarf (nicht in M2)
