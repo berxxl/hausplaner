@@ -57,7 +57,8 @@ describe("Dateibeobachtung (3.4)", () => {
       await rm(join(root, "geschosse", "eg.yaml"));
     });
     expect(events).toEqual([["geschosse/eg.yaml", "geschosse/og.yaml", "projekt.yaml"]]);
-  });
+    // Start des Watchers dauert auf Windows-Runnern bis zu 4 s
+  }, 15000);
 
   test("eigene Schreibvorgänge und Dateien in plaene/ werden nicht gemeldet", async () => {
     const root = await tempDir();
