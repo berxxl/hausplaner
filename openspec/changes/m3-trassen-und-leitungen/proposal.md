@@ -23,6 +23,7 @@ Leitungswege bestimmen Material, Schlitz- und Bohrarbeiten und sind nach dem Ver
 
 ### Modified Capabilities
 
+- `building-geometry`: Öffnung auch mit dem Werkzeug „Öffnung“ verschieben (Rückmeldung des Benutzers)
 - `workspace`: Auswahl von Knoten, Segmenten und Leitungen; Gewerkfilter mit Kategorie Trassen
 
 ## Impact

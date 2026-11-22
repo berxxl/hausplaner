@@ -48,6 +48,11 @@
 - [x] 7.1 Playwright-Ablauf: M2-Projekt öffnen (Migration), Trasse über Ecke und zur Decke zeichnen, Durchbruch, Leitung anlegen, Weg hervorgehoben, Zuschläge ändern, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
 - [ ] 7.2 Manuell: banatstrasse10 migrieren, im EG Trassen zu einigen Steckdosen und Schaltern zeichnen, eine Leitung anlegen; Befunde als Folge-Tasks
 
+### Rückmeldungen des Benutzers während m3
+
+- [x] R.1 Nordpfeil im Grundriss nach der Nordrichtung der Projekteinstellungen (Plan wird nicht gedreht); Unit-Test
+- [x] R.2 Werkzeug „Öffnung“: Druck auf eine vorhandene Öffnung wählt sie aus und verschiebt sie, statt eine neue anzulegen (bisher nur mit dem Auswahlwerkzeug, das man erst wählen musste); Spec-Delta `building-geometry`, Komponententest
+
 ## Workflow follow-up
 
 - Vor der Umsetzung: Review von design.md, Specs und Tasks (von Hand nach dem Schema der m1/m2-Reviews, da `/openspec-review` nicht installiert ist)

@@ -114,6 +114,26 @@ describe("Öffnungen zeichnen und verschieben (9.2.1, 9.2.2)", () => {
     expect(field("Breite")).toBe(885);
   });
 
+  test("Werkzeug „Öffnung“: Ziehen an einer vorhandenen Öffnung verschiebt sie, ohne eine neue anzulegen", () => {
+    const { store, view } = setup();
+    render(<PlanView store={store} view={view} />);
+    fireEvent.click(screen.getByRole("button", { name: "Öffnung" }));
+    const svg = screen.getByRole("img", { name: "Grundriss" });
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf(2000, 0) });
+    expect(view.getState().selection).toEqual({ kind: "opening", id: "o1fenstr" });
+    fireEvent.pointerMove(svg, screenOf(2500, 100));
+    fireEvent.pointerUp(svg);
+    expect(screen.queryByRole("dialog", { name: "Öffnung setzen" })).toBeNull();
+    const p = store.getState().project;
+    expect(p.openings).toHaveLength(2);
+    near(p.openings.find((o) => o.id === "o1fenstr")!.offsetMm, 1995);
+    expect(store.undoLabel()).toBe("Öffnung verschieben");
+    // Klick auf freie Wand legt weiter eine neue Öffnung an
+    fireEvent.pointerDown(svg, { button: 0, ...screenOf(6000, 0) });
+    fireEvent.pointerUp(svg);
+    expect(screen.getByRole("dialog", { name: "Öffnung setzen" })).toBeTruthy();
+  });
+
   test("Auswahlwerkzeug: Öffnung entlang der Wand ziehen ist ein Befehl", () => {
     const { store, view } = setup();
     render(<PlanView store={store} view={view} />);

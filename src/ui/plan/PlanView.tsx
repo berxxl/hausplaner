@@ -127,7 +127,7 @@ const HINTS: Record<PlanTool, string> = {
   measure: "Zwei Punkte anklicken.",
   wall: "Anfangspunkt anklicken; jeder weitere Klick setzt eine Wand. Esc beendet.",
   room: "In eine von Wänden umschlossene Fläche klicken.",
-  opening: "Auf eine Wand klicken oder aufziehen.",
+  opening: "Auf die Wand klicken oder aufziehen; vorhandene Öffnung ziehen verschiebt sie.",
   slope: "Zwei Punkte der Grundlinie anklicken (Ecken des Raums rasten ein).",
   "redetect-room": "In die Fläche klicken, die der Raum künftig einnehmen soll.",
   device: "Gerätetyp wählen und klicken; jeder Klick setzt ein Gerät. Esc beendet.",
@@ -499,6 +499,22 @@ export function PlanView({ store, view }: PlanViewProps) {
     return p;
   };
 
+  /** Wählt eine Öffnung aus und beginnt das Verschieben entlang ihrer Wand (ein Befehl). */
+  const grabOpening = (opening: (typeof openings)[number], world: Vec, capture: () => void) => {
+    view.select({ kind: "opening", id: opening.id });
+    const w = geoms.find((x) => x.id === opening.wallId);
+    if (!w) return false;
+    store.begin("Öffnung verschieben");
+    drag.current = {
+      kind: "opening",
+      openingId: opening.id,
+      wallId: w.id,
+      grabMm: alongWallMm(w, world),
+    };
+    capture();
+    return true;
+  };
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (e.button !== 0 && e.button !== 1) return;
     const world = toWorld(e);
@@ -572,19 +588,7 @@ export function PlanView({ store, view }: PlanViewProps) {
         const wall = opening ? undefined : hitWall(world);
         const room = opening || wall ? undefined : hitRoom(world);
         if (opening) {
-          view.select({ kind: "opening", id: opening.id });
-          const w = geoms.find((x) => x.id === opening.wallId);
-          if (w) {
-            store.begin("Öffnung verschieben");
-            drag.current = {
-              kind: "opening",
-              openingId: opening.id,
-              wallId: w.id,
-              grabMm: alongWallMm(w, world),
-            };
-            capture();
-            return;
-          }
+          if (grabOpening(opening, world, capture)) return;
         } else if (wall) view.select({ kind: "wall", id: wall.id });
         else if (room) view.select({ kind: "room", id: room.id });
         else view.select(null);
@@ -755,6 +759,9 @@ export function PlanView({ store, view }: PlanViewProps) {
         return;
       }
       case "opening": {
+        // Vorhandene Öffnung: auswählen und entlang der Wand ziehen statt eine neue anzulegen
+        const existing = hitOpening(world);
+        if (existing && grabOpening(existing, world, capture)) return;
         const wall = hitWall(world);
         if (!wall) {
           setMessage("Auf eine Wand klicken.");
