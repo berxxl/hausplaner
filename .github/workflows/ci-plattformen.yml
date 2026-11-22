@@ -1,0 +1,54 @@
+name: CI Plattformen
+
+# Nur von Hand (Actions → „CI Plattformen“ → Run workflow): macOS-Minuten zählen etwa zehnfach,
+# Windows-Minuten etwa doppelt. Für gelegentliche Prüfungen vor größeren Meilensteinen.
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: Plattform
+        type: choice
+        options: [macos-latest, windows-latest, beide]
+        default: windows-latest
+
+jobs:
+  check:
+    name: Lint, Typecheck, Unit-Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ inputs.os == 'beide' && fromJSON('["macos-latest","windows-latest"]') || fromJSON(format('["{0}"]', inputs.os)) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  e2e:
+    name: Playwright Chromium (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ inputs.os == 'beide' && fromJSON('["macos-latest","windows-latest"]') || fromJSON(format('["{0}"]', inputs.os)) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps --no-shell chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: playwright-report/
+          retention-days: 7
