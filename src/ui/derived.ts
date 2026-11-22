@@ -5,7 +5,9 @@ import {
   type FreeSurface,
   type RoomView,
 } from "../geometry/surfaces";
-import type { Project } from "../model/types";
+import type { Cable, Project } from "../model/types";
+import { circuitCables, circuitDevices } from "../geometry/circuits";
+import type { PathEdit, Selection } from "../store/view";
 import { computeWarnings, type ProjectWarning } from "../rules";
 
 const roomViewCache = new WeakMap<Project, Map<string, RoomView[]>>();
@@ -56,4 +58,29 @@ export function warnedIds(project: Project): Set<string> {
     )
       ids.add(w.target.id);
   return ids;
+}
+
+/**
+ * Hervorgehobene Segmente und Geräte (design.md M3 „Leitungen“, M4 „Stromkreise“): Weg bearbeiten,
+ * ausgewählte Leitung bzw. alle Geräte und Leitungen des ausgewählten Stromkreises.
+ */
+export function highlightOf(
+  project: Project,
+  selection: Selection | null,
+  pathEdit: PathEdit | null,
+  cableVisible: (c: Cable) => boolean = () => true,
+): { segments: Set<string>; devices: Set<string> } {
+  if (pathEdit) return { segments: new Set(pathEdit.segmentIds), devices: new Set() };
+  if (selection?.kind === "cable") {
+    const c = project.cables.find((x) => x.id === selection.id);
+    return { segments: new Set(c && cableVisible(c) ? c.path : []), devices: new Set() };
+  }
+  if (selection?.kind === "circuit") {
+    const cables = circuitCables(project, selection.id).filter(cableVisible);
+    return {
+      segments: new Set(cables.flatMap((c) => c.path)),
+      devices: new Set(circuitDevices(project, selection.id).map((d) => d.id)),
+    };
+  }
+  return { segments: new Set(), devices: new Set() };
 }

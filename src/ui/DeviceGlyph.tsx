@@ -1,6 +1,7 @@
 import type { Device } from "../model/types";
 import { STATUS_COLORS, WARNING_COLOR } from "./labels";
 import { SymbolView } from "./SymbolView";
+import { HIGHLIGHT_COLOR } from "./surface/routeGeometry";
 
 /**
  * Gerät als Rahmen mit Symbol in Weltkoordinaten (y nach oben), design.md M2 „Darstellung“:
@@ -17,6 +18,7 @@ export function DeviceGlyph({
   dashed = false,
   selected = false,
   warned = false,
+  highlighted = false,
   rotationDeg = 0,
 }: {
   device: Device;
@@ -28,18 +30,27 @@ export function DeviceGlyph({
   dashed?: boolean;
   selected?: boolean;
   warned?: boolean;
+  /** Teil des ausgewählten Stromkreises (M4) */
+  highlighted?: boolean;
   rotationDeg?: number;
 }) {
   const color = STATUS_COLORS[device.status];
   const filled = device.status !== "planned";
   const s = Math.min(width, height) / 100;
-  const stroke = warned ? WARNING_COLOR : selected ? "#0071e3" : color;
+  const stroke = warned
+    ? WARNING_COLOR
+    : selected
+      ? "#0071e3"
+      : highlighted
+        ? HIGHLIGHT_COLOR
+        : color;
   return (
     <g
       data-device={device.id}
       data-status={device.status}
       data-selected={selected || undefined}
       data-warned={warned || undefined}
+      data-highlighted={highlighted || undefined}
       className="device"
       transform={`translate(${x} ${y}) rotate(${rotationDeg})`}
     >

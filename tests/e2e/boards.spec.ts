@@ -54,4 +54,36 @@ test.describe("Verteiler (M4)", () => {
     await open3d(page);
     await expect(page.getByTestId("scene")).toHaveAttribute("data-boards", new RegExp(`${id}:`));
   });
+
+  test("„Nur KNX“: Verteiler bleiben in Grundriss, Wandansicht und 3D sichtbar (6.3, Spec-Scenario „Nur KNX“)", async ({
+    page,
+    request,
+  }) => {
+    await openProject(page, request, "m4");
+    const filter = page.getByRole("group", { name: "Gewerkfilter" });
+    for (const name of [
+      "Strom",
+      "Daten",
+      "Leerrohr",
+      "Kältemittel",
+      "Kondensat",
+      "Sonstiges",
+      "Möbel",
+    ])
+      await filter.getByRole("button", { name, exact: true }).click();
+    // EG: Zählerschrank, UV EG, Medienverteiler; Geräte: nur KNX (keine im EG)
+    await expect(page.getByTestId("plan-boards").locator("[data-board]")).toHaveCount(3);
+    await expect(page.getByTestId("plan-devices").locator("[data-device]")).toHaveCount(0);
+    await expect(page.getByTestId("plan-routes").locator("[data-plan-segment]")).not.toHaveCount(0);
+    await tree(page)
+      .getByRole("treeitem", { name: "Wohnen" })
+      .getByRole("treeitem", { name: "Wand Nord" })
+      .click();
+    await expect(page.getByTestId("surface-boards").locator('[data-board="b2uveg01"]')).toHaveCount(
+      1,
+    );
+    await open3d(page);
+    await expect(page.getByTestId("scene")).toHaveAttribute("data-boards", /b2uveg01:/);
+    await expect(page.getByTestId("scene")).toHaveAttribute("data-devices", "");
+  });
 });

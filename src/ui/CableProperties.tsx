@@ -9,6 +9,7 @@ import {
 } from "../geometry/cables";
 import type { Cable, Project, Status } from "../model/types";
 import { deleteCables, editCable, setCablePath, suggestCablePath } from "../store/cables";
+import { cableCircuit } from "../geometry/circuits";
 import type { ProjectStore } from "../store/history";
 import type { ViewStore } from "../store/view";
 import { TextField } from "./fields";
@@ -73,6 +74,21 @@ export function CableProperties({
       <p className="field-info">
         Von „{endpointLabel(project, cable.from)}“ nach „{endpointLabel(project, cable.to)}“
       </p>
+      {(() => {
+        const circuit = cableCircuit(project, cable);
+        return circuit ? (
+          <p className="field-info" aria-label="Stromkreis">
+            Stromkreis:{" "}
+            <button
+              type="button"
+              className="link"
+              onClick={() => view.select({ kind: "circuit", id: circuit.id })}
+            >
+              {circuit.label}
+            </button>
+          </p>
+        ) : null;
+      })()}
       <p className="field-info" aria-label="Leitungslänge">
         Länge: {formatCableLength(cableLength(project, cable))}
       </p>

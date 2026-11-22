@@ -152,3 +152,59 @@ export function setLengthAllowance(allowance: LengthAllowance): Checked {
     },
   };
 }
+
+/**
+ * „Leitungen anlegen“: je Gerät eine Leitung zum Verteiler mit Wegvorschlag (design.md M4 „Mehrere
+ * Leitungen gleichzeitig“). Überspringt Geräte, die schon eine Leitung dieses Typs zum Verteiler
+ * haben, und Geräte, die den Typ nicht anschließen.
+ */
+export function addCablesToBoard(
+  project: Project,
+  deviceIds: readonly string[],
+  boardId: string,
+  lineTypeId: string,
+  status: Cable["status"],
+  ids: readonly string[],
+): { ok: false; error: string } | { ok: true; command: Command; added: number; skipped: number } {
+  const board = project.boards.find((b) => b.id === boardId);
+  if (!board) return { ok: false, error: "Verteiler nicht gefunden" };
+  const to = { boardId };
+  const cables: Cable[] = [];
+  let skipped = 0;
+  for (const deviceId of deviceIds) {
+    const from = { deviceId };
+    const device = project.devices.find((d) => d.id === deviceId);
+    const exists = project.cables.some(
+      (c) =>
+        c.lineTypeId === lineTypeId &&
+        ((c.from.deviceId === deviceId && c.to.boardId === boardId) ||
+          (c.to.deviceId === deviceId && c.from.boardId === boardId)),
+    );
+    if (!device || exists || typeCheck(project, lineTypeId, from, to) !== null) {
+      skipped++;
+      continue;
+    }
+    cables.push({
+      id: ids[cables.length]!,
+      label: `${device.label} – ${board.label}`,
+      lineTypeId,
+      status,
+      from,
+      to,
+      path: suggestPath(project, from, to),
+    });
+  }
+  if (cables.length === 0)
+    return { ok: false, error: `0 Leitungen angelegt, ${skipped} übersprungen` };
+  return {
+    ok: true,
+    added: cables.length,
+    skipped,
+    command: {
+      label: "Leitungen anlegen",
+      run(draft) {
+        draft.cables.push(...structuredClone(cables));
+      },
+    },
+  };
+}

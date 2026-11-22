@@ -117,3 +117,23 @@ export function setUnderlay(
     },
   };
 }
+
+/** „Reserven ändern“ (design.md M4): TE-Reserve und Aktorreserve, je 0–100 %. */
+export function setReserves(values: {
+  teReservePercent: number;
+  actuatorReservePercent: number;
+}): Checked {
+  const ok = (v: number) => Number.isFinite(v) && v >= 0 && v <= 100;
+  if (!ok(values.teReservePercent) || !ok(values.actuatorReservePercent))
+    return { ok: false, error: "Reserven zwischen 0 und 100 %" };
+  return {
+    ok: true,
+    command: {
+      label: "Reserven ändern",
+      run(draft) {
+        draft.settings.teReservePercent = values.teReservePercent;
+        draft.settings.actuatorReservePercent = values.actuatorReservePercent;
+      },
+    },
+  };
+}

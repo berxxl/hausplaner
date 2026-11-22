@@ -51,7 +51,7 @@ import { PenetrationDialog } from "../plan/dialogs";
 import { useCableTool } from "../useCableTool";
 import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
-import { warnedIds } from "../derived";
+import { highlightOf, warnedIds } from "../derived";
 import { isCableVisible, isDeviceVisible } from "../filter";
 import { boardFrontRect, boardNodeAnchor, BOARD_DEFAULTS } from "../../geometry/boards";
 import { addBoard, boardCascade, deleteBoards, moveBoard } from "../../store/boards";
@@ -602,13 +602,8 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
         ? [selection.id]
         : [],
   );
-  const highlightedSegments = new Set<string>(
-    pathEdit
-      ? pathEdit.segmentIds
-      : selection?.kind === "cable"
-        ? (project.cables.find((c) => c.id === selection.id)?.path ?? [])
-        : [],
-  );
+  const highlight = highlightOf(project, selection, pathEdit);
+  const highlightedSegments = highlight.segments;
 
   return (
     <div className="surface">
@@ -820,6 +815,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                   width={rect.uMax - rect.uMin}
                   height={rect.vMax - rect.vMin}
                   warned={warned.has(device.id)}
+                  highlighted={highlight.devices.has(device.id)}
                   selected={
                     selection?.kind === "device" &&
                     (selection.ids ?? [selection.id]).includes(device.id)

@@ -18,7 +18,7 @@ import type { Board } from "../../model/types";
 import { segmentWorldEnds } from "../../geometry/routes";
 import { furnitureBaseZ } from "../../geometry/furniture";
 import { STATUS_COLORS, WARNING_COLOR } from "../labels";
-import { warnedIds } from "../derived";
+import { highlightOf, warnedIds } from "../derived";
 import { HIGHLIGHT_COLOR } from "../surface/routeGeometry";
 import { isCableVisible, isDeviceVisible } from "../filter";
 import type { ProjectStore } from "../../store/history";
@@ -313,15 +313,10 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
   const pathEdit = useStore(view, (s) => s.pathEdit);
   const routes = routesHidden ? [] : scene.routes;
   // Hervorgehobene Leitung (design.md M3 „Leitungen“)
-  const selectedCable =
-    selection?.kind === "cable" ? project.cables.find((c) => c.id === selection.id) : undefined;
-  const highlighted = new Set(
-    pathEdit
-      ? pathEdit.segmentIds
-      : selectedCable && isCableVisible(project, { hiddenTrades, furnitureHidden }, selectedCable)
-        ? selectedCable.path
-        : [],
+  const highlight = highlightOf(project, selection, pathEdit, (c) =>
+    isCableVisible(project, { hiddenTrades, furnitureHidden }, c),
   );
+  const highlighted = highlight.segments;
   useEffect(
     () => () => {
       scene.walls.forEach((w) => w.geometry.dispose());
@@ -455,9 +450,11 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
                 color={
                   isSel(selection, "device", device.id)
                     ? COLORS.selected
-                    : warned.has(device.id)
-                      ? WARNING_COLOR
-                      : STATUS_COLORS[device.status]
+                    : highlight.devices.has(device.id)
+                      ? HIGHLIGHT_COLOR
+                      : warned.has(device.id)
+                        ? WARNING_COLOR
+                        : STATUS_COLORS[device.status]
                 }
               />
             </mesh>

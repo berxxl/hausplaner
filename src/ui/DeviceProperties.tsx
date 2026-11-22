@@ -16,6 +16,7 @@ import type { ViewStore } from "../store/view";
 import { roomViewsOf } from "./derived";
 import { DegField, MmField, TextField } from "./fields";
 import { STATUS_LABELS } from "./labels";
+import { BoardDeviceFields, ConsumerChannel, DeviceAssignments } from "./DeviceAssignments";
 
 /** Bezugskante für den Abstand eines Wandgeräts (fertige Raumecke oder Laibung), design.md M2. */
 interface ReferenceEdge {
@@ -111,17 +112,21 @@ export function DeviceProperties({
   if (ids.length > 1) return <MultiDevice project={project} store={store} view={view} ids={ids} />;
   const device = project.devices.find((d) => d.id === ids[0]);
   if (!device) return null;
-  return <SingleDevice key={device.id} device={device} project={project} store={store} />;
+  return (
+    <SingleDevice key={device.id} device={device} project={project} store={store} view={view} />
+  );
 }
 
 function SingleDevice({
   device,
   project,
   store,
+  view,
 }: {
   device: Device;
   project: Project;
   store: ProjectStore;
+  view: ViewStore;
 }) {
   const typeId = useId();
   const statusId = useId();
@@ -256,6 +261,9 @@ function SingleDevice({
         </select>
       </div>
       {positionFields}
+      {p.kind === "board" && (
+        <BoardDeviceFields device={device} project={project} store={store} view={view} />
+      )}
       {p.kind === "surface" && (
         <DegField
           label="Drehung"
@@ -263,6 +271,8 @@ function SingleDevice({
           onCommit={(rotationDeg) => edit({ placement: { ...p, rotationDeg } })}
         />
       )}
+      <DeviceAssignments ids={[device.id]} project={project} store={store} view={view} />
+      <ConsumerChannel device={device} project={project} store={store} />
       <button type="button" onClick={() => store.execute(deleteDevices([device.id]))}>
         Gerät löschen
       </button>
@@ -283,6 +293,13 @@ function MultiDevice({
 }) {
   const [spacing, setSpacing] = useState(COMBINATION_SPACING_MM);
   const [error, setError] = useState<string | null>(null);
+  // Kombinieren nur für Geräte derselben Fläche (Mehrfachauswahl im Grundriss geht ab M4 über Flächen)
+  const surfaces = new Set(
+    project.devices
+      .filter((d) => ids.includes(d.id))
+      .map((d) => (d.placement.kind === "surface" ? d.placement.surface : d.id)),
+  );
+  const sameSurface = surfaces.size === 1;
   const combine = (direction: "horizontal" | "vertical") => {
     const r = combineDevices(project, ids, direction, spacing);
     if (!r.ok) return setError(r.error);
@@ -292,14 +309,15 @@ function MultiDevice({
   return (
     <div className="device-properties">
       <p>{ids.length} Geräte ausgewählt</p>
-      <MmField label="Achsabstand" min={1} value={spacing} onCommit={setSpacing} />
-      <button type="button" onClick={() => combine("horizontal")}>
+      {sameSurface && <MmField label="Achsabstand" min={1} value={spacing} onCommit={setSpacing} />}
+      <button type="button" disabled={!sameSurface} onClick={() => combine("horizontal")}>
         Waagerecht kombinieren
       </button>
-      <button type="button" onClick={() => combine("vertical")}>
+      <button type="button" disabled={!sameSurface} onClick={() => combine("vertical")}>
         Senkrecht kombinieren
       </button>
       {error && <p role="alert">{error}</p>}
+      <DeviceAssignments ids={ids} project={project} store={store} view={view} />
       <button
         type="button"
         onClick={() => {

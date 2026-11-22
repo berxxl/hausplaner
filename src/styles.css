@@ -205,6 +205,8 @@ button {
   padding: 1rem 1.5rem;
   border-radius: 8px;
   max-width: 28rem;
+  max-height: 90vh;
+  overflow: auto;
 }
 .dialog__buttons {
   display: flex;
@@ -817,4 +819,8 @@ button {
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
+}
+.settings__line {
+  border-top: 1px solid #e5e5ea;
+  padding: 0.25rem 0;
 }

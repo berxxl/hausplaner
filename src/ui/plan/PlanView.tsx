@@ -90,7 +90,7 @@ import {
   moveFurniture,
   rotateFurniture90,
 } from "../../store/furniture";
-import { warnedIds, warningsOf } from "../derived";
+import { highlightOf, warnedIds, warningsOf } from "../derived";
 import { isDeviceVisible } from "../filter";
 import { dependentDeviceIds } from "../../store/building";
 import { boardPlanRect } from "../../geometry/boards";
@@ -275,13 +275,8 @@ export function PlanView({ store, view }: PlanViewProps) {
   const [message, setMessage] = useState<string | null>(null);
   const routesHidden = useStore(view, (s) => s.routesHidden);
   const pathEdit = useStore(view, (s) => s.pathEdit);
-  const highlightedSegments = new Set<string>(
-    pathEdit
-      ? pathEdit.segmentIds
-      : selection?.kind === "cable"
-        ? (project.cables.find((c) => c.id === selection.id)?.path ?? [])
-        : [],
-  );
+  const highlight = highlightOf(project, selection, pathEdit);
+  const highlightedSegments = highlight.segments;
   const cableTool = useCableTool(store, view, setMessage);
   const [pending, setPending] = useState<Pending | null>(null);
   /** Aufgezogene Öffnung während des Ziehens (Vorschau). */
@@ -1182,6 +1177,7 @@ export function PlanView({ store, view }: PlanViewProps) {
                   height={PLAN_SYMBOL_MM}
                   dashed={at.frame === "ceiling"}
                   warned={warned.has(device.id)}
+                  highlighted={highlight.devices.has(device.id)}
                   selected={
                     !!(
                       selection?.kind === "device" &&
