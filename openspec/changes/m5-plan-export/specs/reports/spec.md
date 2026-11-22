@@ -6,6 +6,21 @@ Fasst den Plan in Tabellen zusammen, die für Bestellung, Ausführung und Abstim
 
 ## ADDED Requirements
 
+### Requirement: Geräteliste
+Das System SHALL alle Geräte außerhalb von Verteilern (Dosen, Schalter, Taster, Melder, Auslässe, Motoren usw.) mit Bezeichnung, Typ, Gewerk, Geschoss, Raum, Fläche und Status listen, dazu eine Spalte „Anschluss im Verteiler“: Stromkreis mit Schutzgerät und Verteiler, KNX-Aktorkanal, bei Datengeräten der Verteiler am anderen Ende ihrer Leitung; nicht angeschlossene Geräte sind erkennbar. Ein Klick auf eine Zeile wählt das Gerät aus.
+
+#### Scenario: Steckdose im Bad
+- **WHEN** die Steckdose „Bad EG Waschtisch“ dem Stromkreis „F7 Bad EG“ mit LS „F7“ in der UV EG zugeordnet ist
+- **THEN** zeigt die Geräteliste in ihrer Zeile „UV EG · F7 Bad EG (F7)“
+
+#### Scenario: Rollladen am Aktor
+- **WHEN** der Rollladenmotor „Rollladen Bad“ dem Kanal C des Jalousieaktors JA2 in der UV OG zugeordnet ist
+- **THEN** zeigt die Geräteliste „UV OG · JA2.C“ und seinen Stromkreis
+
+#### Scenario: Nicht angeschlossen
+- **WHEN** eine Netzwerkdose keine Leitung zu einem Verteiler hat
+- **THEN** zeigt die Spalte „nicht angeschlossen“, und der Filter „nur nicht angeschlossene“ findet sie
+
 ### Requirement: Stromkreisliste
 Das System SHALL je Verteiler eine Liste aller Stromkreise mit Bezeichnung, Schutzgerät, Leitungstyp, Anzahl Geräte und Räumen zeigen.
 

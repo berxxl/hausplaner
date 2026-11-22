@@ -6,7 +6,7 @@ Der Elektriker und andere Gewerke arbeiten mit ausgedruckten bzw. als PDF versch
 
 ## What Changes
 
-- Listen in der App: Stromkreise, KNX-Kanäle, Leitungen mit Längen, Durchbrüche, Material
+- Listen in der App: Geräte mit ihrem Anschluss im Verteiler (Wunsch des Benutzers bei M4 7.2), Stromkreise, KNX-Kanäle, Leitungen mit Längen, Durchbrüche, Material
 - PDF-Export: Grundrisse je Geschoss, Wandansichten mit Maßketten, Deckenspiegel, Bodenansichten, Verteilerbelegung, Listen
 - Maßstab, Papierformat und Plankopf
 - Filter nach Gewerk und Status, Bestandsplan aus verlegten Elementen
