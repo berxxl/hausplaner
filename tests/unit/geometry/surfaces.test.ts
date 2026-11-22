@@ -62,6 +62,7 @@ function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
     routeSegments: [],
     cables: [],
     boards: [],
+    roomBoundaries: [],
     circuits: [],
     knxLines: [],
     knxAssignments: [],

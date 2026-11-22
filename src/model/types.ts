@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type {
   AnchorSchema,
   BoardFieldSchema,
+  RoomBoundarySchema,
   BoardSchema,
   CircuitSchema,
   EndpointSchema,
@@ -41,6 +42,7 @@ export type Slope = z.infer<typeof SlopeSchema>;
 export type Wall = z.infer<typeof WallSchema> & { storeyId: Id };
 export type Room = z.infer<typeof RoomSchema> & { storeyId: Id };
 export type Opening = z.infer<typeof OpeningSchema> & { storeyId: Id };
+export type RoomBoundary = z.infer<typeof RoomBoundarySchema> & { storeyId: Id };
 
 export type Trade = (typeof TRADES)[number];
 export type Mounting = (typeof MOUNTINGS)[number];
@@ -88,6 +90,8 @@ export interface Project {
   catalog: Catalog;
   storeys: Storey[];
   walls: Wall[];
+  /** Gedachte Raumgrenzen (M4) */
+  roomBoundaries: RoomBoundary[];
   rooms: Room[];
   openings: Opening[];
   devices: Device[];

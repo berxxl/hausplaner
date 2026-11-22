@@ -100,6 +100,9 @@ export const WallSchema = z.strictObject({
   outsideSide: z.enum(["L", "R"]).optional(),
 });
 
+/** Gedachte Raumgrenze (design.md M4 „Gedachte Raumgrenze“): Linie ohne Dicke. */
+export const RoomBoundarySchema = z.strictObject({ id, start: PointSchema, end: PointSchema });
+
 export const SlopeSchema = z.strictObject({
   id,
   baseLine: z.tuple([PointSchema, PointSchema]),
@@ -387,6 +390,7 @@ export const WarningsFileSchema = z.strictObject({
 export const StoreyFileSchema = z.strictObject({
   storey: StoreySchema,
   walls: z.array(WallSchema).optional(),
+  roomBoundaries: z.array(RoomBoundarySchema).optional(),
   rooms: z.array(RoomSchema).optional(),
   openings: z.array(OpeningSchema).optional(),
   devices: z.array(DeviceSchema).optional(),

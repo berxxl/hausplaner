@@ -824,3 +824,15 @@ button {
   border-top: 1px solid #e5e5ea;
   padding: 0.25rem 0;
 }
+.plan-boundary {
+  stroke: #6e6e73;
+  stroke-width: 2;
+  stroke-dasharray: 8 5;
+}
+.plan-boundary--selected {
+  stroke: #0071e3;
+  stroke-width: 3;
+}
+.plan-boundary--preview {
+  stroke: #0071e3;
+}

@@ -92,7 +92,12 @@ import {
 } from "../../store/furniture";
 import { highlightOf, warnedIds, warningsOf } from "../derived";
 import { isDeviceVisible } from "../filter";
-import { dependentDeviceIds } from "../../store/building";
+import {
+  addRoomBoundary,
+  boundaryLines,
+  deleteRoomBoundaries,
+  dependentDeviceIds,
+} from "../../store/building";
 import { boardPlanRect } from "../../geometry/boards";
 import { circuitShortName } from "../../geometry/circuits";
 import { boardCascade, boardsOnWalls, deleteBoards } from "../../store/boards";
@@ -113,6 +118,7 @@ const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "measure", label: "Messen" },
   { tool: "wall", label: "Wand" },
   { tool: "room", label: "Raum" },
+  { tool: "boundary", label: "Raumgrenze" },
   { tool: "opening", label: "Öffnung" },
   { tool: "device", label: "Gerät" },
   { tool: "furniture", label: "Möbel" },
@@ -130,6 +136,8 @@ const HINTS: Record<PlanTool, string> = {
   measure: "Zwei Punkte anklicken.",
   wall: "Anfangspunkt anklicken; jeder weitere Klick setzt eine Wand. Esc beendet.",
   room: "In eine von Wänden umschlossene Fläche klicken.",
+  boundary:
+    "Anfang und Ende der gedachten Raumgrenze anklicken (rastet an Wänden ein). Esc bricht ab.",
   opening: "Auf die Wand klicken oder aufziehen; vorhandene Öffnung ziehen verschiebt sie.",
   slope: "Zwei Punkte der Grundlinie anklicken (Ecken des Raums rasten ein).",
   "redetect-room": "In die Fläche klicken, die der Raum künftig einnehmen soll.",
@@ -208,6 +216,16 @@ export function PlanView({ store, view }: PlanViewProps) {
     () => (activeStoreyId ? wallGeoms(project, activeStoreyId) : []),
     [project, activeStoreyId],
   );
+  // Gedachte Raumgrenzen (design.md M4): Linien für Darstellung und Raumerkennung
+  const boundaries = useMemo(
+    () => project.roomBoundaries.filter((b) => b.storeyId === activeStoreyId),
+    [project.roomBoundaries, activeStoreyId],
+  );
+  const lines = useMemo(
+    () => (activeStoreyId ? boundaryLines(project, activeStoreyId) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boundaries, activeStoreyId],
+  );
   const storeyDevices = useMemo(
     () =>
       project.devices.filter(
@@ -263,6 +281,7 @@ export function PlanView({ store, view }: PlanViewProps) {
   const [camera, setCamera] = useState<Camera | null>(null);
   const [cursor, setCursor] = useState<Vec | null>(null);
   const [wallStart, setWallStart] = useState<Vec | null>(null);
+  const [boundaryStart, setBoundaryStart] = useState<Vec | null>(null);
   /** Laufender Wandzug: vorige und erste Wand, um Ecken auf die Achsschnittpunkte zu legen. */
   const chain = useRef<{ prevId: string; firstId: string; firstClick: Vec } | null>(null);
   const [drawMode, setDrawMode] = useState<DrawMode>("axis");
@@ -305,6 +324,7 @@ export function PlanView({ store, view }: PlanViewProps) {
     setCameraFor(activeStoreyId);
     setCamera(initialCamera(vp, storey, walls));
     setWallStart(null);
+    setBoundaryStart(null);
     setMeasure(null);
     setSlopeP1(null);
     setCalibrationP1(null);
@@ -360,6 +380,7 @@ export function PlanView({ store, view }: PlanViewProps) {
   if (toolFor !== tool) {
     setToolFor(tool);
     setWallStart(null);
+    setBoundaryStart(null);
     setMeasure(null);
     setSlopeP1(null);
     setCalibrationP1(null);
@@ -399,6 +420,10 @@ export function PlanView({ store, view }: PlanViewProps) {
   const deleteSelection = async () => {
     const sel = view.getState().selection;
     if (!sel) return;
+    if (sel.kind === "room-boundary") {
+      store.execute(deleteRoomBoundaries([sel.id]));
+      return;
+    }
     if (sel.kind === "board") {
       const c = boardCascade(project, [sel.id]);
       const message = cascadeMessage(c.devices, c.cables, { circuits: c.circuits });
@@ -448,8 +473,9 @@ export function PlanView({ store, view }: PlanViewProps) {
       if (isTextTarget(e.target) || pending) return;
       if (e.key === "Escape") {
         if (view.getState().cableFrom) view.setCableFrom(null);
-        else if (wallStart || measure || slopeP1 || calibrationP1) {
+        else if (wallStart || boundaryStart || measure || slopeP1 || calibrationP1) {
           setWallStart(null);
+          setBoundaryStart(null);
           setMeasure(null);
           setSlopeP1(null);
           setCalibrationP1(null);
@@ -479,6 +505,10 @@ export function PlanView({ store, view }: PlanViewProps) {
   const radius = snapRadius(cam.zoom);
   const snapForWall = (p: Vec) => snapPoint(p, geoms, radius, wallStart ?? undefined).point;
 
+  const hitBoundary = (p: Vec) =>
+    boundaries.find(
+      (b) => projectOnSegment(p, b.start, b.end).distance <= Math.max(30, 6 / cam.zoom),
+    );
   const hitWall = (p: Vec) => geoms.find((w) => pointInPolygon(p, wallBody(geoms, w)));
   const hitOpening = (p: Vec) =>
     openings.find((o) => {
@@ -616,6 +646,13 @@ export function PlanView({ store, view }: PlanViewProps) {
           capture();
           return;
         }
+        const boundary = hitBoundary(world);
+        if (boundary) {
+          view.select({ kind: "room-boundary", id: boundary.id });
+          drag.current = { kind: "pan", last: { x: e.clientX, y: e.clientY } };
+          capture();
+          return;
+        }
         const opening = hitOpening(world);
         const wall = opening ? undefined : hitWall(world);
         const room = opening || wall ? undefined : hitRoom(world);
@@ -689,6 +726,18 @@ export function PlanView({ store, view }: PlanViewProps) {
         view.select({ kind: "furniture", id });
         return;
       }
+      case "boundary": {
+        if (!storey) return;
+        const p = snapPoint(world, geoms, radius, boundaryStart ?? undefined).point;
+        const q = { x: roundMm(p.x), y: roundMm(p.y) };
+        if (!boundaryStart) return setBoundaryStart(q);
+        if (q.x === boundaryStart.x && q.y === boundaryStart.y) return;
+        const id = newId(new Set(allIds(project)));
+        store.execute(addRoomBoundary({ id, start: boundaryStart, end: q, storeyId: storey.id }));
+        setBoundaryStart(null);
+        view.select({ kind: "room-boundary", id });
+        return;
+      }
       case "wall": {
         if (!storey) return;
         // Startpunkt des Zugs hat Vorrang: im Kantenmodus läge sonst das versetzte Achsende der
@@ -756,7 +805,7 @@ export function PlanView({ store, view }: PlanViewProps) {
           view.select({ kind: "room", id: existing.id });
           return;
         }
-        const d = detectRoom(geoms, world);
+        const d = detectRoom(geoms, world, lines);
         if (d.status === "closed")
           setPending({
             kind: "room",
@@ -777,7 +826,7 @@ export function PlanView({ store, view }: PlanViewProps) {
       case "redetect-room": {
         const room = rooms.find((r) => r.id === toolRoomId);
         if (!room) return;
-        const d = detectRoom(geoms, world);
+        const d = detectRoom(geoms, world, lines);
         if (d.status === "closed") {
           store.execute(
             redetectRoom(room.id, { x: roundMm(world.x), y: roundMm(world.y) }, d.polygon),
@@ -844,6 +893,8 @@ export function PlanView({ store, view }: PlanViewProps) {
     const d = drag.current;
     if (!d) {
       if (tool === "wall") setCursor(snapForWall(world));
+      else if (tool === "boundary")
+        setCursor(snapPoint(world, geoms, radius, boundaryStart ?? undefined).point);
       else if (tool === "measure" || tool === "slope")
         setCursor(tool === "slope" ? snapSlopePoint(world) : world);
       return;
@@ -1132,6 +1183,31 @@ export function PlanView({ store, view }: PlanViewProps) {
                   )
                 );
               })()}
+            <g data-testid="plan-boundaries">
+              {boundaries.map((b) => (
+                <line
+                  key={b.id}
+                  data-boundary={b.id}
+                  className={`plan-boundary${selection?.kind === "room-boundary" && selection.id === b.id ? " plan-boundary--selected" : ""}`}
+                  x1={b.start.x}
+                  y1={b.start.y}
+                  x2={b.end.x}
+                  y2={b.end.y}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {tool === "boundary" && boundaryStart && cursor && (
+                <line
+                  className="plan-boundary plan-boundary--preview"
+                  data-testid="boundary-preview"
+                  x1={boundaryStart.x}
+                  y1={boundaryStart.y}
+                  x2={cursor.x}
+                  y2={cursor.y}
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </g>
             <g data-testid="plan-boards">
               {storeyBoards.map(({ board, rect }) => (
                 <polygon

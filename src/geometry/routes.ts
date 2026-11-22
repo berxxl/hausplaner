@@ -13,7 +13,8 @@ import {
   type RoomView,
   type WallSide,
 } from "./surfaces";
-import { add, dot, scale, sub, type Vec } from "./vec";
+import { add, dot, normalize, projectOnSegment, scale, sub, type Vec } from "./vec";
+import { BOUNDARY_HALF_MM } from "./rooms";
 import { topAt } from "./zones";
 import { surfaceKind } from "../model/devices";
 import type { Anchor, Cable, Project, RouteNode, RouteSegment } from "../model/types";
@@ -188,6 +189,42 @@ function horizontalEdgeAnchors(project: Project, anchor: Anchor): Anchor[] {
       // Decke bzw. Schräge: nur, wenn diese Fläche dort die Oberkante bildet
       const top = horizontalAnchor(project, view, u, "top");
       if (top?.surface === anchor.surface) result.push(roundAnchor(view.ref, u, topAt(view, u)));
+    }
+  }
+  return [...result, ...boundaryAnchors(project, anchor, p)];
+}
+
+/** Putzstärke eines Raums (Raumwert oder Geschossstandard). */
+function roomPlaster(project: Project, roomId: string): number | null {
+  const room = project.rooms.find((r) => r.id === roomId);
+  const storey = room && project.storeys.find((s) => s.id === room.storeyId);
+  return room && storey ? (room.plasterMm ?? storey.defaults.plasterMm) : null;
+}
+
+/**
+ * Übergang über eine gedachte Raumgrenze (design.md M4): Ein Anker auf Decke oder Boden am fertigen
+ * Rand entlang der Grenze hat einen Anker auf Decke bzw. Boden des Raums auf der anderen Seite.
+ */
+function boundaryAnchors(project: Project, anchor: Anchor, p: Vec): Anchor[] {
+  const [kind, roomId] = anchor.surface.split(":");
+  if (kind !== "ceiling" && kind !== "floor") return [];
+  const room = project.rooms.find((r) => r.id === roomId);
+  const own = roomPlaster(project, roomId!);
+  if (!room || own === null) return [];
+  const result: Anchor[] = [];
+  for (const b of project.roomBoundaries) {
+    if (b.storeyId !== room.storeyId) continue;
+    const proj = projectOnSegment(p, b.start, b.end);
+    if (proj.t < 0 || proj.t > 1) continue;
+    if (Math.abs(proj.distance - (BOUNDARY_HALF_MM + own)) > EDGE_TOLERANCE_MM) continue;
+    const away = normalize(sub(proj.point, p));
+    for (const other of project.rooms) {
+      if (other.id === room.id || other.storeyId !== room.storeyId) continue;
+      const plaster = roomPlaster(project, other.id) ?? 0;
+      const probe = add(proj.point, scale(away, BOUNDARY_HALF_MM + plaster + 5));
+      if (other.polygon.length < 3 || !pointInPolygon(probe, other.polygon)) continue;
+      const q = add(proj.point, scale(away, BOUNDARY_HALF_MM + plaster));
+      result.push(roundAnchor(`${kind}:${other.id}`, kind === "ceiling" ? -q.x : q.x, q.y));
     }
   }
   return result;

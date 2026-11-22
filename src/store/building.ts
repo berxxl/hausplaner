@@ -6,7 +6,7 @@ import type { Draft } from "immer";
 import { roomStatuses } from "../geometry/rooms";
 import type { WallEditResult } from "../geometry/wall-edit";
 import type { WallGeom } from "../geometry/walls";
-import type { Opening, Project, Room, Slope, Wall } from "../model/types";
+import type { Opening, Project, Room, RoomBoundary, Slope, Wall } from "../model/types";
 import type { Command } from "./history";
 
 const plainPt = (p: { x: number; y: number }) => ({ x: p.x, y: p.y });
@@ -45,6 +45,13 @@ export function wallGeoms(project: Project | Draft<Project>, storeyId: string): 
     }));
 }
 
+/** Raumgrenzen eines Geschosses als Linien für die Raumerkennung (design.md M4). */
+export function boundaryLines(project: Project | Draft<Project>, storeyId: string) {
+  return project.roomBoundaries
+    .filter((b) => b.storeyId === storeyId)
+    .map((b) => ({ start: plainPt(b.start), end: plainPt(b.end) }));
+}
+
 const samePolygon = (
   a: readonly { x: number; y: number }[],
   b: readonly { x: number; y: number }[],
@@ -57,6 +64,7 @@ export function recomputeRooms(draft: Draft<Project>, storeyId: string): void {
   const statuses = roomStatuses(
     wallGeoms(draft, storeyId),
     rooms.map((r) => ({ id: r.id, seed: plainPt(r.seed), polygon: [] })),
+    boundaryLines(draft, storeyId),
   );
   for (const room of rooms) {
     const s = statuses.get(room.id);
@@ -285,6 +293,31 @@ export function deleteSlope(roomId: string, slopeId: string): Command {
       draft.devices = draft.devices.filter(
         (d) => !(d.placement.kind === "surface" && d.placement.surface === ref),
       );
+    },
+  };
+}
+
+/** „Raumgrenze zeichnen“ (design.md M4 „Gedachte Raumgrenze“); Raumkonturen werden neu berechnet. */
+export function addRoomBoundary(boundary: RoomBoundary): Command {
+  return {
+    label: "Raumgrenze zeichnen",
+    run(draft) {
+      draft.roomBoundaries.push(structuredClone(boundary));
+      recomputeRooms(draft, boundary.storeyId);
+    },
+  };
+}
+
+export function deleteRoomBoundaries(ids: readonly string[]): Command {
+  const set = new Set(ids);
+  return {
+    label: "Raumgrenze löschen",
+    run(draft) {
+      const storeys = new Set(
+        draft.roomBoundaries.filter((b) => set.has(b.id)).map((b) => b.storeyId),
+      );
+      draft.roomBoundaries = draft.roomBoundaries.filter((b) => !set.has(b.id));
+      for (const s of storeys) recomputeRooms(draft, s);
     },
   };
 }

@@ -3,7 +3,7 @@ import { isSlopeValid } from "../geometry/ceiling";
 import { roomStatuses, type RoomStatus } from "../geometry/rooms";
 import { distance } from "../geometry/vec";
 import type { Opening, Project } from "../model/types";
-import { wallGeoms } from "../store/building";
+import { boundaryLines, wallGeoms } from "../store/building";
 import type { ProjectWarning } from "./index";
 
 const statusCache = new WeakMap<
@@ -21,7 +21,12 @@ export function allRoomStatuses(project: Project): Map<string, RoomStatus> {
   for (const storey of project.storeys) {
     const rooms = project.rooms.filter((r) => r.storeyId === storey.id);
     if (rooms.length === 0) continue;
-    for (const [id, s] of roomStatuses(wallGeoms(project, storey.id), rooms)) result.set(id, s);
+    for (const [id, s] of roomStatuses(
+      wallGeoms(project, storey.id),
+      rooms,
+      boundaryLines(project, storey.id),
+    ))
+      result.set(id, s);
   }
   inner.set(project.rooms, result);
   return result;

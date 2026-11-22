@@ -195,12 +195,13 @@ export function snapPoint(
   radiusMm: number,
   from?: Vec,
 ): { point: Vec; kind: SnapKind; orthogonal: boolean } {
+  // Wandenden fangen bis halbe Dicke + Fangradius (design.md M4, Rückmeldung R.2)
   let best: Vec | null = null;
-  let bestD = radiusMm;
+  let bestD = Infinity;
   for (const w of walls) {
     for (const q of [w.start, w.end]) {
       const d = distance(p, q);
-      if (d <= bestD) {
+      if (d <= Math.max(radiusMm, w.thicknessMm / 2 + radiusMm) && d < bestD) {
         best = q;
         bestD = d;
       }
@@ -220,16 +221,18 @@ export function snapPoint(
     }
   }
 
+  // Achsen fangen, auch aus dem Wandkörper heraus (Abstand ≤ halbe Dicke + Fangradius)
   let axisHit: Vec | null = null;
-  let axisD = radiusMm;
+  let axisD = Infinity;
   for (const w of walls) {
     if (length(sub(w.end, w.start)) === 0) continue;
     const proj = projectOnSegment(q, w.start, w.end);
-    if (proj.t < 0 || proj.t > 1 || proj.distance > axisD) continue;
+    if (proj.t < 0 || proj.t > 1) continue;
+    if (proj.distance > w.thicknessMm / 2 + radiusMm || proj.distance >= axisD) continue;
     let hit = proj.point;
     if (orthoDir && from) {
       const x = intersectLines(from, orthoDir, w.start, sub(w.end, w.start));
-      if (x && distance(x, q) <= radiusMm) hit = x;
+      if (x && distance(x, q) <= w.thicknessMm / 2 + radiusMm) hit = x;
     }
     axisHit = hit;
     axisD = proj.distance;

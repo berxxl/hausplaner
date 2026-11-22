@@ -93,6 +93,7 @@ export function deleteStorey(id: string): Command {
     run(draft) {
       draft.storeys = draft.storeys.filter((s) => s.id !== id);
       draft.walls = draft.walls.filter((w) => w.storeyId !== id);
+      draft.roomBoundaries = draft.roomBoundaries.filter((b) => b.storeyId !== id);
       draft.rooms = draft.rooms.filter((r) => r.storeyId !== id);
       draft.openings = draft.openings.filter((o) => o.storeyId !== id);
       draft.devices = draft.devices.filter((d) => d.storeyId !== id);

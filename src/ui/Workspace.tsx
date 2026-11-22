@@ -141,5 +141,7 @@ function selectionExists(project: Project, sel: Selection): boolean {
       return project.boards.some((x) => x.id === sel.id);
     case "circuit":
       return project.circuits.some((x) => x.id === sel.id);
+    case "room-boundary":
+      return project.roomBoundaries.some((x) => x.id === sel.id);
   }
 }

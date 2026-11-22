@@ -171,6 +171,17 @@ Neue reine Module: `geometry/boards.ts` (Weltlage, Rechteck im Grundriss, Gerät
 - Unit-Tests: Gerätebreite, Belegung und Platzprüfung (Spec „Aktor einsetzen“, „Kein Platz“), Reserve (Spec „Zu wenig Reserve“), vorgemerkt (Spec „Aktorbedarf vor Belegung“), Vorschlag (Spec „Vorschlag mit Reserve“, Gleichstände, kein Typ), Platzsuche beim Übernehmen, automatische Zuordnung (Sortierung), Bedarf (Spec „Bedarf UV OG“), speisender Verteiler, Leitungen eines Stromkreises, alle neuen Regeln, Löschkaskaden, Normalisierung, Länge mit Verteilerzuschlag (Spec „Längenberechnung“).
 - Playwright: Verteiler im Flur OG setzen (erscheint in Wandansicht, Grundriss, 3D, Baum), Belegung öffnen und Aktor einsetzen, Trasse zum Verteiler und Leitung mit Länge, Stromkreis anlegen, fünf Geräte zuweisen und hervorheben, Aktorvorschlag übernehmen, Kanäle automatisch zuordnen, speichern und neu laden.
 
+### Gedachte Raumgrenze (Folge-Task R.1, Befund OG banatstrasse10, m1 9.4.3)
+- **Modell:** `roomBoundaries` je Geschossdatei, Felder `id`, `start`, `end` (Punkte wie Wandachsen, ganze mm), Liste nach `id`, in der Geschossdatei nach `walls`. `storeyId` wird beim Laden gesetzt. Die Liste kommt in Schemaversion 4 hinzu, weil M4 noch nicht verteilt ist; eine M4-App ohne Raumgrenzen gibt es nicht.
+- **Raumerkennung:** Eine Raumgrenze zählt als Körper von 2 mm Breite (±1 mm um die Linie), an den Enden 1 mm verlängert, und wird mit den Wandkörpern vereinigt, bevor die Raumerkennung schließt (+10/−10 mm). Sie erzeugt keine Gehrungen, keine offenen Wandenden und keine Wandseiten. Anlegen, Ändern und Löschen einer Raumgrenze berechnen die Raumkonturen des Geschosses neu (`recomputeRooms`).
+- **Fertige Fläche:** Die Konturen werden auch an der Raumgrenze um die Putzstärke nach innen versetzt (vereinfacht, wie bei Wänden). Zwischen den fertigen Flächen zweier Räume bleibt eine Fuge von 2 · Putz + 2 mm; sie fehlt in Raumflächen und Trassenlängen (bei 15 mm Putz 32 mm).
+- **Werkzeug „Raumgrenze“** im Grundriss: zwei Klicks (Anfang, Ende) mit dem Fang des Wandwerkzeugs, Esc bricht ab; Befehl „Raumgrenze zeichnen“. Darstellung gestrichelt; Auswahlart `room-boundary` (Klick bis 6 px neben der Linie), Eigenschaften mit Länge und „Raumgrenze löschen“, Entf löscht (Befehl „Raumgrenze löschen“). Geschoss löschen löscht seine Raumgrenzen.
+- **Trassen:** Ein Anker auf Decke oder Boden, der auf dem fertigen Rand entlang einer Raumgrenze liegt (Toleranz wie bei Wandkanten), hat einen weiteren Anker auf Decke bzw. Boden des Raums auf der anderen Seite: Fußpunkt auf der Linie, um 1 mm + Putz des Nachbarraums zur anderen Seite versetzt. Schrägen sind ausgenommen. `normalizeAfterCommand` leitet die Anker wie bei anderen Übergängen nach.
+
+### Rückmeldungen während M4
+- **Wandende rastet auf die Achse (R.2):** Liegt ein Punkt beim Wandzeichnen im Körper einer vorhandenen Wand (Abstand zur Achse ≤ halbe Dicke + Fangradius), legt der Fang ihn auf die Achse; Wandenden haben weiter Vorrang, und zwar bis halbe Dicke + Fangradius. Grund: Im OG von banatstrasse10 endeten alle Wände an Oberflächen und waren nicht verbunden.
+- **Keine Wandansichten ≤ 0 mm (R.3):** Raumansichten, deren fertige Breite nicht größer als 1 mm ist, entstehen nicht (bisher z. B. „Wand Nord 1 −28“ an Kerben nicht verbundener Wände).
+
 ## Risks / Trade-offs
 
 - [Viele neue Warnungen in bestehenden Projekten: jedes Stromgerät ohne Stromkreis, jeder KNX-Verbraucher ohne Kanal] → die Regeln greifen erst mit der Planung (erster Stromkreis bzw. Verteiler des Verbrauchers, Entscheidung 7) und sind übergehbar.
@@ -190,6 +201,7 @@ Die Specs ließen diese Punkte offen. Claude hat sie ohne Rückfrage festgelegt,
 5. Shift-Klick im Grundriss wählt Geräte über Flächen hinweg aus, dazu kommt „Gleiche im Geschoss auswählen“.
 6. KNX-Linien mit optionalem Startverteiler. Die Teilnehmer werden gespeichert (`knxLineId`) und lassen sich über Busleitungen übernehmen.
 7. „Kein Stromkreis“ erst, wenn das Projekt einen Stromkreis hat; „Kein KNX-Kanal“ nur für Verbraucher mit Verteiler. Sonst bekäme ein Projekt ohne Verteilerplanung für jede Dose eine Warnung.
+8. Gedachte Raumgrenze als Linie in der Geschossdatei (Schemaversion 4), Putz wird an ihr vereinfacht wie an Wänden abgezogen (vom Benutzer am 2026-11-22 beauftragt; Details in „Gedachte Raumgrenze“).
 
 ## Open Questions
 

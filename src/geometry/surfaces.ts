@@ -397,7 +397,8 @@ export function deriveRoomViews(project: Project): Map<string, RoomView[]> {
     for (const room of project.rooms.filter((r) => r.storeyId === storey.id)) {
       const h = roomHeights(room, storey);
       const c = room.polygon.length >= 3 ? centroid(room.polygon) : room.seed;
-      const own = secs.filter((s) => s.roomId === room.id);
+      // keine Ansichten mit fertiger Breite ≤ 1 mm (design.md M4, Rückmeldung R.3)
+      const own = secs.filter((s) => s.roomId === room.id && s.uTo - s.uFrom - 2 * h.plasterMm > 1);
       // stabiler Schlüssel: Wandseite, Raum und laufende Nummer entlang u
       const occurrence = (s: Section) =>
         own.filter((o) => o.ref === s.ref && o.uFrom < s.uFrom).length;

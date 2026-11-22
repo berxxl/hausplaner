@@ -10,6 +10,8 @@ import { CableProperties } from "./CableProperties";
 import { RouteNodeProperties, RouteSegmentProperties } from "./RouteProperties";
 import { BoardProperties } from "./BoardProperties";
 import { CircuitProperties } from "./CircuitProperties";
+import { deleteRoomBoundaries } from "../store/building";
+import { formatMm } from "../model/units";
 
 const KIND_LABELS = {
   storey: "Geschoss",
@@ -24,6 +26,7 @@ const KIND_LABELS = {
   cable: "Leitung",
   board: "Verteiler",
   circuit: "Stromkreis",
+  "room-boundary": "Raumgrenze",
 } as const;
 
 /** Eigenschaften der Auswahl. */
@@ -91,6 +94,24 @@ export function Properties({
     if (c)
       body = (
         <CircuitProperties key={c.id} circuit={c} project={project} store={store} view={view} />
+      );
+  } else if (selection?.kind === "room-boundary") {
+    const b = project.roomBoundaries.find((x) => x.id === selection.id);
+    if (b)
+      body = (
+        <>
+          <p className="field-info" aria-label="Länge">
+            Länge: {formatMm(Math.round(Math.hypot(b.end.x - b.start.x, b.end.y - b.start.y)))} mm
+          </p>
+          <p className="hint">Gedachte Raumgrenze: zählt nur für die Raumerkennung.</p>
+          <button
+            type="button"
+            className="danger"
+            onClick={() => store.execute(deleteRoomBoundaries([b.id]))}
+          >
+            Raumgrenze löschen
+          </button>
+        </>
       );
   } else if (selection?.kind === "opening") {
     const opening = project.openings.find((o) => o.id === selection.id);

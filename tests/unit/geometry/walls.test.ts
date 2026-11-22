@@ -122,20 +122,34 @@ describe("Zeichenmodi (6.2)", () => {
 describe("Fang (6.2)", () => {
   const walls = [w("a", 0, 0, 4000, 0)];
 
-  test("Wandende innerhalb 20 mm hat Vorrang", () => {
+  test("Wandende bis halbe Dicke + Fangradius hat Vorrang (R.2)", () => {
     expect(snapPoint({ x: 4012, y: 10 }, walls, 20)).toMatchObject({
       point: { x: 4000, y: 0 },
       kind: "endpoint",
     });
-    expect(snapPoint({ x: 4030, y: 0 }, walls, 20).kind).not.toBe("endpoint");
+    // 240 mm dick: bis 120 + 20 mm
+    expect(snapPoint({ x: 4130, y: 0 }, walls, 20).kind).toBe("endpoint");
+    expect(snapPoint({ x: 4150, y: 0 }, walls, 20).kind).not.toBe("endpoint");
   });
 
-  test("Achse innerhalb 20 mm", () => {
+  test("Achse aus dem Wandkörper heraus bis halbe Dicke + Fangradius (R.2)", () => {
     expect(snapPoint({ x: 1500, y: 19 }, walls, 20)).toMatchObject({
       point: { x: 1500, y: 0 },
       kind: "axis",
     });
-    expect(snapPoint({ x: 1500, y: 21 }, walls, 20).kind).toBe("none");
+    expect(snapPoint({ x: 1500, y: 139 }, walls, 20)).toMatchObject({
+      point: { x: 1500, y: 0 },
+      kind: "axis",
+    });
+    expect(snapPoint({ x: 1500, y: 141 }, walls, 20).kind).toBe("none");
+  });
+
+  test("Wand bis an die Oberfläche gezeichnet endet auf der Achse (Spec-Scenario „Wand bis an die Oberfläche gezeichnet“)", () => {
+    // Innenseite der 240-mm-Wand bei y = 120; Zug von (2000, 3000) nach unten bis an die Oberfläche
+    const s = snapPoint({ x: 2000, y: 120 }, walls, 20, { x: 2000, y: 3000 });
+    expect(s).toMatchObject({ kind: "axis", orthogonal: true });
+    expect(s.point.x).toBeCloseTo(2000, 9);
+    expect(s.point.y).toBeCloseTo(0, 9);
   });
 
   test("orthogonal bis 5°: 4,9° rastet, 5,1° nicht", () => {

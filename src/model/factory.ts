@@ -39,6 +39,7 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
     catalog: defaultCatalog(),
     storeys: [storey],
     walls: [],
+    roomBoundaries: [],
     rooms: [],
     openings: [],
     devices: [],
@@ -101,6 +102,7 @@ export function allIds(project: Project): string[] {
   return [
     ...project.storeys.map((s) => s.id),
     ...project.walls.map((w) => w.id),
+    ...project.roomBoundaries.map((b) => b.id),
     ...project.rooms.flatMap((r) => [r.id, ...(r.slopes ?? []).map((s) => s.id)]),
     ...project.openings.map((o) => o.id),
     ...project.devices.map((d) => d.id),

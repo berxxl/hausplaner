@@ -13,6 +13,7 @@ export type TypeName =
   | "calibration"
   | "point"
   | "wall"
+  | "roomBoundary"
   | "room"
   | "slope"
   | "opening"
@@ -102,6 +103,7 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
     fields: [
       f("storey", obj("storey")),
       f("walls", byId("wall"), true),
+      f("roomBoundaries", byId("roomBoundary"), true),
       f("rooms", byId("room"), true),
       f("openings", byId("opening"), true),
       f("devices", byId("device"), true),
@@ -149,6 +151,7 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("outsideSide", scalar, true),
     ],
   },
+  roomBoundary: { fields: [f("id"), f("start", obj("point")), f("end", obj("point"))] },
   room: {
     fields: [
       f("id"),

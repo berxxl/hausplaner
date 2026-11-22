@@ -153,6 +153,7 @@ function schemaErrors(
 function storeyFileIds(file: StoreyFile): { id: string; path: Segment[] }[] {
   const ids: { id: string; path: Segment[] }[] = [{ id: file.storey.id, path: ["storey", "id"] }];
   file.walls?.forEach((w, i) => ids.push({ id: w.id, path: ["walls", i, "id"] }));
+  file.roomBoundaries?.forEach((b, i) => ids.push({ id: b.id, path: ["roomBoundaries", i, "id"] }));
   file.rooms?.forEach((r, i) => {
     ids.push({ id: r.id, path: ["rooms", i, "id"] });
     r.slopes?.forEach((s, j) => ids.push({ id: s.id, path: ["rooms", i, "slopes", j, "id"] }));

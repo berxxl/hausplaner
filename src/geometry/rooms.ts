@@ -5,7 +5,28 @@
 import { difference, fromPath, offset, toPath, union, type Region } from "./clipper";
 import { area, canonicalPolygon, distanceToBoundary, pointInPolygon } from "./polygon";
 import { endPoint, isConnected, wallBody, type EndRef, type WallGeom } from "./walls";
-import type { Vec } from "./vec";
+import { add, normalize, perpLeft, scale, sub, type Vec } from "./vec";
+
+/** Gedachte Raumgrenze als Linie (design.md M4 „Gedachte Raumgrenze“). */
+export interface BoundaryLine {
+  start: Vec;
+  end: Vec;
+}
+
+/** Halbe Breite des Körpers einer Raumgrenze und Verlängerung an den Enden. */
+export const BOUNDARY_HALF_MM = 1;
+
+const NO_BOUNDARIES: readonly BoundaryLine[] = [];
+
+/** Körper einer Raumgrenze: Rechteck ±1 mm um die Linie, an den Enden 1 mm länger. */
+export function boundaryBody(b: BoundaryLine): Vec[] {
+  const d = normalize(sub(b.end, b.start));
+  if (d.x === 0 && d.y === 0) return [];
+  const n = scale(perpLeft(d), BOUNDARY_HALF_MM);
+  const a = sub(b.start, scale(d, BOUNDARY_HALF_MM));
+  const e = add(b.end, scale(d, BOUNDARY_HALF_MM));
+  return [add(a, n), add(e, n), sub(e, n), sub(a, n)];
+}
 
 /** Halbe Lückenweite, die das morphologische Schließen überbrückt. */
 export const CLOSE_MM = 10;
@@ -25,12 +46,20 @@ interface Prepared {
   hull: { min: Vec; max: Vec };
 }
 
-const cache = new WeakMap<readonly WallGeom[], Prepared>();
+const cache = new WeakMap<readonly WallGeom[], WeakMap<readonly BoundaryLine[], Prepared>>();
 
-function prepare(walls: readonly WallGeom[]): Prepared {
-  const hit = cache.get(walls);
+function prepare(walls: readonly WallGeom[], boundaries: readonly BoundaryLine[]): Prepared {
+  let inner = cache.get(walls);
+  if (!inner) {
+    inner = new WeakMap();
+    cache.set(walls, inner);
+  }
+  const hit = inner.get(boundaries);
   if (hit) return hit;
-  const bodies = walls.map((w) => wallBody(walls, w));
+  const bodies = [
+    ...walls.map((w) => wallBody(walls, w)),
+    ...boundaries.map(boundaryBody).filter((b) => b.length > 0),
+  ];
   const closed = offset(offset(union(bodies), CLOSE_MM), -CLOSE_MM);
   const pts = bodies.flat();
   const min = {
@@ -48,7 +77,7 @@ function prepare(walls: readonly WallGeom[]): Prepared {
     solid: closed.map(fromPath),
     hull: { min, max },
   };
-  cache.set(walls, prepared);
+  inner.set(boundaries, prepared);
   return prepared;
 }
 
@@ -69,10 +98,17 @@ function touchesHull(region: Region, hull: Prepared["hull"]): boolean {
   );
 }
 
-/** Erkennt den Raum um einen Saatpunkt. `walls` sollte als stabile Referenz übergeben werden (Cache). */
-export function detectRoom(walls: readonly WallGeom[], seed: Vec): Detection {
+/**
+ * Erkennt den Raum um einen Saatpunkt. `walls` und `boundaries` sollten als stabile Referenzen
+ * übergeben werden (Cache). Raumgrenzen zählen nur hier (design.md M4 „Gedachte Raumgrenze“).
+ */
+export function detectRoom(
+  walls: readonly WallGeom[],
+  seed: Vec,
+  boundaries: readonly BoundaryLine[] = NO_BOUNDARIES,
+): Detection {
   if (walls.length === 0) return { status: "no-walls" };
-  const prep = prepare(walls);
+  const prep = prepare(walls, boundaries);
   const region = prep.regions.find((r) => regionContains(r, seed));
   if (!region) return { status: "in-wall" };
   if (touchesHull(region, prep.hull))
@@ -116,10 +152,11 @@ export type RoomStatus =
 export function roomStatuses(
   walls: readonly WallGeom[],
   rooms: readonly RoomLike[],
+  boundaries: readonly BoundaryLine[] = NO_BOUNDARIES,
 ): Map<string, RoomStatus> {
   const result = new Map<string, RoomStatus>();
   for (const room of rooms) {
-    const d = detectRoom(walls, room.seed);
+    const d = detectRoom(walls, room.seed, boundaries);
     if (d.status === "open") result.set(room.id, { status: "open", openEnds: d.openEnds });
     else if (d.status === "in-wall" || d.status === "no-walls")
       result.set(

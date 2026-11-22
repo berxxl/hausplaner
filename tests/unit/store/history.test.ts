@@ -23,6 +23,7 @@ function emptyProject(): Project {
     routeSegments: [],
     cables: [],
     boards: [],
+    roomBoundaries: [],
     circuits: [],
     knxLines: [],
     knxAssignments: [],

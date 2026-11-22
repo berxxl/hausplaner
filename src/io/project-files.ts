@@ -36,6 +36,7 @@ export function projectToFiles(project: Project): Record<string, string> {
     const storeyFile: StoreyFile = {
       storey,
       walls: own(project.walls),
+      roomBoundaries: own(project.roomBoundaries),
       rooms: own(project.rooms),
       openings: own(project.openings),
       devices: own(project.devices).filter((d) => !inBoard(d)),
@@ -115,6 +116,7 @@ export function filesToProject(
     catalog: catalogFromFile(catalogFile),
     storeys: [],
     walls: [],
+    roomBoundaries: [],
     rooms: [],
     openings: [],
     devices: [],
@@ -132,6 +134,7 @@ export function filesToProject(
     const storeyId = file.storey.id;
     project.storeys.push(file.storey);
     for (const w of file.walls ?? []) project.walls.push({ ...w, storeyId });
+    for (const b of file.roomBoundaries ?? []) project.roomBoundaries.push({ ...b, storeyId });
     for (const r of file.rooms ?? []) project.rooms.push({ ...r, storeyId });
     for (const o of file.openings ?? []) project.openings.push({ ...o, storeyId });
     for (const d of file.devices ?? []) project.devices.push({ ...d, storeyId });

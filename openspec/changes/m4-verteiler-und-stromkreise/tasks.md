@@ -52,6 +52,13 @@
 - [x] 7.1 Playwright-Ablauf: M3-Projekt öffnen (Migration), UV setzen, Belegung öffnen und Aktor einsetzen, Trasse zur UV, Leitung mit Verteilerzuschlag, Stromkreis anlegen und Geräte zuweisen, hervorheben, Aktorvorschlag übernehmen, Kanäle automatisch zuordnen, speichern, neu laden; serialisiertes Projekt vor und nach dem Neuladen identisch
 - [ ] 7.2 Manuell: banatstrasse10 migrieren, UV EG und Zählerschrank setzen, einen Stromkreis mit Geräten anlegen, Aktorvorschlag prüfen; Befunde als Folge-Tasks
 
+### Rückmeldungen des Benutzers während m4
+
+- [x] R.1 Gedachte Raumgrenze nach design.md „Gedachte Raumgrenze“: Schema, Ablage, Golden File; Raumerkennung mit Grenzen; Befehle zeichnen/löschen mit Neuberechnung; Werkzeug, Darstellung, Auswahl, Eigenschaften im Grundriss; Trassenübergang Decke/Boden über die Grenze; Unit-Tests (Spec-Scenarios „Flur abgrenzen“, „Trasse über die Raumgrenze“, „Raumgrenze löschen“), Komponententest Werkzeug
+- [x] R.2 Wandende im Wandkörper rastet auf die Achse; Unit-Test (Spec-Scenario „Wand bis an die Oberfläche gezeichnet“)
+- [x] R.3 Keine Raumansichten mit fertiger Breite ≤ 1 mm; Unit-Test
+- [ ] R.4 banatstrasse10 OG: Wandenden auf die Achsen legen, `aoytki8w` (Flurabgrenzung mit gleich großer Öffnung) durch eine Raumgrenze ersetzen, Räume neu erkennen; Diff dem Benutzer zeigen
+
 ## Workflow follow-up
 
 - Vor der Umsetzung: Review von design.md, Specs und Tasks (von Hand nach dem Schema der m1–m3-Reviews, da `/openspec-review` nicht installiert ist)

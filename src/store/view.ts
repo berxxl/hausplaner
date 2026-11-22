@@ -17,7 +17,8 @@ export type SelectableKind =
   | "route-segment"
   | "cable"
   | "board"
-  | "circuit";
+  | "circuit"
+  | "room-boundary";
 
 export interface Selection {
   kind: SelectableKind;
@@ -48,6 +49,7 @@ export type PlanTool =
   | "measure"
   | "wall"
   | "room"
+  | "boundary"
   | "opening"
   | "slope"
   | "redetect-room"
