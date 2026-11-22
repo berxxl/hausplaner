@@ -169,3 +169,107 @@ export function SlopeDialog({
     </Dialog>
   );
 }
+
+export type PenetrationMethod = "drill" | "core-drill" | "slot" | "conduit";
+
+const PENETRATION_LABELS: Record<PenetrationMethod, string> = {
+  drill: "Bohrung",
+  "core-drill": "Kernbohrung",
+  slot: "Schlitz",
+  conduit: "Leerrohr",
+};
+
+const PENETRATION_DEFAULTS: Record<PenetrationMethod, number> = {
+  drill: 40,
+  "core-drill": 65,
+  slot: 50,
+  conduit: 25,
+};
+
+/** Durchbruch anlegen: Art und Durchmesser (design.md M3 „Durchbrüche“). */
+export function PenetrationDialog({
+  onSubmit,
+  onCancel,
+}: {
+  onSubmit(values: { method: PenetrationMethod; diameterMm: number }): void;
+  onCancel(): void;
+}) {
+  const [method, setMethod] = useState<PenetrationMethod>("drill");
+  const [diameterMm, setDiameter] = useState(PENETRATION_DEFAULTS.drill);
+  const [edited, setEdited] = useState(false);
+  return (
+    <Dialog
+      title="Durchbruch anlegen"
+      canSubmit={diameterMm > 0}
+      onSubmit={() => onSubmit({ method, diameterMm })}
+      onCancel={onCancel}
+    >
+      <div className="field">
+        <label htmlFor="penetration-method">Art</label>
+        <select
+          id="penetration-method"
+          value={method}
+          onChange={(e) => {
+            const m = e.target.value as PenetrationMethod;
+            setMethod(m);
+            if (!edited) setDiameter(PENETRATION_DEFAULTS[m]);
+          }}
+        >
+          {(Object.keys(PENETRATION_LABELS) as PenetrationMethod[]).map((m) => (
+            <option key={m} value={m}>
+              {PENETRATION_LABELS[m]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <MmField
+        label="Durchmesser"
+        min={1}
+        value={diameterMm}
+        onCommit={(d) => {
+          setDiameter(d);
+          setEdited(true);
+        }}
+      />
+    </Dialog>
+  );
+}
+
+/** Leitung anlegen: Typ (nur passende) und Bezeichnung (design.md M3 „Leitungen“). */
+export function CableDialog({
+  types,
+  defaultLabel,
+  onSubmit,
+  onCancel,
+}: {
+  types: { id: string; name: string }[];
+  defaultLabel: string;
+  onSubmit(values: { lineTypeId: string; label: string }): void;
+  onCancel(): void;
+}) {
+  const [lineTypeId, setType] = useState(types[0]?.id ?? "");
+  const [label, setLabel] = useState(defaultLabel);
+  return (
+    <Dialog
+      title="Leitung anlegen"
+      canSubmit={!!lineTypeId && label.trim() !== ""}
+      onSubmit={() => onSubmit({ lineTypeId, label: label.trim() })}
+      onCancel={onCancel}
+    >
+      <div className="field">
+        <label htmlFor="cable-type">Leitungstyp</label>
+        <select id="cable-type" value={lineTypeId} onChange={(e) => setType(e.target.value)}>
+          {types.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="cable-label">Bezeichnung</label>
+        <input id="cable-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+      </div>
+    </Dialog>
+  );
+}

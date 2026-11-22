@@ -28,7 +28,7 @@ export interface Selection {
 }
 
 /** Werkzeug der Flächenansicht. */
-export type SurfaceTool = "select" | "measure" | "device";
+export type SurfaceTool = "select" | "measure" | "device" | "route" | "penetration" | "cable";
 
 export type EditorKind = "plan" | "surface" | "3d";
 
@@ -50,12 +50,22 @@ export type PlanTool =
   | "redetect-room"
   | "device"
   | "furniture"
+  | "cable"
   | "calibrate"
   | "move-underlay"
   | "rotate-underlay";
 
+/** „Weg bearbeiten“ einer Leitung: Klicks auf Segmente fügen hinzu oder entfernen (design.md M3). */
+export interface PathEdit {
+  cableId: string;
+  segmentIds: string[];
+}
+
 export interface ViewState {
   selection: Selection | null;
+  pathEdit: PathEdit | null;
+  /** Erstes Gerät des Werkzeugs „Leitung“; bleibt über Ansichten und Geschosse bis Esc. */
+  cableFrom: string | null;
   /** Geschoss des Grundrisses und des Baums. */
   activeStoreyId: string | null;
   editor: EditorKind;
@@ -75,6 +85,8 @@ export interface ViewState {
   hiddenTrades: Trade[];
   /** Kategorie Möbel ausgeblendet. */
   furnitureHidden: boolean;
+  /** Kategorie „Trassen“ im Gewerkfilter (design.md M3 „Darstellung“). */
+  routesHidden: boolean;
   /** Overlay der Installationszonen in allen Wandansichten (nicht gespeichert). */
   showZones: boolean;
   /** Senkrechte Zuführungen der Wandgeräte in allen Wandansichten (nicht gespeichert). */
@@ -101,13 +113,20 @@ export interface ViewStore extends StoreApi<ViewState> {
   setFurnitureType(typeId: string | null): void;
   setTradeHidden(trade: Trade, hidden: boolean): void;
   setFurnitureHidden(hidden: boolean): void;
+  setRoutesHidden(hidden: boolean): void;
   setShowZones(show: boolean): void;
   setShowFeeds(show: boolean): void;
+  setPathEdit(edit: PathEdit | null): void;
+  setCableFrom(deviceId: string | null): void;
+  /** Im Modus „Weg bearbeiten“: Segment hinzufügen oder entfernen; sonst false. */
+  togglePathSegment(segmentId: string): boolean;
 }
 
 export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
   const store = createStore<ViewState>(() => ({
     selection: null,
+    pathEdit: null,
+    cableFrom: null,
     activeStoreyId: null,
     editor: "plan",
     planTool: "select",
@@ -119,6 +138,7 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     furnitureTypeId: null,
     hiddenTrades: [],
     furnitureHidden: false,
+    routesHidden: false,
     showZones: false,
     showFeeds: false,
     ...initial,
@@ -162,11 +182,29 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
       const rest = store.getState().hiddenTrades.filter((t) => t !== trade);
       store.setState({ hiddenTrades: hidden ? [...rest, trade] : rest });
     },
+    setRoutesHidden(routesHidden: boolean) {
+      store.setState({ routesHidden });
+    },
     setFurnitureHidden(furnitureHidden: boolean) {
       store.setState({ furnitureHidden });
     },
     setShowZones(showZones: boolean) {
       store.setState({ showZones });
+    },
+    setPathEdit(pathEdit: PathEdit | null) {
+      store.setState({ pathEdit });
+    },
+    setCableFrom(cableFrom: string | null) {
+      store.setState({ cableFrom });
+    },
+    togglePathSegment(segmentId: string) {
+      const e = store.getState().pathEdit;
+      if (!e) return false;
+      const segmentIds = e.segmentIds.includes(segmentId)
+        ? e.segmentIds.filter((x) => x !== segmentId)
+        : [...e.segmentIds, segmentId];
+      store.setState({ pathEdit: { ...e, segmentIds } });
+      return true;
     },
     setShowFeeds(showFeeds: boolean) {
       store.setState({ showFeeds });

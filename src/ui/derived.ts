@@ -47,6 +47,13 @@ export function warnedIds(project: Project): Set<string> {
   const suppressed = new Set(project.suppressedWarnings);
   const ids = new Set<string>();
   for (const w of warningsOf(project))
-    if (w.target.kind === "device" && !suppressed.has(w.key)) ids.add(w.target.id);
+    if (
+      (w.target.kind === "device" ||
+        w.target.kind === "route-node" ||
+        w.target.kind === "route-segment" ||
+        w.target.kind === "cable") &&
+      !suppressed.has(w.key)
+    )
+      ids.add(w.target.id);
   return ids;
 }

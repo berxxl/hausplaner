@@ -1,8 +1,12 @@
-/** Gewerkfilter (design.md M2 „Gewerkfilter“): Sichtbarkeit von Geräten und Möbeln. Frei von React. */
-import type { Device, Project, Trade } from "../model/types";
+/**
+ * Gewerkfilter (design.md M2 „Gewerkfilter“, M3 „Darstellung“): Sichtbarkeit von Geräten, Möbeln,
+ * Trassen und Leitungen. Frei von React.
+ */
+import type { Cable, Device, Project, Trade } from "../model/types";
 import type { Selection, ViewState } from "../store/view";
 
-export type FilterState = Pick<ViewState, "hiddenTrades" | "furnitureHidden">;
+export type FilterState = Pick<ViewState, "hiddenTrades" | "furnitureHidden"> &
+  Partial<Pick<ViewState, "routesHidden">>;
 
 /** Gewerk eines Geräts; Geräte mit unbekanntem Typ zählen zu „Sonstiges“. */
 export function deviceTrade(project: Project, device: Device): Trade {
@@ -15,6 +19,12 @@ export function isDeviceVisible(project: Project, filter: FilterState, device: D
   );
 }
 
+/** Leitungen folgen dem Gewerk ihres Leitungstyps (unbekannter Typ: „Sonstiges“). */
+export function isCableVisible(project: Project, filter: FilterState, cable: Cable): boolean {
+  const trade = project.catalog.lineTypes.find((t) => t.id === cable.lineTypeId)?.trade ?? "other";
+  return !filter.hiddenTrades.includes(trade);
+}
+
 /** Auswahl ohne ausgeblendete Elemente; null, wenn nichts übrig bleibt. */
 export function visibleSelection(
   project: Project,
@@ -23,6 +33,12 @@ export function visibleSelection(
 ): Selection | null {
   if (!selection) return null;
   if (selection.kind === "furniture") return filter.furnitureHidden ? null : selection;
+  if (selection.kind === "route-node" || selection.kind === "route-segment")
+    return filter.routesHidden ? null : selection;
+  if (selection.kind === "cable") {
+    const c = project.cables.find((x) => x.id === selection.id);
+    return c && !isCableVisible(project, filter, c) ? null : selection;
+  }
   if (selection.kind !== "device") return selection;
   const ids = (selection.ids ?? [selection.id]).filter((id) => {
     const d = project.devices.find((x) => x.id === id);

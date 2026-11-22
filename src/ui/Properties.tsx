@@ -6,6 +6,8 @@ import { StoreyProperties } from "./StoreyProperties";
 import { DeviceProperties } from "./DeviceProperties";
 import { FurnitureProperties } from "./FurnitureProperties";
 import { OpeningProperties, RoomProperties, WallProperties } from "./BuildingProperties";
+import { CableProperties } from "./CableProperties";
+import { RouteNodeProperties, RouteSegmentProperties } from "./RouteProperties";
 
 const KIND_LABELS = {
   storey: "Geschoss",
@@ -60,6 +62,22 @@ export function Properties({
       body = (
         <FurnitureProperties key={f.id} furniture={f} project={project} store={store} view={view} />
       );
+  } else if (selection?.kind === "route-node") {
+    const n = project.routeNodes.find((x) => x.id === selection.id);
+    if (n) body = <RouteNodeProperties key={n.id} node={n} project={project} store={store} />;
+  } else if (selection?.kind === "route-segment") {
+    body = (
+      <RouteSegmentProperties
+        ids={selection.ids ?? [selection.id]}
+        project={project}
+        store={store}
+        view={view}
+      />
+    );
+  } else if (selection?.kind === "cable") {
+    const c = project.cables.find((x) => x.id === selection.id);
+    if (c)
+      body = <CableProperties key={c.id} cable={c} project={project} store={store} view={view} />;
   } else if (selection?.kind === "opening") {
     const opening = project.openings.find((o) => o.id === selection.id);
     if (opening) body = <OpeningProperties key={opening.id} opening={opening} store={store} />;

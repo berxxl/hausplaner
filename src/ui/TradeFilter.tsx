@@ -5,10 +5,11 @@ import type { ViewStore } from "../store/view";
 import { visibleSelection } from "./filter";
 import { TRADE_LABELS } from "./labels";
 
-/** Schalter je Gewerk und für Möbel in der Kopfzeile des Editorbereichs. */
+/** Schalter je Gewerk, für Möbel und für Trassen in der Kopfzeile des Editorbereichs. */
 export function TradeFilter({ store, view }: { store: ProjectStore; view: ViewStore }) {
   const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
   const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
+  const routesHidden = useStore(view, (s) => s.routesHidden);
   // Auswahl eines ausgeblendeten Elements aufheben
   const prune = () => {
     const s = view.getState();
@@ -42,6 +43,16 @@ export function TradeFilter({ store, view }: { store: ProjectStore; view: ViewSt
         }}
       >
         Möbel
+      </button>
+      <button
+        type="button"
+        aria-pressed={!routesHidden}
+        onClick={() => {
+          view.setRoutesHidden(!routesHidden);
+          prune();
+        }}
+      >
+        Trassen
       </button>
     </div>
   );

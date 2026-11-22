@@ -21,12 +21,12 @@
 - [x] 3.1 Befehle in `store/routes.ts`: „Trasse zeichnen“ (Segment mit neuen oder vorhandenen Knoten), „Segment teilen“, „Knoten verschieben“, „Segment ändern“ (Status, Leerrohr), „Trasse löschen“ (Knoten mit Segmenten, Segment allein); Unit-Tests inkl. Undo
 - [x] 3.2 `normalizeAfterCommand`: Gerätknoten auf Gerätelage, weitere Anker von Übergangsknoten, verwaiste Knoten entfernen, gelöschte Segmente aus Pfaden entfernen; Löschkaskaden für Gerät, Wand, Raum, Geschoss mit Anzahl mitgelöschter Leitungen in der Bestätigung; Unit-Tests: Gerät verschieben zieht den Knoten mit, Gerät löschen löscht seine Leitungen und lässt den Knoten stehen, Wand löschen nimmt Knoten und Segmente mit, Undo stellt alles her
 - [ ] 3.3 Werkzeug „Trasse“ in der Flächenansicht mit Fang (Gerät, Knoten, Segment → Abzweig, Kante, Winkelfang, Shift), Zug bis Esc; Playwright: Trasse von der oberen Zone senkrecht zur Steckdose endet in einem Gerätknoten (Spec-Scenario „Trasse zur Steckdose“), Klick auf ein Segment teilt es (Spec-Scenario „Abzweig“), Trasse bis an die rechte Ecke und in der Nachbarwand fortsetzen
-- [ ] 3.4 Auswahl, Ziehen und Eigenschaften von Knoten und Segmenten (u, v, Abstand zur Bezugskante, Status, Leerrohr, Belegung), Mehrfachauswahl mit Shift; Komponententest: drei Segmente gemeinsam auf „verlegt“, ein Undo-Schritt (Spec-Scenario „Mehrere Segmente verlegt“); Knoten auf 1830 mm ab Raumecke und Segment auf „verlegt“ (Spec-Scenario „Aufmaß übernehmen“)
-- [ ] 3.5 Werkzeug „Durchbruch“ mit Dialog (Art, Durchmesser mit Standardwerten); Komponententest: Durchbruch in der Küchenwand erscheint in der Fluransicht
+- [x] 3.4 Auswahl, Ziehen und Eigenschaften von Knoten und Segmenten (u, v, Abstand zur Bezugskante, Status, Leerrohr, Belegung), Mehrfachauswahl mit Shift; Komponententest: drei Segmente gemeinsam auf „verlegt“, ein Undo-Schritt (Spec-Scenario „Mehrere Segmente verlegt“); Knoten auf 1830 mm ab Raumecke und Segment auf „verlegt“ (Spec-Scenario „Aufmaß übernehmen“)
+- [x] 3.5 Werkzeug „Durchbruch“ mit Dialog (Art, Durchmesser mit Standardwerten); Komponententest: Durchbruch in der Küchenwand erscheint in der Fluransicht
 
 ## 4. Darstellung
 
-- [ ] 4.1 Flächenansicht: Segmente, Knoten, Übergangsknoten, Durchbrüche, Leerrohr, Statusfarben, roter Rand bei offener Warnung
+- [x] 4.1 Flächenansicht: Segmente, Knoten, Übergangsknoten, Durchbrüche, Leerrohr, Statusfarben, roter Rand bei offener Warnung
 - [ ] 4.2 Grundriss: Boden- und Deckensegmente, Wand- und Deckendurchbrüche; 3D: Segmente und Durchbrüche; Playwright: Durchbruch EG/OG erscheint in beiden Geschossen und in 3D
 - [ ] 4.3 Gewerkfilter um „Trassen“ erweitern, Leitungen nach Gewerk; Unit-Test des Filters; Playwright: Trassen ausblenden (Spec-Scenario „Trassen ausblenden“), „nur KNX“ zeigt Trassen weiter (Spec-Scenario „Nur KNX“)
 
@@ -34,14 +34,14 @@
 
 - [x] 5.1 `geometry/cables.ts`: Graph aus Segmenten, Dijkstra mit deterministischem Gleichstand, Kette ordnen, zusammenhängend prüfen; Unit-Tests: kürzester Weg (Spec-Scenario „Automatischer Weg“), kein Weg (Spec-Scenario „Kein Weg“), gleich lange Wege, Weg über einen Deckendurchbruch
 - [x] 5.2 Befehle „Leitung anlegen“ (mit Typprüfung und Wegvorschlag), „Leitung ändern“, „Weg ändern“, „Weg vorschlagen“, „Leitung löschen“; Leitungstyp in Verwendung nicht löschbar; Unit-Tests: KNX-Busleitung vom Präsenzmelder zum KNX-Taster (Spec-Scenario „Busleitung zum Präsenzmelder“), Cat 7 an Rollladenmotor abgelehnt (Spec-Scenario „Unpassender Typ“), Typ löschen abgelehnt
-- [ ] 5.3 Länge mit Zuschlägen, Einstellungen in den Projekteinstellungen (Befehl, Prüfung ≥ 0); Unit-Tests: 8,4 m Trasse Dose → Schalter ergibt 9,9 m (Spec-Scenario „Längenberechnung“), Wand verschoben verlängert Segmente und Länge (Spec-Scenario „Wand verschoben“), unterbrochener Weg ohne Länge
+- [x] 5.3 Länge mit Zuschlägen, Einstellungen in den Projekteinstellungen (Befehl, Prüfung ≥ 0); Unit-Tests: 8,4 m Trasse Dose → Schalter ergibt 9,9 m (Spec-Scenario „Längenberechnung“), Wand verschoben verlängert Segmente und Länge (Spec-Scenario „Wand verschoben“), unterbrochener Weg ohne Länge
 - [ ] 5.4 Werkzeug „Leitung“ (zwei Geräte, auch über Ansichten und Geschosse), Leitungseigenschaften (Typ, Bezeichnung, Status, Länge, Weg bearbeiten, Weg vorschlagen), Hervorheben in allen Ansichten, im Grundriss und in 3D, Baum markiert die Flächen; Playwright: Leitung über zwei Geschosse auswählen hebt den Weg in allen beteiligten Ansichten und in 3D hervor (Spec-Scenario „Leitung über zwei Geschosse“); Komponententest: Status „geprüft“ (Spec-Scenario „Leitung geprüft“)
 
 ## 6. Belegung und Regeln
 
 - [x] 6.1 Belegung je Segment (Anzahl, Querschnittssumme, Füllgrad, Leitungsliste), Regel `conduit-overfull`; Unit-Test: fünf Leitungen über M20 melden „Leerrohr überfüllt“ (Spec-Scenario „Volles Leerrohr“), M25 belegt (Spec-Scenario „Leerrohr belegen“)
 - [x] 6.2 Regel `route-outside-zone` mit den fünf Bedingungen aus `design.md`; Unit-Tests: Diagonale meldet (Spec-Scenario „Diagonale Trasse“), senkrechter Stich zum Schalter meldet nichts (Spec-Scenario „Senkrechter Stich“), waagerecht in der oberen Zone, senkrecht in der senkrechten Zone, Stich über Abzweig, Aufstieg von der Zone zur Decke, Wandseite ohne Raum nicht geprüft
-- [ ] 6.3 Regeln `cable-without-path`, `route-node-off-edge` und die Verweise ins Leere mit ihren Aktionen; Klickziele in der Warnungsübersicht; Unit-Tests je Regel, nicht übergehbare Warnungen
+- [x] 6.3 Regeln `cable-without-path`, `route-node-off-edge` und die Verweise ins Leere mit ihren Aktionen; Klickziele in der Warnungsübersicht; Unit-Tests je Regel, nicht übergehbare Warnungen
 
 ## 7. Integration
 

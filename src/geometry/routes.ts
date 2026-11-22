@@ -365,3 +365,23 @@ export function splitInPaths(
   }
   return result;
 }
+
+/** Endpunkte eines Segments in Weltkoordinaten (z über Geländenull); null bei fehlenden Ankern. */
+export function segmentWorldEnds(
+  project: Project,
+  segment: RouteSegment,
+  nodes: ReadonlyMap<string, RouteNode>,
+): { a: World3; b: World3; za: number; zb: number } | null {
+  const na = nodes.get(segment.a);
+  const nb = nodes.get(segment.b);
+  if (!na || !nb) return null;
+  const pick = (n: RouteNode) =>
+    segment.kind === "surface" && segment.surface ? anchorOn(n, segment.surface) : n.anchors[0];
+  const aa = pick(na);
+  const ab = pick(nb);
+  if (!aa || !ab) return null;
+  const a = anchorWorld(project, aa);
+  const b = anchorWorld(project, ab);
+  if (!a || !b) return null;
+  return { a, b, za: globalZ(project, a), zb: globalZ(project, b) };
+}

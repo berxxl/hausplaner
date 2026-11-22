@@ -34,7 +34,21 @@ import { DeviceGlyph } from "../DeviceGlyph";
 import { isTextTarget } from "../shortcuts";
 import { useConfirm } from "../useConfirm";
 import { cascadeMessage } from "../labels";
-import { dependentCableCount } from "../../store/routes";
+import {
+  addPenetration,
+  dependentCableCount,
+  drawSegment,
+  makeNode,
+  moveNode,
+  type SplitSpec,
+} from "../../store/routes";
+import { edgeAnchors, penetrationTarget } from "../../geometry/routes";
+import type { Anchor, RouteNode } from "../../model/types";
+import { routeGeometry } from "./routeGeometry";
+import { RoutesLayer } from "./RoutesLayer";
+import { edgeContour, routeSnap, viewToAnchor, type RouteSnap } from "./routeSnap";
+import { PenetrationDialog } from "../plan/dialogs";
+import { useCableTool } from "../useCableTool";
 import { feedFor, viewZones } from "../../geometry/zones";
 import { sectionSilhouettes } from "../../geometry/furniture";
 import { warnedIds } from "../derived";
@@ -61,13 +75,16 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const project = useStore(store, (s) => s.project);
   const target = useStore(view, (s) => s.surface);
   const selection = useStore(view, (s) => s.selection);
+  const pathEdit = useStore(view, (s) => s.pathEdit);
   const deviceTypeId = useStore(view, (s) => s.deviceTypeId);
   const showZones = useStore(view, (s) => s.showZones);
   const showFeeds = useStore(view, (s) => s.showFeeds);
   const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
   const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
+  const routesHidden = useStore(view, (s) => s.routesHidden);
   const [message, setMessage] = useState<string | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
+  const cableTool = useCableTool(store, view, (m) => setMessage(m));
   const model = useMemo(() => (target ? surfaceModel(project, target) : null), [project, target]);
 
   const hasModel = model !== null;
@@ -80,8 +97,13 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   const drag = useRef<
     | { kind: "pan"; last: Vec }
     | { kind: "device"; id: string; start: Vec; base: SurfacePlacement }
+    | { kind: "node"; id: string; transition: boolean }
     | null
   >(null);
+  /** Letzter Punkt des laufenden Trassenzugs (design.md M3 „Trassen zeichnen“). */
+  const [routePrev, setRoutePrev] = useState<RoutePoint | null>(null);
+  const [routeCursor, setRouteCursor] = useState<{ u: number; v: number } | null>(null);
+  const [pendingPenetration, setPendingPenetration] = useState<RoutePoint | null>(null);
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setMessage(null), 5000);
@@ -91,6 +113,11 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTextTarget(e.target)) return;
+      if (e.key === "Escape") {
+        setRoutePrev(null);
+        view.setCableFrom(null);
+        return;
+      }
       const ids = view.selectedDevices();
       if ((e.key === "Delete" || e.key === "Backspace") && ids.length > 0) {
         e.preventDefault();
@@ -123,12 +150,20 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     return () => ro.disconnect();
   }, [hasModel]);
 
+  const [toolFor, setToolFor] = useState(tool);
+  if (toolFor !== tool) {
+    setToolFor(tool);
+    setRoutePrev(null);
+    setRouteCursor(null);
+  }
+
   const targetKey = JSON.stringify(target);
   const [cameraFor, setCameraFor] = useState<string>("");
   if (model && cameraFor !== targetKey) {
     setCameraFor(targetKey);
     setCamera(fit(vp, model));
     setMeasure(null);
+    setRoutePrev(null);
   }
   const cam = camera ?? (model ? fit(vp, model) : { cx: 0, cy: 0, zoom: 0.1 });
 
@@ -228,9 +263,103 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     view.select({ kind: "device", id });
   };
 
+  // --- Trassen ---
+  const routes = routesHidden
+    ? { segments: [], nodes: [], penetrations: [] }
+    : routeGeometry(project, model);
+  const deviceCenters = shownDevices.map(({ device, rect }) => ({
+    id: device.id,
+    at: { u: (rect.uMin + rect.uMax) / 2, v: (rect.vMin + rect.vMax) / 2 },
+  }));
+  const snapRoute = (world: Vec, shift: boolean): RouteSnap =>
+    routeSnap(
+      project,
+      model,
+      { u: world.x, v: world.y },
+      {
+        zoom: cam.zoom,
+        prev: routePrev?.at ?? null,
+        noAngle: shift,
+        devices: deviceCenters,
+      },
+    );
+  /** Punkt eines Zugs aus einem Fang: vorhandener Knoten oder neuer Knoten (ggf. mit Teilung). */
+  const toRoutePoint = (snap: RouteSnap, taken: Set<string>): RoutePoint => {
+    const fresh = () => {
+      const id = newId(taken);
+      taken.add(id);
+      return id;
+    };
+    if (snap.kind === "node") return { at: snap.at, nodeId: snap.nodeId };
+    if (snap.kind === "device") {
+      const existing = project.routeNodes.find((n) => n.deviceId === snap.deviceId);
+      if (existing) return { at: snap.at, nodeId: existing.id };
+      const d = project.devices.find((x) => x.id === snap.deviceId)!;
+      const p = d.placement as SurfacePlacement;
+      const node = makeNode(project, fresh(), [{ surface: p.surface, u: p.u, v: p.v }], d.id);
+      return { at: snap.at, nodeId: node.id, newNode: node };
+    }
+    const anchor: Anchor = viewToAnchor(project, model, snap.at);
+    const anchors = snap.kind === "edge" ? [anchor, ...edgeAnchors(project, anchor)] : [anchor];
+    const node = makeNode(project, fresh(), anchors);
+    if (snap.kind === "segment")
+      return {
+        at: snap.at,
+        nodeId: node.id,
+        split: { segmentId: snap.segmentId, node, idA: fresh(), idB: fresh() },
+      };
+    return { at: snap.at, nodeId: node.id, newNode: node };
+  };
+  const routeClick = (world: Vec, shift: boolean) => {
+    const taken = new Set(allIds(project));
+    const point = toRoutePoint(snapRoute(world, shift), taken);
+    if (!routePrev) return setRoutePrev(point);
+    if (
+      point.nodeId === routePrev.nodeId ||
+      (point.at.u === routePrev.at.u && point.at.v === routePrev.at.v)
+    )
+      return setRoutePrev(null);
+    if (point.split && routePrev.split?.segmentId === point.split.segmentId)
+      return setMessage("Zweimal dasselbe Segment: zuerst den ersten Abzweig setzen.");
+    const id = newId(taken);
+    store.execute(
+      drawSegment({
+        segment: { id, a: routePrev.nodeId, b: point.nodeId, surface: model.ref },
+        newNodes: [routePrev.newNode, point.newNode].filter((n): n is RouteNode => !!n),
+        splits: [routePrev.split, point.split].filter((x): x is SplitSpec => !!x),
+      }),
+    );
+    setRoutePrev({ at: point.at, nodeId: point.nodeId });
+  };
+  const hitRouteNode = (world: Vec) => {
+    const r = 8 / cam.zoom;
+    return routes.nodes.find((n) => Math.hypot(n.at.u - world.x, n.at.v - world.y) <= r);
+  };
+  const hitRouteSegment = (world: Vec) => {
+    const r = 6 / cam.zoom;
+    return routes.segments.find((s) => {
+      const du = s.b.u - s.a.u;
+      const dv = s.b.v - s.a.v;
+      const len2 = du * du + dv * dv;
+      const t =
+        len2 === 0
+          ? 0
+          : Math.max(0, Math.min(1, ((world.x - s.a.u) * du + (world.y - s.a.v) * dv) / len2));
+      return Math.hypot(s.a.u + t * du - world.x, s.a.v + t * dv - world.y) <= r;
+    });
+  };
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return;
     const world = toWorld(e);
+    if (tool === "route") return routeClick(world, e.shiftKey);
+    if (tool === "cable") return cableTool.clickDevice(hitDevice(world)?.id);
+    if (tool === "penetration") {
+      const point = toRoutePoint(snapRoute(world, true), new Set(allIds(project)));
+      if (point.split)
+        return setMessage("Durchbruch nicht auf einem Segment, sondern an einem Knoten setzen.");
+      return setPendingPenetration(point);
+    }
     if (tool === "measure") {
       const p = snap(world);
       setMeasure((m) => (!m || m.b ? { a: p, b: null } : { a: m.a, b: p }));
@@ -246,6 +375,31 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
       e.currentTarget.setPointerCapture?.(e.pointerId);
       return;
     }
+    const node = hitRouteNode(world);
+    if (node) {
+      view.select({ kind: "route-node", id: node.id });
+      const n = project.routeNodes.find((x) => x.id === node.id)!;
+      // Ziehen nur über den maßgebenden Anker, nicht für Gerätknoten
+      if (!n.deviceId && n.anchors[0]!.surface === model.ref) {
+        store.begin("Knoten verschieben");
+        drag.current = { kind: "node", id: n.id, transition: n.anchors.length > 1 };
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      }
+      return;
+    }
+    const segment = hitRouteSegment(world);
+    if (segment && view.togglePathSegment(segment.id)) return;
+    if (segment) {
+      const sel = view.getState().selection;
+      if (e.shiftKey && sel?.kind === "route-segment") {
+        const ids = new Set(sel.ids ?? [sel.id]);
+        if (ids.has(segment.id)) ids.delete(segment.id);
+        else ids.add(segment.id);
+        const list = [...ids];
+        view.select(list.length > 0 ? { kind: "route-segment", id: list[0]!, ids: list } : null);
+      } else view.select({ kind: "route-segment", id: segment.id });
+      return;
+    }
     const sil = [...silhouettes]
       .reverse()
       .find(
@@ -259,8 +413,38 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
   };
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (tool === "measure") setCursor(snap(toWorld(e)));
+    if (tool === "route" && routePrev) setRouteCursor(snapRoute(toWorld(e), e.shiftKey).at);
     const d = drag.current;
     if (!d) return;
+    if (d.kind === "node") {
+      const w = toWorld(e);
+      let at = { u: w.x, v: w.y };
+      // Übergangsknoten bleiben auf ihrer Kante
+      if (d.transition) {
+        const ring = edgeContour(project, model);
+        let best: { u: number; v: number } | null = null;
+        for (let i = 0; i < ring.length; i++) {
+          const a = ring[i]!;
+          const b = ring[(i + 1) % ring.length]!;
+          const du = b.u - a.u;
+          const dv = b.v - a.v;
+          const len2 = du * du + dv * dv;
+          const t =
+            len2 === 0
+              ? 0
+              : Math.max(0, Math.min(1, ((at.u - a.u) * du + (at.v - a.v) * dv) / len2));
+          const q = { u: a.u + t * du, v: a.v + t * dv };
+          if (
+            !best ||
+            Math.hypot(q.u - at.u, q.v - at.v) < Math.hypot(best.u - at.u, best.v - at.v)
+          )
+            best = q;
+        }
+        if (best) at = best;
+      }
+      store.preview(moveNode(d.id, viewToAnchor(project, model, at)).run);
+      return;
+    }
     if (d.kind === "device") {
       const w = toWorld(e);
       const u = Math.round(d.base.u + w.x - d.start.x);
@@ -279,7 +463,7 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
     setCamera((c) => panBy(c ?? cam, delta));
   };
   const onPointerUp = () => {
-    if (drag.current?.kind === "device") store.commit();
+    if (drag.current?.kind === "device" || drag.current?.kind === "node") store.commit();
     drag.current = null;
   };
 
@@ -303,6 +487,20 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
         })
       : [];
   const measureB = measure ? (measure.b ?? (tool === "measure" ? cursor : null)) : null;
+  const selectedRouteIds = new Set<string>(
+    selection?.kind === "route-segment"
+      ? (selection.ids ?? [selection.id])
+      : selection?.kind === "route-node"
+        ? [selection.id]
+        : [],
+  );
+  const highlightedSegments = new Set<string>(
+    pathEdit
+      ? pathEdit.segmentIds
+      : selection?.kind === "cable"
+        ? (project.cables.find((c) => c.id === selection.id)?.path ?? [])
+        : [],
+  );
 
   return (
     <div className="surface">
@@ -339,6 +537,19 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
           </button>
           <button type="button" aria-pressed={tool === "device"} onClick={() => setTool("device")}>
             Gerät
+          </button>
+          <button type="button" aria-pressed={tool === "route"} onClick={() => setTool("route")}>
+            Trasse
+          </button>
+          <button
+            type="button"
+            aria-pressed={tool === "penetration"}
+            onClick={() => setTool("penetration")}
+          >
+            Durchbruch
+          </button>
+          <button type="button" aria-pressed={tool === "cable"} onClick={() => setTool("cable")}>
+            Leitung
           </button>
           {model.roomView && (
             <>
@@ -462,6 +673,14 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
                 ))}
               </g>
             )}
+            <RoutesLayer
+              geometry={routes}
+              zoom={cam.zoom}
+              selectedIds={selectedRouteIds}
+              highlighted={highlightedSegments}
+              warned={warned}
+              preview={routePrev && routeCursor ? { a: routePrev.at, b: routeCursor } : null}
+            />
             <g data-testid="surface-devices">
               {shownDevices.map(({ device, symbol, rect }) => (
                 <DeviceGlyph
@@ -588,6 +807,42 @@ export function SurfaceView({ store, view }: { store: ProjectStore; view: ViewSt
         </p>
       )}
       {confirmDialog}
+      {cableTool.dialog}
+      {pendingPenetration && (
+        <PenetrationDialog
+          onCancel={() => setPendingPenetration(null)}
+          onSubmit={({ method, diameterMm }) => {
+            const near = pendingPenetration;
+            setPendingPenetration(null);
+            const nearNode = near.newNode ?? project.routeNodes.find((n) => n.id === near.nodeId)!;
+            const target = penetrationTarget(project, nearNode.anchors[0]!);
+            if (!target.ok) return setMessage(target.error);
+            const taken = new Set([...allIds(project), nearNode.id]);
+            const far = makeNode(project, newId(taken), [target.anchor]);
+            taken.add(far.id);
+            // a ist bei Deckendurchbrüchen der obere Knoten
+            const nearIsA = model.kind !== "ceiling" && model.kind !== "slope";
+            store.execute(
+              addPenetration({
+                id: newId(taken),
+                near: nearNode,
+                far,
+                method,
+                diameterMm,
+                nearIsA,
+              }),
+            );
+          }}
+        />
+      )}
     </div>
   );
+}
+
+/** Punkt eines Trassenzugs: vorhandener oder neuer Knoten, ggf. mit Teilung eines Segments. */
+interface RoutePoint {
+  at: { u: number; v: number };
+  nodeId: string;
+  newNode?: RouteNode;
+  split?: SplitSpec;
 }

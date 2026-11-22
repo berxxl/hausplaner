@@ -100,6 +100,8 @@ import { DeviceGlyph } from "../DeviceGlyph";
 import { useConfirm } from "../useConfirm";
 import { isTextTarget } from "../shortcuts";
 import { surfaceAt } from "./navigate";
+import { useCableTool } from "../useCableTool";
+import { RoutesPlanLayer } from "./RoutesPlanLayer";
 
 const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "select", label: "Auswählen" },
@@ -109,6 +111,7 @@ const DRAW_TOOLS: { tool: PlanTool; label: string }[] = [
   { tool: "opening", label: "Öffnung" },
   { tool: "device", label: "Gerät" },
   { tool: "furniture", label: "Möbel" },
+  { tool: "cable", label: "Leitung" },
 ];
 
 const PLAN_TOOLS: { tool: PlanTool; label: string }[] = [
@@ -128,6 +131,7 @@ const HINTS: Record<PlanTool, string> = {
   device: "Gerätetyp wählen und klicken; jeder Klick setzt ein Gerät. Esc beendet.",
   furniture:
     "Möbeltyp wählen und klicken; rastet an Wänden ein (Shift: frei). R dreht um 90°. Esc beendet.",
+  cable: "Erstes Gerät anklicken, dann das zweite (auch in einer anderen Ansicht). Esc bricht ab.",
   calibrate: "Ersten Punkt einer bemaßten Strecke im Plan anklicken.",
   "move-underlay": "Plan mit der Maus an die richtige Stelle ziehen.",
   "rotate-underlay": "Drehpunkt im Plan anklicken.",
@@ -254,6 +258,16 @@ export function PlanView({ store, view }: PlanViewProps) {
   const [calibrationP1, setCalibrationP1] = useState<Vec | null>(null);
   const [openEnds, setOpenEnds] = useState<EndRef[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const routesHidden = useStore(view, (s) => s.routesHidden);
+  const pathEdit = useStore(view, (s) => s.pathEdit);
+  const highlightedSegments = new Set<string>(
+    pathEdit
+      ? pathEdit.segmentIds
+      : selection?.kind === "cable"
+        ? (project.cables.find((c) => c.id === selection.id)?.path ?? [])
+        : [],
+  );
+  const cableTool = useCableTool(store, view, setMessage);
   const [pending, setPending] = useState<Pending | null>(null);
   /** Aufgezogene Öffnung während des Ziehens (Vorschau). */
   const [openingDraft, setOpeningDraft] = useState<{ wallId: string; a: number; b: number } | null>(
@@ -409,7 +423,8 @@ export function PlanView({ store, view }: PlanViewProps) {
     const onKey = (e: KeyboardEvent) => {
       if (isTextTarget(e.target) || pending) return;
       if (e.key === "Escape") {
-        if (wallStart || measure || slopeP1 || calibrationP1) {
+        if (view.getState().cableFrom) view.setCableFrom(null);
+        else if (wallStart || measure || slopeP1 || calibrationP1) {
           setWallStart(null);
           setMeasure(null);
           setSlopeP1(null);
@@ -564,6 +579,9 @@ export function PlanView({ store, view }: PlanViewProps) {
       }
       case "measure":
         setMeasure((m) => (!m || m.b ? { a: world, b: null } : { a: m.a, b: world }));
+        return;
+      case "cable":
+        cableTool.clickDevice(hitDevice(world)?.id);
         return;
       case "device": {
         if (!storey) return;
@@ -1034,6 +1052,14 @@ export function PlanView({ store, view }: PlanViewProps) {
               selection={selection}
               invalid={invalidOpenings}
             />
+            {storey && !routesHidden && (
+              <RoutesPlanLayer
+                project={project}
+                storeyId={storey.id}
+                zoom={cam.zoom}
+                highlighted={highlightedSegments}
+              />
+            )}
             {openingDraft &&
               (() => {
                 const w = geoms.find((x) => x.id === openingDraft.wallId);
@@ -1137,6 +1163,7 @@ export function PlanView({ store, view }: PlanViewProps) {
         </svg>
       </div>
       {confirmDialog}
+      {cableTool.dialog}
       {pending?.kind === "distance" && underlay && storey && (
         <NumberPrompt
           title="Kalibrieren"

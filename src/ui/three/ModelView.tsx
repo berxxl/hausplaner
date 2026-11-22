@@ -13,10 +13,12 @@ import {
 import { sortedStoreys } from "../../io/project-files";
 import type { Device, Furniture, Project } from "../../model/types";
 import { deviceWorld } from "../../geometry/devices";
+import { segmentWorldEnds } from "../../geometry/routes";
 import { furnitureBaseZ } from "../../geometry/furniture";
 import { STATUS_COLORS, WARNING_COLOR } from "../labels";
 import { warnedIds } from "../derived";
-import { isDeviceVisible } from "../filter";
+import { HIGHLIGHT_COLOR } from "../surface/routeGeometry";
+import { isCableVisible, isDeviceVisible } from "../filter";
 import type { ProjectStore } from "../../store/history";
 import type { Selection, ViewStore } from "../../store/view";
 
@@ -105,6 +107,7 @@ interface SceneData {
   polys: { poly: PlanarPolygon; geometry: THREE.BufferGeometry }[];
   devices: SceneDevice[];
   furniture: SceneFurniture[];
+  routes: SceneRoute[];
   bounds: THREE.Box3;
 }
 
@@ -145,11 +148,46 @@ function furnitureMesh(project: Project, f: Furniture, elevationMm: number): Sce
   return { furniture: f, geometry, matrix, at: { x: f.x, y: f.y, z } };
 }
 
+interface SceneRoute {
+  id: string;
+  status: Device["status"];
+  geometry: THREE.BufferGeometry;
+  matrix: THREE.Matrix4;
+}
+
+/** Segment als dünner Zylinder (Ø 20 mm), Durchbruch mit seinem Durchmesser (design.md M3 „Darstellung“). */
+function routeMesh(
+  project: Project,
+  segment: Project["routeSegments"][number],
+  nodes: ReadonlyMap<string, Project["routeNodes"][number]>,
+): SceneRoute | null {
+  const ends = segmentWorldEnds(project, segment, nodes);
+  if (!ends) return null;
+  const p = toThree(ends.a.x, ends.a.y, ends.za);
+  const q = toThree(ends.b.x, ends.b.y, ends.zb);
+  const dir = new THREE.Vector3().subVectors(q, p);
+  const len = Math.max(dir.length(), 0.001);
+  const r = ((segment.penetration?.diameterMm ?? 20) / 2) * M;
+  const geometry = new THREE.CylinderGeometry(r, r, len, 12);
+  const quat = new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    dir.clone().normalize(),
+  );
+  const matrix = new THREE.Matrix4().compose(
+    p.clone().add(dir.multiplyScalar(0.5)),
+    quat,
+    new THREE.Vector3(1, 1, 1),
+  );
+  return { id: segment.id, status: segment.status, geometry, matrix };
+}
+
 function buildScene(project: Project, upTo: string | null): SceneData {
   const walls: SceneData["walls"] = [];
   const polys: SceneData["polys"] = [];
   const devices: SceneDevice[] = [];
   const furniture: SceneFurniture[] = [];
+  const routes: SceneRoute[] = [];
+  const nodes = new Map(project.routeNodes.map((n) => [n.id, n]));
   const bounds = new THREE.Box3();
   for (const storey of visibleStoreys(project, upTo)) {
     for (const solid of wallSolids(project, storey.id)) {
@@ -168,8 +206,12 @@ function buildScene(project: Project, upTo: string | null): SceneData {
     }
     for (const f of project.furniture.filter((x) => x.storeyId === storey.id))
       furniture.push(furnitureMesh(project, f, storey.elevationMm));
+    for (const seg of project.routeSegments.filter((x) => x.storeyId === storey.id)) {
+      const mesh = routeMesh(project, seg, nodes);
+      if (mesh) routes.push(mesh);
+    }
   }
-  return { walls, polys, devices, furniture, bounds };
+  return { walls, polys, devices, furniture, routes, bounds };
 }
 
 /** Testhilfe: Projektion eines Weltpunkts (mm) auf Seitenkoordinaten. */
@@ -235,11 +277,25 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     isDeviceVisible(project, { hiddenTrades, furnitureHidden }, d.device),
   );
   const furniture = furnitureHidden ? [] : scene.furniture;
+  const routesHidden = useStore(view, (s) => s.routesHidden);
+  const pathEdit = useStore(view, (s) => s.pathEdit);
+  const routes = routesHidden ? [] : scene.routes;
+  // Hervorgehobene Leitung (design.md M3 „Leitungen“)
+  const selectedCable =
+    selection?.kind === "cable" ? project.cables.find((c) => c.id === selection.id) : undefined;
+  const highlighted = new Set(
+    pathEdit
+      ? pathEdit.segmentIds
+      : selectedCable && isCableVisible(project, { hiddenTrades, furnitureHidden }, selectedCable)
+        ? selectedCable.path
+        : [],
+  );
   useEffect(
     () => () => {
       scene.walls.forEach((w) => w.geometry.dispose());
       scene.devices.forEach((d) => d.geometry.dispose());
       scene.furniture.forEach((f) => f.geometry.dispose());
+      scene.routes.forEach((r) => r.geometry.dispose());
     },
     [scene],
   );
@@ -302,6 +358,12 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
         data-walls={summary}
         data-devices={deviceSummary}
         data-furniture={furnitureSummary}
+        data-routes={routes.length}
+        data-highlighted={routes
+          .filter((r) => highlighted.has(r.id))
+          .map((r) => r.id)
+          .sort()
+          .join(",")}
         data-storeys={visibleStoreys(project, upTo)
           .map((s) => s.name)
           .sort()
@@ -372,6 +434,27 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
                 color={isSel(selection, "furniture", f.id) ? COLORS.selected : COLORS.furniture}
                 transparent
                 opacity={0.75}
+              />
+            </mesh>
+          ))}
+          {routes.map((r) => (
+            <mesh
+              key={r.id}
+              geometry={r.geometry}
+              matrix={r.matrix}
+              matrixAutoUpdate={false}
+              onClick={pick({ kind: "route-segment", id: r.id })}
+            >
+              <meshStandardMaterial
+                color={
+                  highlighted.has(r.id)
+                    ? HIGHLIGHT_COLOR
+                    : isSel(selection, "route-segment", r.id)
+                      ? COLORS.selected
+                      : warned.has(r.id)
+                        ? WARNING_COLOR
+                        : STATUS_COLORS[r.status]
+                }
               />
             </mesh>
           ))}

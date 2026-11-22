@@ -4,6 +4,7 @@ import { roundDeg } from "../model/rounding";
 import type { InstallZones } from "../model/types";
 import { setInstallZones, setNorthDeg, setProjectName } from "../store/commands";
 import type { ProjectStore } from "../store/history";
+import { setLengthAllowance } from "../store/cables";
 import { DegField, MmField, TextField } from "./fields";
 
 const ZONE_ROWS: { key: keyof InstallZones; label: string }[] = [
@@ -12,11 +13,16 @@ const ZONE_ROWS: { key: keyof InstallZones; label: string }[] = [
   { key: "verticalFromEdge", label: "Senkrechte Zone neben Ecken und Laibungen" },
 ];
 
-/** Projekteinstellungen: Projektname, Nordrichtung und Installationszonen, undo-fähig. */
+/** Projekteinstellungen: Projektname, Nordrichtung, Installationszonen, Leitungszuschläge, undo-fähig. */
 export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClose(): void }) {
   const name = useStore(store, (s) => s.project.name);
   const northDeg = useStore(store, (s) => s.project.settings.northDeg);
   const zones = useStore(store, (s) => s.project.settings.installZones);
+  const allowance = useStore(store, (s) => s.project.settings.lengthAllowance);
+  const commitAllowance = (patch: Partial<typeof allowance>) => {
+    const r = setLengthAllowance({ ...allowance, ...patch });
+    if (r.ok) store.execute(r.command);
+  };
   const [zoneError, setZoneError] = useState<string | null>(null);
   // abgelehnte Eingabe: Felder neu aufbauen, damit sie den gespeicherten Wert zeigen
   const [resets, setResets] = useState(0);
@@ -82,6 +88,21 @@ export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClo
               {zoneError}
             </p>
           )}
+        </fieldset>
+        <fieldset className="settings__zones">
+          <legend>Leitungslängen</legend>
+          <MmField
+            label="Zuschlag je Geräteendpunkt (mm)"
+            min={0}
+            value={allowance.perDeviceMm}
+            onCommit={(perDeviceMm) => commitAllowance({ perDeviceMm })}
+          />
+          <MmField
+            label="Verschnitt (%)"
+            min={0}
+            value={allowance.wastePercent}
+            onCommit={(wastePercent) => commitAllowance({ wastePercent })}
+          />
         </fieldset>
         <div className="dialog__buttons">
           <button type="button" onClick={onClose}>
