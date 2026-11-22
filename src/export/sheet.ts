@@ -32,6 +32,13 @@ export type Item =
       stroke?: string | null;
     } & Style)
   | ({
+      kind: "path";
+      /** mehrere Ringe; Löcher gegenläufig (Füllregel nonzero) */
+      rings: [number, number][][];
+      fill?: string;
+      stroke?: string | null;
+    } & Style)
+  | ({
       kind: "circle";
       cx: number;
       cy: number;

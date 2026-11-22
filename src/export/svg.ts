@@ -29,6 +29,12 @@ function itemSvg(i: Item): string {
       const tag = i.closed ? "polygon" : "polyline";
       return `<${tag} points="${pts}" fill="${esc(i.fill ?? "none")}"${style(i, i.stroke)} stroke-linejoin="miter"${data}/>`;
     }
+    case "path": {
+      const d = i.rings
+        .map((r) => "M" + r.map(([x, y]) => `${n(x)},${n(y)}`).join("L") + "Z")
+        .join(" ");
+      return `<path d="${d}" fill="${esc(i.fill ?? "none")}" fill-rule="nonzero"${style(i, i.stroke)} stroke-linejoin="miter"${data}/>`;
+    }
     case "circle":
       return `<circle cx="${n(i.cx)}" cy="${n(i.cy)}" r="${n(i.r)}" fill="${esc(i.fill ?? "none")}"${style(i, i.stroke)}${data}/>`;
     case "text": {
