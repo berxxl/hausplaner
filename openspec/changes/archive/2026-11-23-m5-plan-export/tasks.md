@@ -41,7 +41,7 @@
 ## 8. Integration
 
 - [x] 8.1 Playwright-Ablauf: Listen öffnen, filtern, Zeile auswählen; Export mit Wandansichten, Belegung und Leitungsliste; Baustellen-PDF; alle drei Browser
-- [ ] 8.2 Manuell: banatstrasse10 Grundriss EG in 1:50 auf A3 drucken und eine Wand nachmessen, Wandansichten eines Raums und Baustellen-PDF prüfen, Listen durchsehen (in Safari); Befunde als Folge-Tasks
+- [x] 8.2 Manuell: banatstrasse10 Grundriss EG in 1:50 auf A3 drucken und eine Wand nachmessen, Wandansichten eines Raums und Baustellen-PDF prüfen, Listen durchsehen (in Safari); Befunde als Folge-Tasks (vom Benutzer zurückgestellt (2026-11-23); Ausdruck 1:50 auf A3 und Prüfung in Safari stehen als offener Punkt im Drift-Review)
 
 ## Workflow follow-up
 

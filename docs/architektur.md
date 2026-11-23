@@ -326,7 +326,7 @@ src/
 server/         lokaler Node-Server: statische App, Dateizugriff im Projektordner, Dateibeobachtung
 ```
 
-`geometry/`, `rules/`, `reports/`, `export/` (außer `export/pdf.ts`) und die Serialisierung in `io/` hängen nicht von React ab. Exporteinstellungen (Maßstab, Format, Planstand, Filter) sind Ansichtszustand im Browser, nicht Teil der Projektdateien; Blattaufbau, Plankopf und Seitenzuordnung der Baustellen-PDF beschreibt `openspec/changes/m5-plan-export/design.md`. Der Server darf nur innerhalb des beim Start angegebenen Projektordners lesen und schreiben.
+`geometry/`, `rules/`, `reports/`, `export/` (außer `export/pdf.ts`) und die Serialisierung in `io/` hängen nicht von React ab. Exporteinstellungen (Maßstab, Format, Planstand, Filter) sind Ansichtszustand im Browser, nicht Teil der Projektdateien; Blattaufbau, Plankopf und Seitenzuordnung der Baustellen-PDF beschreibt `openspec/changes/archive/2026-11-23-m5-plan-export/design.md`. Der Server darf nur innerhalb des beim Start angegebenen Projektordners lesen und schreiben.
 
 ## Meilensteine
 
