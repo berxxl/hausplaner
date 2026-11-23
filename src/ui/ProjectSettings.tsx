@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useStore } from "zustand";
 import { roundDeg } from "../model/rounding";
 import type { InstallZones } from "../model/types";
-import { setInstallZones, setNorthDeg, setProjectName, setReserves } from "../store/commands";
+import {
+  setCondensateMinSlope,
+  setInstallZones,
+  setNorthDeg,
+  setProjectName,
+  setReserves,
+} from "../store/commands";
 import { lineParticipantCount } from "../geometry/knx";
 import { allIds } from "../model/factory";
 import { newId } from "../model/ids";
@@ -19,7 +25,7 @@ const ZONE_ROWS: { key: keyof InstallZones; label: string }[] = [
 
 /**
  * Projekteinstellungen: Projektname, Nordrichtung, Installationszonen, Leitungszuschläge, Reserven
- * und KNX-Linien (M4), undo-fähig.
+ * und KNX-Linien (M4), Mindestgefälle für Kondensat (M6), undo-fähig.
  */
 export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClose(): void }) {
   const name = useStore(store, (s) => s.project.name);
@@ -27,7 +33,7 @@ export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClo
   const zones = useStore(store, (s) => s.project.settings.installZones);
   const allowance = useStore(store, (s) => s.project.settings.lengthAllowance);
   const project = useStore(store, (s) => s.project);
-  const { teReservePercent, actuatorReservePercent } = project.settings;
+  const { teReservePercent, actuatorReservePercent, condensateMinSlopePercent } = project.settings;
   const [lineMessage, setLineMessage] = useState<string | null>(null);
   const commitReserves = (patch: {
     teReservePercent?: number;
@@ -143,6 +149,21 @@ export function ProjectSettings({ store, onClose }: { store: ProjectStore; onClo
             min={0}
             value={actuatorReservePercent}
             onCommit={(v) => commitReserves({ actuatorReservePercent: v })}
+          />
+        </fieldset>
+        <fieldset className="settings__zones">
+          <legend>Kondensat</legend>
+          <NumberField
+            key={`slope#${resets}`}
+            label="Mindestgefälle (%)"
+            min={0}
+            decimals={1}
+            value={condensateMinSlopePercent}
+            onCommit={(v) => {
+              const r = setCondensateMinSlope(v);
+              if (r.ok) store.execute(r.command);
+              else setResets((n) => n + 1);
+            }}
           />
         </fieldset>
         <fieldset className="settings__zones">

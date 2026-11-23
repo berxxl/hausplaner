@@ -152,6 +152,29 @@ function walk(g: RouteGraph, cable: Pick<Cable, "from" | "to">, path: readonly s
   return null;
 }
 
+/**
+ * Knotenfolge eines zusammenhängenden Wegs ab dem Endpunkt `from` (Länge = Segmente + 1), sonst
+ * null (design.md M6 „Kondensatgefälle“).
+ */
+export function pathNodes(project: Project, cable: Pick<Cable, "from" | "to" | "path">) {
+  const g = routeGraph(project);
+  if (walk(g, cable, cable.path) === null) return null;
+  for (const start of endpointNodes(g, cable.from)) {
+    const nodes = [start];
+    let at = start;
+    for (const id of cable.path) {
+      const s = g.segments.get(id)!;
+      if (s.a === at) at = s.b;
+      else if (s.b === at) at = s.a;
+      else break;
+      nodes.push(at);
+    }
+    if (nodes.length === cable.path.length + 1 && isEndpointNode(g.nodes.get(at), cable.to))
+      return nodes;
+  }
+  return null;
+}
+
 /** Zusammenhängende Kette vom Gerät `from` zum Gerät `to`? */
 export function isPathConnected(project: Project, cable: Pick<Cable, "from" | "to" | "path">) {
   return walk(routeGraph(project), cable, cable.path) !== null;

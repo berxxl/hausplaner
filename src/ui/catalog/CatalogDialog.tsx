@@ -4,6 +4,7 @@ import { allIds } from "../../model/factory";
 import { newId } from "../../model/ids";
 import { KNX_FUNCTIONS, MOUNTINGS, TRADES } from "../../model/schema";
 import { importSvgSymbol } from "../../model/symbol";
+import { refrigerantUnit } from "../../model/devices";
 import type {
   DeviceType,
   FurnitureType,
@@ -503,7 +504,12 @@ function DeviceTypeForm({
                 set(
                   "refrigerant",
                   e.target.checked
-                    ? { minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 }
+                    ? {
+                        unit: type.connects.includes("condensate") ? "indoor" : "outdoor",
+                        minLengthM: 3,
+                        maxLengthM: 25,
+                        prechargedLengthM: 7,
+                      }
                     : undefined,
                 )
               }
@@ -512,6 +518,17 @@ function DeviceTypeForm({
           </label>
         </legend>
         {type.refrigerant && (
+          <Select
+            label="Gerät"
+            value={refrigerantUnit(type) ?? "outdoor"}
+            options={[
+              { value: "indoor" as const, label: "Innengerät" },
+              { value: "outdoor" as const, label: "Außengerät" },
+            ]}
+            onChange={(unit) => set("refrigerant", { ...type.refrigerant!, unit })}
+          />
+        )}
+        {type.refrigerant && refrigerantUnit(type) === "outdoor" && (
           <>
             <NumberField
               label="Leitungslänge min."

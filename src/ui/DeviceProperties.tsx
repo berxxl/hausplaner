@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
+import { AcConnectionInfo } from "./AcConnectionInfo";
 import { finishedWallDistances, rawHeightOf, type PlanDirection } from "../geometry/devices";
 import { OPENING_LABELS } from "../geometry/openings";
 import type { RoomView } from "../geometry/surfaces";
@@ -273,6 +274,7 @@ function SingleDevice({
       )}
       <DeviceAssignments ids={[device.id]} project={project} store={store} view={view} />
       <ConsumerChannel device={device} project={project} store={store} />
+      <AcConnectionInfo project={project} view={view} deviceId={device.id} />
       <button type="button" onClick={() => store.execute(deleteDevices([device.id]))}>
         Gerät löschen
       </button>

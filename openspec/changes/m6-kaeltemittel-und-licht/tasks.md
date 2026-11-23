@@ -8,17 +8,17 @@
 
 ## 2. Klimaverbindung und Kältemittellänge (rein)
 
-- [ ] 2.1 `geometry/refrigerant.ts`: `refrigerantLinks`, `acConnection`, Mehrlänge; Unit-Tests: Innengerät Schlafen mit Außengerät, Kältemittel- und Kondensatleitung zum Ablauf (Spec-Scenario „Split-Gerät Schlafzimmer“), drei Innengeräte an einem Multisplit-Außengerät (Spec-Scenario „Multisplit“), 9,5 m bei 7 m vorgefüllt ergibt 2,5 m (Spec-Scenario „Nachfüllen nötig“), ohne Weg keine Länge
-- [ ] 2.2 `rules/refrigerant.ts`: `refrigerant-too-long`, `refrigerant-too-short`, `refrigerant-ends`, `ac-without-condensate`; Unit-Tests: Länge über Höchstlänge (Spec-Scenario „Zu lang“), unter Mindestlänge, Innen-Innen, ohne Weg keine Längenwarnung
+- [x] 2.1 `geometry/refrigerant.ts`: `refrigerantLinks`, `acConnection`, Mehrlänge; Unit-Tests: Innengerät Schlafen mit Außengerät, Kältemittel- und Kondensatleitung zum Ablauf (Spec-Scenario „Split-Gerät Schlafzimmer“), drei Innengeräte an einem Multisplit-Außengerät (Spec-Scenario „Multisplit“), 9,5 m bei 7 m vorgefüllt ergibt 2,5 m (Spec-Scenario „Nachfüllen nötig“), ohne Weg keine Länge
+- [x] 2.2 `rules/refrigerant.ts`: `refrigerant-too-long`, `refrigerant-too-short`, `refrigerant-ends`, `ac-without-condensate`; Unit-Tests: Länge über Höchstlänge (Spec-Scenario „Zu lang“), unter Mindestlänge, Innen-Innen, ohne Weg keine Längenwarnung
 
 ## 3. Kondensatgefälle
 
-- [ ] 3.1 Gefälle je Segment in Fließrichtung, Regel `condensate-slope`; Unit-Tests: Segment steigt zum Ablauf an → Warnung „Kondensat ohne Gefälle“ am Segment (Spec-Scenario „Steigung“), senkrecht nach unten keine Warnung (Spec-Scenario „Senkrecht nach unten“), 0,5 % bei 1 % meldet, 1 % nicht, vertauschte Enden, Durchbruch waagerecht meldet, geteiltes Segment einmal
-- [ ] 3.2 Projekteinstellungen „Kondensat“ mit „Mindestgefälle (%)“ (Befehl „Mindestgefälle ändern“); Komponententest: 2 % meldet ein 1,5-%-Segment, Undo stellt 1 % her
+- [x] 3.1 Gefälle je Segment in Fließrichtung, Regel `condensate-slope`; Unit-Tests: Segment steigt zum Ablauf an → Warnung „Kondensat ohne Gefälle“ am Segment (Spec-Scenario „Steigung“), senkrecht nach unten keine Warnung (Spec-Scenario „Senkrecht nach unten“), 0,5 % bei 1 % meldet, 1 % nicht, vertauschte Enden, Durchbruch waagerecht meldet, geteiltes Segment einmal
+- [x] 3.2 Projekteinstellungen „Kondensat“ mit „Mindestgefälle (%)“ (Befehl „Mindestgefälle ändern“); Komponententest: 2 % meldet ein 1,5-%-Segment, Undo stellt 1 % her
 
 ## 4. Klima in der Oberfläche
 
-- [ ] 4.1 Eigenschaften: Abschnitt „Klimaverbindung“ am Innen- und Außengerät, Mehrlänge und Gefälle an der Leitung; Katalogdialog „Innengerät“/„Außengerät“; Komponententests: Innengerät zeigt Außengerät, Kältemittel- und Kondensatleitung (Spec-Scenario „Split-Gerät Schlafzimmer“), Außengerät zeigt drei Verbindungen, Katalogdialog setzt `unit`
+- [x] 4.1 Eigenschaften: Abschnitt „Klimaverbindung“ am Innen- und Außengerät, Mehrlänge und Gefälle an der Leitung; Katalogdialog „Innengerät“/„Außengerät“; Komponententests: Innengerät zeigt Außengerät, Kältemittel- und Kondensatleitung (Spec-Scenario „Split-Gerät Schlafzimmer“), Außengerät zeigt drei Verbindungen, Katalogdialog setzt `unit`
 
 ## 5. Licht in 3D
 

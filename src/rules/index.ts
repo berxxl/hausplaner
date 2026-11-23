@@ -9,6 +9,7 @@ import { cableWarnings } from "./cables";
 import { boardWarnings } from "./boards";
 import { circuitWarnings } from "./circuits";
 import { knxWarnings } from "./knx";
+import { refrigerantWarnings } from "./refrigerant";
 
 export type WarningTarget =
   | { kind: "room"; id: string }
@@ -63,5 +64,6 @@ export function computeWarnings(project: Project): ProjectWarning[] {
   warnings.push(...deviceCoveredWarnings(project));
   warnings.push(...routeWarnings(project), ...cableWarnings(project));
   warnings.push(...boardWarnings(project), ...circuitWarnings(project), ...knxWarnings(project));
+  warnings.push(...refrigerantWarnings(project));
   return warnings.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }

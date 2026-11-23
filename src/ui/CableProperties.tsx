@@ -1,4 +1,12 @@
 /** Eigenschaften einer Leitung (design.md M3 „Leitungen“): Typ, Bezeichnung, Status, Länge, Weg. */
+import {
+  condensateSlopes,
+  extraLengthText,
+  formatSlope,
+  isCondensateCable,
+  isRefrigerantCable,
+  refrigerantLinks,
+} from "../geometry/refrigerant";
 import { useId, useState } from "react";
 import { useStore } from "zustand";
 import {
@@ -92,6 +100,7 @@ export function CableProperties({
       <p className="field-info" aria-label="Leitungslänge">
         Länge: {formatCableLength(cableLength(project, cable))}
       </p>
+      <RefrigerantCableInfo project={project} cable={cable} />
       <p className="field-info">{cable.path.length} Segmente im Weg</p>
       {editing ? (
         <>
@@ -133,5 +142,32 @@ export function CableProperties({
         Leitung löschen
       </button>
     </>
+  );
+}
+
+/** Mehrlänge an Kältemittelleitungen, Gefälle an Kondensatleitungen (design.md M6). */
+function RefrigerantCableInfo({ project, cable }: { project: Project; cable: Cable }) {
+  if (isRefrigerantCable(project, cable)) {
+    const link = refrigerantLinks(project).find((l) => l.cableId === cable.id);
+    const text = link && extraLengthText(link);
+    return text ? (
+      <p className="field-info" aria-label="Mehrlänge">
+        {text}
+      </p>
+    ) : null;
+  }
+  if (!isCondensateCable(project, cable)) return null;
+  const slopes = condensateSlopes(project, cable);
+  if (!slopes) return null;
+  const bad = slopes.filter((s) => !s.ok).length;
+  const sloped = slopes.filter((s) => s.percent !== null).map((s) => s.percent!);
+  return (
+    <p className="field-info" aria-label="Gefälle">
+      {bad > 0
+        ? `ohne Gefälle in ${bad} ${bad === 1 ? "Segment" : "Segmenten"}`
+        : sloped.length > 0
+          ? `Gefälle min. ${formatSlope(Math.min(...sloped))}`
+          : "Gefälle: nur senkrecht"}
+    </p>
   );
 }

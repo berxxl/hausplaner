@@ -119,6 +119,21 @@ export function setUnderlay(
   };
 }
 
+/** „Mindestgefälle ändern“ (design.md M6 „Einstellungen“): 0–10 %, eine Nachkommastelle. */
+export function setCondensateMinSlope(percent: number): Checked {
+  if (!Number.isFinite(percent) || percent < 0 || percent > 10)
+    return { ok: false, error: "Mindestgefälle zwischen 0 und 10 %" };
+  return {
+    ok: true,
+    command: {
+      label: "Mindestgefälle ändern",
+      run(draft) {
+        draft.settings.condensateMinSlopePercent = Math.round(percent * 10) / 10;
+      },
+    },
+  };
+}
+
 /** „Reserven ändern“ (design.md M4): TE-Reserve und Aktorreserve, je 0–100 %. */
 export function setReserves(values: {
   teReservePercent: number;
