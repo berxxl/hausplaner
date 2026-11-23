@@ -1,4 +1,4 @@
-schemaVersion: 4
+schemaVersion: 5
 name: "Beispielhaus"
 settings:
   northDeg: 0
@@ -9,3 +9,4 @@ settings:
   lengthAllowance: {perDeviceMm: 300, perBoardMm: 1500, wastePercent: 10}
   teReservePercent: 25
   actuatorReservePercent: 20
+  condensateMinSlopePercent: 1

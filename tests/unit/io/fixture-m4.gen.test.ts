@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import { loadProject } from "../../../src/io/load";
 import { projectToFiles } from "../../../src/io/project-files";
 import type { Board, Device, Project } from "../../../src/model/types";
-import { defaultCatalog } from "../../../src/model/default-catalog";
+import { defaultCatalog, M6_DEVICE_TYPE_IDS } from "../../../src/model/default-catalog";
 import { createProjectStore } from "../../../src/store/history";
 import { readV3Fixture } from "../fixtures";
 
@@ -68,6 +68,9 @@ export function buildM4(): Project {
         const have = new Set(d.catalog[key].map((t) => t.id));
         for (const t of std[key]) if (!have.has(t.id)) (d.catalog[key] as { id: string }[]).push(t);
       }
+      // Klimatypen wie in M4 ohne Rolle (ab M6 abgeleitet); die M6-Typen ergänzt die Migration 4 → 5
+      for (const t of d.catalog.deviceTypes)
+        if (t.refrigerant && !M6_DEVICE_TYPE_IDS.includes(t.id)) delete t.refrigerant.unit;
       const eg = "e0g1k2m3";
       const og = "o9g1k2m3";
       const boards: Omit<Board, "storeyId">[] = [

@@ -2,9 +2,9 @@
 
 ## 1. Schema, Katalog, Dateiformat
 
-- [ ] 1.1 Schemaversion 5: `settings.condensateMinSlopePercent` (0–10), `refrigerant.unit?`, `cameraViews` im Modell; Migration `4 → 5` (Mindestgefälle 1 %, neue Standardtypen `condensate-drain`, `ac-outdoor-multi-3`, vorhandene Typen unverändert); `refrigerantUnit(type)` mit Ableitung; Standardkatalog neuer Projekte mit `unit`; Unit-Tests: Migration der M4-Fixture (Spec-Scenario „Projekt aus M5“), Standardkatalog (Spec-Scenario „Standardkatalog“), Ableitung der Rolle
-- [ ] 1.2 Datei `ansichten.yaml` (nur mit Inhalt), Feldreihenfolge, Flow-Stil, Bereinigung `upToStoreyId` in `normalizeAfterCommand`; `docs/architektur.md` (Dateiliste, `Project.cameraViews`, `CameraView`, `Settings`, `refrigerant.unit?`); Serialisierungstest
-- [ ] 1.3 Fixture `tests/fixtures/m6` über Generator `tests/unit/io/fixture-m6.gen.test.ts` (Klima Schlafen, Außengerät auf Außenwand, Kondensatablauf, Trassen mit Durchbruch, Kältemittel- und Kondensatleitung, vier Spots in Wohnen auf „F3 Licht“, Deckenauslass 4000 K, eine Ansicht); Golden-File-Test; Migrationstest „erster Befehl schreibt nur projekt.yaml und katalog.yaml“
+- [x] 1.1 Schemaversion 5: `settings.condensateMinSlopePercent` (0–10), `refrigerant.unit?`, `cameraViews` im Modell; Migration `4 → 5` (Mindestgefälle 1 %, neue Standardtypen `condensate-drain`, `ac-outdoor-multi-3`, vorhandene Typen unverändert); `refrigerantUnit(type)` mit Ableitung; Standardkatalog neuer Projekte mit `unit`; Unit-Tests: Migration der M4-Fixture (Spec-Scenario „Projekt aus M5“), Standardkatalog (Spec-Scenario „Standardkatalog“), Ableitung der Rolle
+- [x] 1.2 Datei `ansichten.yaml` (nur mit Inhalt), Feldreihenfolge, Flow-Stil, Bereinigung `upToStoreyId` in `normalizeAfterCommand`; `docs/architektur.md` (Dateiliste, `Project.cameraViews`, `CameraView`, `Settings`, `refrigerant.unit?`); Serialisierungstest
+- [x] 1.3 Fixture `tests/fixtures/m6` über Generator `tests/unit/io/fixture-m6.gen.test.ts` (Klima Schlafen, Außengerät auf Außenwand, Kondensatablauf, Trassen mit Durchbruch, Kältemittel- und Kondensatleitung, vier Spots in Wohnen auf „F3 Licht“, Deckenauslass 4000 K, eine Ansicht); Golden-File-Test; Migrationstest „erster Befehl schreibt nur projekt.yaml und katalog.yaml“
 
 ## 2. Klimaverbindung und Kältemittellänge (rein)
 

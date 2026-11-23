@@ -7,7 +7,7 @@ import type { Project } from "../../../src/model/types";
 
 function emptyProject(): Project {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     name: "Test",
     settings: {
       northDeg: 0,
@@ -15,6 +15,7 @@ function emptyProject(): Project {
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
       teReservePercent: 25,
       actuatorReservePercent: 20,
+      condensateMinSlopePercent: 1,
     },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
@@ -28,6 +29,7 @@ function emptyProject(): Project {
     knxLines: [],
     knxAssignments: [],
     suppressedWarnings: [],
+    cameraViews: [],
     storeys: [],
     walls: [],
     rooms: [],

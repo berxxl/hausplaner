@@ -1,4 +1,8 @@
-import { M4_DEVICE_TYPE_IDS, M4_LINE_TYPE_IDS } from "../../../src/model/default-catalog";
+import {
+  M4_DEVICE_TYPE_IDS,
+  M6_DEVICE_TYPE_IDS,
+  M4_LINE_TYPE_IDS,
+} from "../../../src/model/default-catalog";
 // Standardkatalog (1.5) und Migration 1 → 2 (1.6)
 import { loadProject } from "../../../src/io/load";
 import { projectToFiles } from "../../../src/io/project-files";
@@ -99,12 +103,12 @@ describe("Migration 1 → 2 (1.6)", () => {
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.notice).toBe(
-      "Projekt auf Version 4 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 5 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     // Laden selbst schreibt nichts: Vergleichsbasis ist der gelesene Inhalt
     expect(result.contents).toEqual(files);
     const p = result.project;
-    expect(p.schemaVersion).toBe(4);
+    expect(p.schemaVersion).toBe(5);
     expect(p.settings.installZones).toEqual({
       horizontalTop: [150, 450],
       horizontalBottom: [150, 450],
@@ -116,18 +120,18 @@ describe("Migration 1 → 2 (1.6)", () => {
     store.execute({ label: "Projekt umbenennen", run: (d) => void (d.name = "Neu") });
     const out = projectToFiles(store.getState().project);
     expect(out["geschosse/eg.yaml"]).toBe(files["geschosse/eg.yaml"]);
-    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 4\n/);
+    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 5\n/);
     expect(out["katalog.yaml"]).toContain('- id: "socket"');
   });
 
-  test("vorhandene katalog.yaml bleibt bei der Migration 1 → 2 erhalten, 3 → 4 ergänzt nur die M4-Standardtypen", () => {
+  test("vorhandene katalog.yaml bleibt bei der Migration 1 → 2 erhalten, 3 → 4 und 4 → 5 ergänzen nur die M4- und M6-Standardtypen", () => {
     const own =
       'furnitureTypes:\n  - id: "sofa"\n    name: "Sofa"\n    widthMm: 2000\n    depthMm: 900\n    heightMm: 800\n    elevationMm: 0\n';
     const files = { ...readV1Fixture("klein"), "katalog.yaml": own };
     const result = loadProject(files);
     if (result.status !== "ok") throw new Error(JSON.stringify(result));
     const { deviceTypes, lineTypes, furnitureTypes } = result.project.catalog;
-    expect(deviceTypes.map((t) => t.id)).toEqual(M4_DEVICE_TYPE_IDS);
+    expect(deviceTypes.map((t) => t.id)).toEqual([...M4_DEVICE_TYPE_IDS, ...M6_DEVICE_TYPE_IDS]);
     expect(lineTypes.map((t) => t.id)).toEqual(M4_LINE_TYPE_IDS);
     expect(furnitureTypes).toEqual([
       { id: "sofa", name: "Sofa", widthMm: 2000, depthMm: 900, heightMm: 800, elevationMm: 0 },

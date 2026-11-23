@@ -3,7 +3,7 @@
  * (design.md M2 „Store und Befehle“, M3 „Store und Befehle“, „Löschen und abhängige Änderungen“):
  * Höhenbezug von Wandgeräten bei geänderter Raumzuordnung, Trassen (Anker auf gelöschten Flächen,
  * Gerätknoten, Übergangsanker, verwaiste Segmente und Knoten, Leitungen gelöschter Geräte, Pfade),
- * Verteiler (M4: Löschkaskaden, Verteilerknoten, optionale Verweise), Bereinigen übergangener
+ * Verteiler (M4: Löschkaskaden, Verteilerknoten, optionale Verweise), 3D-Ansichten (M6), Bereinigen übergangener
  * Warnungen, zu denen keine Warnung mehr berechnet wird. Frei von React.
  */
 import { current, type Draft } from "immer";
@@ -17,7 +17,15 @@ export function normalizeAfterCommand(base: Project, draft: Draft<Project>): voi
   rebaseDeviceHeights(base, draft);
   normalizeBoards(base, draft);
   normalizeRoutes(base, draft);
+  normalizeCameraViews(draft);
   pruneSuppressedWarnings(draft);
+}
+
+/** Ansicht mit unbekanntem „Anzeigen bis“ zeigt alle Geschosse (design.md M6 „Dateiformat M5“). */
+function normalizeCameraViews(draft: Draft<Project>): void {
+  const storeys = new Set(draft.storeys.map((s) => s.id));
+  for (const v of draft.cameraViews)
+    if (v.upToStoreyId !== undefined && !storeys.has(v.upToStoreyId)) delete v.upToStoreyId;
 }
 
 /** Gibt es die Fläche (Wand, Raum, Schräge) im Projekt? */

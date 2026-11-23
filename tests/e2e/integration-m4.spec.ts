@@ -12,10 +12,11 @@ import {
 /** M3-Fixture im Stand von M3: Schemaversion 3, ohne Reserven und Verteilerzuschlag. */
 function m3Project(): Record<string, string> {
   const files = fixtureFiles("m3");
-  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 3")
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 5", "schemaVersion: 3")
     .replace(/ perBoardMm: \d+,/, "")
     .replace(/ {2}teReservePercent: .*\n/, "")
-    .replace(/ {2}actuatorReservePercent: .*\n/, "");
+    .replace(/ {2}actuatorReservePercent: .*\n/, "")
+    .replace(/ {2}condensateMinSlopePercent: .*\n/, "");
   return files;
 }
 
@@ -45,7 +46,7 @@ test("7.1 Gesamtablauf M4: M3-Projekt migrieren, UV, Belegung, Trasse, Leitung, 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kleines Projekt" })).toBeVisible();
   const notice = page.getByRole("region", { name: "Hinweis" });
-  await expect(notice).toContainText("Projekt auf Version 4 aktualisiert");
+  await expect(notice).toContainText("Projekt auf Version 5 aktualisiert");
   await notice.getByRole("button", { name: "OK" }).click();
   const props = page.getByRole("complementary", { name: "Eigenschaften" });
 

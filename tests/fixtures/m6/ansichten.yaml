@@ -1,0 +1,6 @@
+cameraViews:
+  - id: "v1kueche"
+    name: "Küche vom Esstisch"
+    position: {x: 3000, y: 2500, z: 1600}
+    target: {x: 1000, y: 800, z: 900}
+    upToStoreyId: "e0g1k2m3"

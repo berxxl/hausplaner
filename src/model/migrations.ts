@@ -6,6 +6,8 @@
 import { CURRENT_SCHEMA_VERSION } from "./schema";
 import {
   DEFAULT_ACTUATOR_RESERVE_PERCENT,
+  DEFAULT_CONDENSATE_MIN_SLOPE_PERCENT,
+  M6_DEVICE_TYPE_IDS,
   DEFAULT_TE_RESERVE_PERCENT,
   M4_DEVICE_TYPE_IDS,
   M4_LINE_TYPE_IDS,
@@ -99,19 +101,51 @@ export function migrateV3toV4(files: RawFiles): RawFiles {
   // Ohne katalog.yaml gilt der Katalog als leer (bewusst geleert); dann nichts ergänzen.
   if (raw && typeof raw === "object") {
     const catalog = structuredClone(raw) as Record<string, unknown>;
-    const add = <T extends { id: string }>(key: string, defaults: T[], ids: string[]) => {
-      const list = Array.isArray(catalog[key]) ? (catalog[key] as { id?: unknown }[]) : [];
-      const have = new Set(list.map((t) => t.id));
-      const missing = defaults.filter((t) => ids.includes(t.id) && !have.has(t.id));
-      if (missing.length > 0) catalog[key] = [...list, ...structuredClone(missing)];
-    };
-    add("deviceTypes", DEFAULT_DEVICE_TYPES, M4_DEVICE_TYPE_IDS);
-    add("lineTypes", DEFAULT_LINE_TYPES, M4_LINE_TYPE_IDS);
+    addMissingTypes(catalog, "deviceTypes", DEFAULT_DEVICE_TYPES, M4_DEVICE_TYPE_IDS);
+    addMissingTypes(catalog, "lineTypes", DEFAULT_LINE_TYPES, M4_LINE_TYPE_IDS);
     next["katalog.yaml"] = catalog;
   }
   return next;
 }
 registerMigration(3, migrateV3toV4);
+
+/** Hängt Standardtypen an, deren ID im Katalog fehlt; vorhandene Typen bleiben unverändert. */
+function addMissingTypes<T extends { id: string }>(
+  catalog: Record<string, unknown>,
+  key: string,
+  defaults: T[],
+  ids: string[],
+) {
+  const list = Array.isArray(catalog[key]) ? (catalog[key] as { id?: unknown }[]) : [];
+  const have = new Set(list.map((t) => t.id));
+  const missing = defaults.filter((t) => ids.includes(t.id) && !have.has(t.id));
+  if (missing.length > 0) catalog[key] = [...list, ...structuredClone(missing)];
+}
+
+/**
+ * 4 → 5 (design.md M6 „Schemaversion 5 und Migration“): Mindestgefälle für Kondensat und die
+ * neuen Standardtypen Kondensatablauf und Multisplit-Außengerät. Vorhandene Typen bleiben
+ * unverändert; ihre Klimarolle wird abgeleitet (`refrigerantUnit`).
+ */
+export function migrateV4toV5(files: RawFiles): RawFiles {
+  const next: RawFiles = { ...files };
+  const project = structuredClone(files["projekt.yaml"]) as Record<string, unknown>;
+  const settings = (project.settings ?? {}) as Record<string, unknown>;
+  project.settings = {
+    ...settings,
+    condensateMinSlopePercent: DEFAULT_CONDENSATE_MIN_SLOPE_PERCENT,
+  };
+  project.schemaVersion = 5;
+  next["projekt.yaml"] = project;
+  const raw = files["katalog.yaml"];
+  if (raw && typeof raw === "object") {
+    const catalog = structuredClone(raw) as Record<string, unknown>;
+    addMissingTypes(catalog, "deviceTypes", DEFAULT_DEVICE_TYPES, M6_DEVICE_TYPE_IDS);
+    next["katalog.yaml"] = catalog;
+  }
+  return next;
+}
+registerMigration(4, migrateV4toV5);
 
 export function migrationNotice(version: number): string {
   return `Projekt auf Version ${version} aktualisiert, wird beim nächsten Speichern geschrieben`;

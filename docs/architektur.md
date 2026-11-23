@@ -59,13 +59,14 @@ haus-daten/
   verteiler.yaml        boards, Reiheneinbaugeräte (devices mit placement board), circuits, knxLines, knxAssignments (ab M4, nur mit Inhalt)
   leitungen.yaml        cables
   warnungen.yaml        suppressedWarnings
+  ansichten.yaml        cameraViews: gespeicherte 3D-Kamerapositionen (ab M6, nur mit Inhalt)
   notizen.yaml          importierte Baustellennotizen (ab m7)
   plaene/<datei>.pdf    Architektenpläne, von storey.underlay.file referenziert
 ```
 
 \* Geräte stehen in der Datei des Geschosses ihrer Fläche; Geräte mit `placement: free` in der Datei ihres Geschosses (`storeyId` wird wie bei Wänden beim Laden gesetzt, nicht geschrieben).
 
-Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“; M4: `openspec/changes/archive/2026-11-22-m4-verteiler-und-stromkreise/design.md`, Abschnitt „Dateiformat M4“).
+Eine fehlende Datei gilt als leer. Jeder Meilenstein schreibt nur die Dateien, die er füllt; `*.yaml`-Dateien, die eine App-Version nicht kennt, ignoriert sie und schreibt oder löscht sie nie. Die vollständige Feldliste je Typ steht im Design des Meilensteins, der den Typ einführt (M1: `openspec/changes/archive/2026-11-21-m1-gebaeudemodell/design.md`, Abschnitt „Dateiformat M1“; M2: `openspec/changes/archive/2026-11-22-m2-geraete-und-moebel/design.md`, Abschnitt „Dateiformat M2“; M3: `openspec/changes/archive/2026-11-22-m3-trassen-und-leitungen/design.md`, Abschnitt „Dateiformat M3“; M4: `openspec/changes/archive/2026-11-22-m4-verteiler-und-stromkreise/design.md`, Abschnitt „Dateiformat M4“; M6: `openspec/changes/m6-kaeltemittel-und-licht/design.md`, Abschnitt „Dateiformat M5 (Schemaversion 5)“).
 
 Regeln für deterministisches Schreiben:
 
@@ -144,6 +145,7 @@ interface Project {
   knxLines: KnxLine[];                        // z. B. "1.1"
   knxAssignments: KnxAssignment[];
   suppressedWarnings: string[];  // Warnungsschlüssel, die bewusst übergangen wurden
+  cameraViews: CameraView[];     // gespeicherte 3D-Ansichten (ab M6)
 }
 
 interface Settings {
@@ -153,6 +155,7 @@ interface Settings {
                   verticalFromEdge: [number, number] };   // [150,450], [150,450], [100,300]
   teReservePercent: number;    // 25 (M4)
   actuatorReservePercent: number; // 20 (M4)
+  condensateMinSlopePercent: number; // 1 (M6), Mindestgefälle von Kondensatleitungen
 }
 
 interface Storey {
@@ -261,6 +264,13 @@ interface KnxAssignment {
   actuatorDeviceId: Id; channel: number; consumerDeviceId: Id;   // channel ab 1 (Anzeige A, B, …)
 }
 interface KnxLine { id: Id; label: string; boardId?: Id; }       // boardId: Verteiler, in dem die Linie beginnt
+
+interface CameraView {                         // ab M6
+  id: Id; name: string;
+  position: { x: number; y: number; z: number };   // Kamera in Welt-mm, z über Geländenull
+  target: { x: number; y: number; z: number };     // Blickziel der Orbit-Steuerung
+  upToStoreyId?: Id;                               // „Anzeigen bis“; fehlt = alle Geschosse
+}
 ```
 
 ### Katalog
@@ -285,7 +295,8 @@ interface DeviceType {
   knx?: { consumes?: KnxFunction;              // Verbraucher braucht einen Kanal dieser Funktion
           provides?: { function: KnxFunction; channels: number } };   // Aktor
   light?: { kind: "spot" | "point" | "area"; lumen: number; beamAngleDeg?: number; colorTempK: number };
-  refrigerant?: { minLengthM: number; maxLengthM: number; prechargedLengthM: number };
+  refrigerant?: { unit?: "indoor" | "outdoor";  // ab M6; fehlt: Innengerät, wenn es Kondensat anschließt
+                 minLengthM: number; maxLengthM: number; prechargedLengthM: number };  // maßgebend am Außengerät
 }
 type KnxFunction = "switch" | "dim" | "blind" | "heating" | "binary-input";
 
@@ -304,6 +315,8 @@ Ein neues Projekt startet mit einem Standardkatalog (Steckdosen, Schalter, Präs
 | Leitungslänge | Summe Segmentlängen + Zuschläge je Endpunkt (Gerät/Verteiler) + Verschnitt % |
 | TE-Belegung | Summe `teWidth` je Feld/Reihe gegen `tePerRow` |
 | Aktorbedarf | Zählung `knx.consumes` je Verteiler (über Stromkreis bzw. Leitung zum Verteiler) |
+| Klimaverbindung | Kältemittelleitung Innen- ↔ Außengerät, Kondensatleitung Innengerät → Ablauf; Mehrlänge = Leitungslänge − vorgefüllte Länge (M6) |
+| Kondensatgefälle | je Segment in Fließrichtung vom Innengerät weg: Fall / waagerechter Abstand (M6) |
 | Warnungen | Regelprüfungen, jede mit stabilem Schlüssel `<regel>:<objektId>` |
 
 ## Modulschnitt (Vorschlag)

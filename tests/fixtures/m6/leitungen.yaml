@@ -1,0 +1,59 @@
+cables:
+  - id: "c1licht1"
+    label: "Schalter Küche – Deckenauslass"
+    lineTypeId: "nym-j-3x1-5"
+    status: "planned"
+    from: {deviceId: "d2schalt"}
+    to: {deviceId: "d3decke1"}
+    path: ["s1stich1", "s3zone02", "s4hoch01", "s5decke1"]
+  - id: "c2og0001"
+    label: "Deckenauslass Küche – Bodendose Kind"
+    lineTypeId: "nym-j-3x1-5"
+    status: "installed"
+    from: {deviceId: "d3decke1"}
+    to: {deviceId: "d7bodog1"}
+    path: ["s8decke2", "s9kern01", "saboden1"]
+  - id: "c3ohne01"
+    label: "Schalter Küche – Steckdose"
+    lineTypeId: "nym-j-3x1-5"
+    status: "planned"
+    from: {deviceId: "d2schalt"}
+    to: {deviceId: "d1steck1"}
+  - id: "c4zuleit"
+    label: "Zuleitung UV OG"
+    lineTypeId: "nym-j-5x10"
+    status: "planned"
+    from: {boardId: "b1zaehl1"}
+    to: {boardId: "b3uvog01"}
+  - id: "c5steck1"
+    label: "Steckdose Küche 1 – UV EG"
+    lineTypeId: "nym-j-3x2-5"
+    status: "planned"
+    from: {deviceId: "d1steck1"}
+    to: {boardId: "b2uveg01"}
+  - id: "c6roll01"
+    label: "Rollladen Kind – UV OG"
+    lineTypeId: "nym-j-5x1-5"
+    status: "planned"
+    from: {deviceId: "daroll01"}
+    to: {boardId: "b3uvog01"}
+  - id: "c7netz01"
+    label: "Netzwerkdose Wohnen – Medienverteiler"
+    lineTypeId: "cat-7"
+    status: "planned"
+    from: {deviceId: "dbnetz01"}
+    to: {boardId: "b4medien"}
+  - id: "ckkaelte"
+    label: "Kältemittel Schlafen"
+    lineTypeId: "refrigerant-pair"
+    status: "planned"
+    from: {deviceId: "dkinnen1"}
+    to: {deviceId: "dkausse1"}
+    path: ["skbohr01", "skentlan", "skausgr1"]
+  - id: "ckkonden"
+    label: "Kondensat Schlafen"
+    lineTypeId: "condensate"
+    status: "planned"
+    from: {deviceId: "dkinnen1"}
+    to: {deviceId: "dkablauf"}
+    path: ["skbohr01", "skrunter"]

@@ -21,6 +21,15 @@ export function deviceMounting(device: Device): Mounting {
     : mountingForSurface(surfaceKind(device.placement.surface));
 }
 
+/**
+ * Rolle eines Klimageräts (design.md M6 „Dateiformat M5“): `refrigerant.unit`, ohne Feld
+ * Innengerät, wenn der Typ Kondensat anschließt, sonst Außengerät; null ohne Kältemittelangaben.
+ */
+export function refrigerantUnit(type: DeviceType | undefined): "indoor" | "outdoor" | null {
+  if (!type?.refrigerant) return null;
+  return type.refrigerant.unit ?? (type.connects.includes("condensate") ? "indoor" : "outdoor");
+}
+
 /** In M2 platzierbare Montagearten (din-rail erst ab M4). */
 export const PLACEABLE_MOUNTINGS: readonly Mounting[] = ["wall", "ceiling", "floor", "free"];
 

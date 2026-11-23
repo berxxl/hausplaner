@@ -2,6 +2,7 @@
 import { CURRENT_SCHEMA_VERSION } from "./schema";
 import {
   DEFAULT_ACTUATOR_RESERVE_PERCENT,
+  DEFAULT_CONDENSATE_MIN_SLOPE_PERCENT,
   DEFAULT_LENGTH_ALLOWANCE,
   DEFAULT_INSTALL_ZONES,
   DEFAULT_TE_RESERVE_PERCENT,
@@ -35,6 +36,7 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
       teReservePercent: DEFAULT_TE_RESERVE_PERCENT,
       actuatorReservePercent: DEFAULT_ACTUATOR_RESERVE_PERCENT,
+      condensateMinSlopePercent: DEFAULT_CONDENSATE_MIN_SLOPE_PERCENT,
     },
     catalog: defaultCatalog(),
     storeys: [storey],
@@ -52,6 +54,7 @@ export function newProject(name: string, firstStoreyName = "EG"): Project {
     knxLines: [],
     knxAssignments: [],
     suppressedWarnings: [],
+    cameraViews: [],
   };
 }
 

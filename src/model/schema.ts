@@ -1,11 +1,11 @@
 /**
- * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“, architektur.md „Datenmodell“).
+ * zod-Schema des Modells (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“, M6: „Dateiformat M5 (Schemaversion 5)“, architektur.md „Datenmodell“).
  * Dateischemata beschreiben genau den Inhalt einer Datei; alle Objekte sind strict.
  */
 import { z } from "zod";
 import { ID_PATTERN } from "./ids";
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 const id = z.string().regex(ID_PATTERN, "ID muss aus 8 Zeichen 0-9 und a-z bestehen");
 const mm = z.number().int("Längen sind ganze Millimeter");
@@ -53,6 +53,11 @@ export const SettingsSchema = z.strictObject({
     .number()
     .min(0, "Wert zwischen 0 und 100")
     .max(100, "Wert zwischen 0 und 100"),
+  /** Mindestgefälle von Kondensatleitungen in % (M6). */
+  condensateMinSlopePercent: z
+    .number()
+    .min(0, "Wert zwischen 0 und 10")
+    .max(10, "Wert zwischen 0 und 10"),
 });
 
 export const ProjectFileSchema = z.strictObject({
@@ -187,6 +192,8 @@ export const DeviceTypeSchema = z.strictObject({
     .optional(),
   refrigerant: z
     .strictObject({
+      /** Rolle (M6); fehlt sie, wird sie abgeleitet (`refrigerantUnit`). */
+      unit: z.enum(["indoor", "outdoor"]).optional(),
       minLengthM: z.number().nonnegative(),
       maxLengthM: z.number().positive(),
       prechargedLengthM: z.number().nonnegative(),
@@ -383,6 +390,23 @@ export const BoardsFileSchema = z.strictObject({
   knxAssignments: z.array(KnxAssignmentSchema).optional(),
 });
 
+// --- 3D-Ansichten (M6) ---
+
+const PointMm3Schema = z.strictObject({ x: mm, y: mm, z: mm });
+
+/** Gespeicherte Kameraposition in Welt-mm, z über Geländenull (design.md M6 „Kamerapositionen“). */
+export const CameraViewSchema = z.strictObject({
+  id,
+  name: text,
+  position: PointMm3Schema,
+  target: PointMm3Schema,
+  upToStoreyId: id.optional(),
+});
+
+export const ViewsFileSchema = z.strictObject({
+  cameraViews: z.array(CameraViewSchema).optional(),
+});
+
 export const WarningsFileSchema = z.strictObject({
   suppressedWarnings: z.array(z.string()).optional(),
 });
@@ -405,3 +429,4 @@ export type CatalogFile = z.infer<typeof CatalogFileSchema>;
 export type WarningsFile = z.infer<typeof WarningsFileSchema>;
 export type CablesFile = z.infer<typeof CablesFileSchema>;
 export type BoardsFile = z.infer<typeof BoardsFileSchema>;
+export type ViewsFile = z.infer<typeof ViewsFileSchema>;

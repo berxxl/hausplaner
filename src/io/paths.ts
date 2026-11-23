@@ -3,6 +3,7 @@ export const CATALOG_FILE = "katalog.yaml";
 export const WARNINGS_FILE = "warnungen.yaml";
 export const CABLES_FILE = "leitungen.yaml";
 export const BOARDS_FILE = "verteiler.yaml";
+export const VIEWS_FILE = "ansichten.yaml";
 const STOREY_FILE = /^geschosse\/([^/]+)\.yaml$/;
 
 export function storeyFilePath(slug: string): string {
@@ -22,6 +23,7 @@ export function isKnownFile(path: string): boolean {
     path === WARNINGS_FILE ||
     path === CABLES_FILE ||
     path === BOARDS_FILE ||
+    path === VIEWS_FILE ||
     storeySlugFromPath(path) !== null
   );
 }

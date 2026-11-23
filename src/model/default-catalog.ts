@@ -307,7 +307,7 @@ export const DEFAULT_DEVICE_TYPES: DeviceType[] = [
     mounting: ["wall"],
     defaultHeightMm: 2100,
     connects: ["power", "refrigerant", "condensate"],
-    refrigerant: { minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 },
+    refrigerant: { unit: "indoor", minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 },
   }),
   device({
     id: "ac-outdoor",
@@ -317,7 +317,28 @@ export const DEFAULT_DEVICE_TYPES: DeviceType[] = [
     shape3d: { kind: "box", widthMm: 800, heightMm: 550, depthMm: 290 },
     mounting: ["free", "wall"],
     connects: ["power", "refrigerant"],
-    refrigerant: { minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 },
+    refrigerant: { unit: "outdoor", minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 },
+  }),
+  // M6: Grenzen je Kältemittelverbindung (design.md M6 „Katalog“)
+  device({
+    id: "ac-outdoor-multi-3",
+    name: "Klima-Außengerät Multisplit 3",
+    trade: "refrigerant",
+    symbol: `<rect x='10' y='20' width='80' height='60' ${S}/><circle cx='50' cy='50' r='20' ${S}/><text x='50' y='96' font-size='22' ${T}>3</text>`,
+    shape3d: { kind: "box", widthMm: 900, heightMm: 700, depthMm: 320 },
+    mounting: ["free", "wall"],
+    connects: ["power", "refrigerant"],
+    refrigerant: { unit: "outdoor", minLengthM: 3, maxLengthM: 25, prechargedLengthM: 7 },
+  }),
+  device({
+    id: "condensate-drain",
+    name: "Kondensatablauf",
+    trade: "condensate",
+    symbol: labelCircle("KA", 30),
+    shape3d: { kind: "cylinder", widthMm: 50, heightMm: 50, depthMm: 40 },
+    mounting: ["wall", "floor", "free"],
+    defaultHeightMm: 300,
+    connects: ["condensate"],
   }),
 ];
 
@@ -482,3 +503,9 @@ export const M4_DEVICE_TYPE_IDS = [
   "power-supply",
 ];
 export const M4_LINE_TYPE_IDS = ["nym-j-5x10"];
+
+/** Standard-Mindestgefälle von Kondensatleitungen in % (design.md M6 „Schemaversion 5“). */
+export const DEFAULT_CONDENSATE_MIN_SLOPE_PERCENT = 1;
+
+/** Standardtypen, die mit M6 hinzukamen (Migration 4 → 5 ergänzt fehlende IDs). */
+export const M6_DEVICE_TYPE_IDS = ["ac-outdoor-multi-3", "condensate-drain"];

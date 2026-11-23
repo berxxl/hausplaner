@@ -43,7 +43,7 @@ function m4Store() {
 describe("Schema M4 (1.1)", () => {
   test("M4-Fixture besteht die Prüfung; Verteiler und Reiheneinbaugeräte erhalten das Geschoss", () => {
     const p = load(readFixture("m4"));
-    expect(p.schemaVersion).toBe(4);
+    expect(p.schemaVersion).toBe(5);
     expect(p.boards.map((b) => [b.id, b.storeyId])).toEqual([
       [I.meter, EG],
       [I.uvEg, EG],
@@ -253,7 +253,7 @@ describe("Migration 3 → 4 (1.5)", () => {
     const result = loadProject(files);
     if (result.status !== "ok") throw new Error(JSON.stringify(result));
     expect(result.notice).toBe(
-      "Projekt auf Version 4 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 5 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     expect(result.contents).toEqual(files);
     const p = result.project;
@@ -265,7 +265,7 @@ describe("Migration 3 → 4 (1.5)", () => {
     const store = createProjectStore(p);
     store.execute({ label: "Projekt umbenennen", run: (d) => void (d.name = "Neu") });
     const out = projectToFiles(store.getState().project);
-    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 4\n/);
+    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 5\n/);
     expect(out["katalog.yaml"]).toContain('  - id: "knx-switch-actuator-16"\n');
     expect(out["katalog.yaml"]).toContain('  - id: "nym-j-5x10"\n');
     for (const path of Object.keys(files).filter(
@@ -297,9 +297,9 @@ describe("Migration 3 → 4 (1.5)", () => {
     expect(p.catalog.lineTypes.some((t) => t.id === "nym-j-5x10")).toBe(true);
   });
 
-  test("Standardkatalog enthält die M4-Typen; neues Projekt in Version 4 (Spec-Scenario „Standardkatalog“)", () => {
+  test("Standardkatalog enthält die M4-Typen; neues Projekt in aktueller Version (Spec-Scenario „Standardkatalog“)", () => {
     const p = newProject("Neu");
-    expect(p.schemaVersion).toBe(4);
+    expect(p.schemaVersion).toBe(5);
     const names = p.catalog.deviceTypes.map((t) => t.name);
     for (const n of [
       "Schaltaktor",

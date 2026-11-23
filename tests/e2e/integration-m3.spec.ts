@@ -14,10 +14,11 @@ import {
 /** M2-Fixture im Stand von M2: Schemaversion 2, ohne Leitungszuschläge. */
 function m2Project(): Record<string, string> {
   const files = fixtureFiles("m2");
-  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 2")
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 5", "schemaVersion: 2")
     .replace(/ {2}lengthAllowance: .*\n/, "")
     .replace(/ {2}teReservePercent: .*\n/, "")
-    .replace(/ {2}actuatorReservePercent: .*\n/, "");
+    .replace(/ {2}actuatorReservePercent: .*\n/, "")
+    .replace(/ {2}condensateMinSlopePercent: .*\n/, "");
   return files;
 }
 
@@ -48,7 +49,7 @@ test("7.1 Gesamtablauf M3: M2-Projekt migrieren, Trasse, Durchbruch, Leitung, Zu
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kleines Projekt" })).toBeVisible();
   const notice = page.getByRole("region", { name: "Hinweis" });
-  await expect(notice).toContainText("Projekt auf Version 4 aktualisiert");
+  await expect(notice).toContainText("Projekt auf Version 5 aktualisiert");
   await notice.getByRole("button", { name: "OK" }).click();
 
   // Küche › Wand Nord: vom Schalter (3500 / 1050) hinauf an die Decke (Oberkante 2365)
@@ -111,7 +112,7 @@ test("7.1 Gesamtablauf M3: M2-Projekt migrieren, Trasse, Durchbruch, Leitung, Zu
     "projekt.yaml",
     "warnungen.yaml",
   ]);
-  expect(before["projekt.yaml"]).toContain("schemaVersion: 4");
+  expect(before["projekt.yaml"]).toContain("schemaVersion: 5");
   expect(before["projekt.yaml"]).toContain(
     "lengthAllowance: {perDeviceMm: 300, perBoardMm: 1500, wastePercent: 0}",
   );

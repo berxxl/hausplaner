@@ -6,6 +6,8 @@ import { isMap, isSeq, LineCounter, parseDocument, type Document } from "yaml";
 import type { z } from "zod";
 import {
   BoardsFileSchema,
+  ViewsFileSchema,
+  type ViewsFile,
   CablesFileSchema,
   CatalogFileSchema,
   CURRENT_SCHEMA_VERSION,
@@ -24,6 +26,7 @@ import type { Project } from "../model/types";
 import { filesToProject } from "./project-files";
 import {
   BOARDS_FILE,
+  VIEWS_FILE,
   CABLES_FILE,
   CATALOG_FILE,
   isKnownFile,
@@ -319,6 +322,12 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     if (result.success) boardsFile = result.data;
     else errors.push(...schemaErrors(BOARDS_FILE, parsed.get(BOARDS_FILE), result.error));
   }
+  let viewsFile: ViewsFile | undefined;
+  if (raw[VIEWS_FILE] !== undefined) {
+    const result = ViewsFileSchema.safeParse(raw[VIEWS_FILE] ?? {});
+    if (result.success) viewsFile = result.data;
+    else errors.push(...schemaErrors(VIEWS_FILE, parsed.get(VIEWS_FILE), result.error));
+  }
   const storeyFiles: { path: string; data: StoreyFile }[] = [];
   for (const path of storeyPaths) {
     const result = StoreyFileSchema.safeParse(raw[path]);
@@ -384,6 +393,11 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
     );
   if (boardsFile) checkIds(BOARDS_FILE, boardsFileIds(boardsFile));
   if (boardsFile) errors.push(...boardDeviceErrors(boardsFile, parsed.get(BOARDS_FILE)));
+  if (viewsFile)
+    checkIds(
+      VIEWS_FILE,
+      (viewsFile.cameraViews ?? []).map((v, i) => ({ id: v.id, path: ["cameraViews", i, "id"] })),
+    );
   if (errors.length > 0) return { status: "error", errors };
 
   return {
@@ -395,6 +409,7 @@ export function loadProject(allFiles: Record<string, string>): LoadResult {
       warningsFile,
       cablesFile,
       boardsFile,
+      viewsFile,
     ),
     contents,
     ...(notice ? { notice } : {}),

@@ -46,7 +46,7 @@ function wall(
 
 function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     name: "T",
     settings: {
       northDeg,
@@ -54,6 +54,7 @@ function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
       lengthAllowance: { ...DEFAULT_LENGTH_ALLOWANCE },
       teReservePercent: 25,
       actuatorReservePercent: 20,
+      condensateMinSlopePercent: 1,
     },
     catalog: { deviceTypes: [], lineTypes: [], furnitureTypes: [] },
     devices: [],
@@ -67,6 +68,7 @@ function project(walls: Wall[], rooms: Room[] = [], northDeg = 0): Project {
     knxLines: [],
     knxAssignments: [],
     suppressedWarnings: [],
+    cameraViews: [],
     storeys: [
       {
         id: "st000001",

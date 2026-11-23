@@ -1,5 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { parse } from "yaml";
+import { writeYaml } from "../../src/io/writer";
+import { M6_DEVICE_TYPE_IDS } from "../../src/model/default-catalog";
+import type { CatalogFile } from "../../src/model/schema";
 
 const ROOT = join(__dirname, "..", "fixtures");
 
@@ -19,9 +23,28 @@ export function readFixture(name: string): Record<string, string> {
   return files;
 }
 
+/**
+ * Fixture als M5-Projekt (Schemaversion 4, ohne Mindestgefälle, ohne die M6-Standardtypen) für
+ * Migrationstests (design.md M6 „Schemaversion 5 und Migration“).
+ */
+export function readV4Fixture(name: string): Record<string, string> {
+  const files = readFixture(name);
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace(
+    "schemaVersion: 5",
+    "schemaVersion: 4",
+  ).replace(/ {2}condensateMinSlopePercent: .*\n/, "");
+  const catalog = files["katalog.yaml"];
+  if (catalog) {
+    const file = parse(catalog) as CatalogFile;
+    file.deviceTypes = file.deviceTypes?.filter((t) => !M6_DEVICE_TYPE_IDS.includes(t.id));
+    files["katalog.yaml"] = writeYaml(file, "catalogFile");
+  }
+  return files;
+}
+
 /** Fixture als M3-Projekt (Schemaversion 3, ohne Reserven und Verteilerzuschlag) für Migrationstests. */
 export function readV3Fixture(name: string): Record<string, string> {
-  const files = readFixture(name);
+  const files = readV4Fixture(name);
   files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 3")
     .replace(/ perBoardMm: \d+,/, "")
     .replace(/ {2}teReservePercent: .*\n/, "")

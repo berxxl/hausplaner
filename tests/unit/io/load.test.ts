@@ -60,14 +60,14 @@ describe("Laden mit Prüfung (2.5)", () => {
 
   test("fehlende schemaVersion ist ein Ladefehler", () => {
     const files = klein();
-    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4\n", "");
+    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 5\n", "");
     const [e] = errorsOf(files);
     expect(e!.message).toMatch(/schemaVersion: Pflichtfeld fehlt/);
   });
 
   test("neuere schemaVersion: nicht öffnen", () => {
     const files = klein();
-    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 5");
+    files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 5", "schemaVersion: 6");
     const [e] = errorsOf(files);
     expect(e!.message).toMatch(/Projekt wurde mit neuerer App-Version erstellt/);
     expect(e!.line).toBe(1);

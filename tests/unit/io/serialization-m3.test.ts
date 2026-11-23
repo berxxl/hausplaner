@@ -130,7 +130,7 @@ describe("Migration 2 → 3 (1.5)", () => {
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.notice).toBe(
-      "Projekt auf Version 4 aktualisiert, wird beim nächsten Speichern geschrieben",
+      "Projekt auf Version 5 aktualisiert, wird beim nächsten Speichern geschrieben",
     );
     expect(result.contents).toEqual(files);
     expect(result.project.settings.lengthAllowance).toEqual({
@@ -139,7 +139,7 @@ describe("Migration 2 → 3 (1.5)", () => {
       wastePercent: 10,
     });
     const out = projectToFiles(result.project);
-    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 4\n/);
+    expect(out["projekt.yaml"]).toMatch(/^schemaVersion: 5\n/);
     expect(out["projekt.yaml"]).toContain(
       "  lengthAllowance: {perDeviceMm: 300, perBoardMm: 1500, wastePercent: 10}\n",
     );

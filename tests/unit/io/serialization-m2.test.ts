@@ -34,7 +34,7 @@ function changedLines(a: Record<string, string>, b: Record<string, string>) {
 describe("Schema M2 (1.1)", () => {
   test("M2-Fixture besteht die Prüfung, Geräte und Möbel erhalten storeyId", () => {
     const p = load(readFixture("m2"));
-    expect(p.schemaVersion).toBe(4);
+    expect(p.schemaVersion).toBe(5);
     expect(p.devices).toHaveLength(6);
     expect(p.furniture).toHaveLength(1);
     expect(p.catalog.deviceTypes.map((t) => t.id)).toContain("k7usb2c4");

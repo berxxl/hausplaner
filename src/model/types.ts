@@ -1,4 +1,4 @@
-/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- bis M4-Teil). */
+/** Modell im Speicher: ein einziges Project-Objekt (architektur.md „Datenmodell“, M1- bis M6-Teil). */
 import type { z } from "zod";
 import type {
   AnchorSchema,
@@ -26,6 +26,7 @@ import type {
   RouteNodeSchema,
   RouteSegmentSchema,
   SettingsSchema,
+  CameraViewSchema,
   SlopeSchema,
   StoreySchema,
   UnderlaySchema,
@@ -81,6 +82,7 @@ export type Board = Omit<z.infer<typeof BoardSchema>, "fields"> & {
 export type Circuit = z.infer<typeof CircuitSchema>;
 export type KnxLine = z.infer<typeof KnxLineSchema>;
 export type KnxAssignment = z.infer<typeof KnxAssignmentSchema>;
+export type CameraView = z.infer<typeof CameraViewSchema>;
 export type BoardPlacement = Extract<DevicePlacement, { kind: "board" }>;
 
 export interface Project {
@@ -107,4 +109,6 @@ export interface Project {
   knxAssignments: KnxAssignment[];
   /** Schlüssel bewusst übergangener Warnungen (warnungen.yaml). */
   suppressedWarnings: string[];
+  /** Gespeicherte 3D-Kamerapositionen (ansichten.yaml, M6). */
+  cameraViews: CameraView[];
 }

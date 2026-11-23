@@ -28,10 +28,11 @@ async function commit(page: Page, label: string, value: string) {
 /** Projekt im Stand von M1: Schemaversion 1, ohne Zonen, ohne katalog.yaml. */
 function m1Project(): Record<string, string> {
   const files = fixtureFiles("klein");
-  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 4", "schemaVersion: 1")
+  files["projekt.yaml"] = files["projekt.yaml"]!.replace("schemaVersion: 5", "schemaVersion: 1")
     .replace(/ {2}lengthAllowance: .*\n/, "")
     .replace(/ {2}teReservePercent: .*\n/, "")
     .replace(/ {2}actuatorReservePercent: .*\n/, "")
+    .replace(/ {2}condensateMinSlopePercent: .*\n/, "")
     .replace(/ {2}installZones:\n( {4}.*\n)+/, "");
   return files;
 }
@@ -55,7 +56,7 @@ test("9.1 Gesamtablauf M2: M1-Projekt migrieren bis Neuladen, Projekt danach unv
   await expect(page.getByRole("heading", { name: "Kleines Projekt" })).toBeVisible();
   // Migration: Hinweis, nichts geschrieben
   const notice = page.getByRole("region", { name: "Hinweis" });
-  await expect(notice).toContainText("Projekt auf Version 4 aktualisiert");
+  await expect(notice).toContainText("Projekt auf Version 5 aktualisiert");
   await notice.getByRole("button", { name: "OK" }).click();
   expect(Object.keys(await projectFiles(request)).sort()).toEqual([
     "geschosse/eg.yaml",
@@ -142,7 +143,7 @@ test("9.1 Gesamtablauf M2: M1-Projekt migrieren bis Neuladen, Projekt danach unv
     "projekt.yaml",
     "warnungen.yaml",
   ]);
-  expect(before["projekt.yaml"]).toContain("schemaVersion: 4");
+  expect(before["projekt.yaml"]).toContain("schemaVersion: 5");
   expect(before["katalog.yaml"]).toContain('name: "Steckdose Kopie"');
   const eg = parse(before["geschosse/eg.yaml"]!) as StoreyFile;
   const copies = eg

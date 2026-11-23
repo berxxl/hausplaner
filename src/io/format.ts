@@ -1,6 +1,6 @@
 /**
  * Dateiformat – die einzige Stelle mit Feldreihenfolge, Sortierung und Flow-Stil
- * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“). Writer und Golden-File-Tests hängen daran.
+ * (M1: design.md „Dateiformat M1“, M2: „Dateiformat M2“, M3: „Dateiformat M3“, M4: „Dateiformat M4“, M6: „Dateiformat M5 (Schemaversion 5)“). Writer und Golden-File-Tests hängen daran.
  */
 
 export type TypeName =
@@ -48,7 +48,10 @@ export type TypeName =
   | "boardField"
   | "circuit"
   | "knxLine"
-  | "knxAssignment";
+  | "knxAssignment"
+  | "viewsFile"
+  | "cameraView"
+  | "point3";
 
 export type FieldKind =
   | { kind: "scalar" }
@@ -89,6 +92,7 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
       f("lengthAllowance", obj("lengthAllowance")),
       f("teReservePercent"),
       f("actuatorReservePercent"),
+      f("condensateMinSlopePercent"),
     ],
   },
   lengthAllowance: { flow: true, fields: [f("perDeviceMm"), f("perBoardMm"), f("wastePercent")] },
@@ -220,7 +224,7 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
   },
   refrigerant: {
     flow: true,
-    fields: [f("minLengthM"), f("maxLengthM"), f("prechargedLengthM")],
+    fields: [f("unit", scalar, true), f("minLengthM"), f("maxLengthM"), f("prechargedLengthM")],
   },
   lineType: { fields: [f("id"), f("name"), f("trade"), f("outerDiameterMm"), f("color")] },
   furnitureType: {
@@ -345,6 +349,17 @@ export const FORMAT: Record<TypeName, TypeSpec> = {
     flow: true,
     fields: [f("actuatorDeviceId"), f("channel"), f("consumerDeviceId")],
   },
+  viewsFile: { fields: [f("cameraViews", byId("cameraView"), true)] },
+  cameraView: {
+    fields: [
+      f("id"),
+      f("name"),
+      f("position", obj("point3")),
+      f("target", obj("point3")),
+      f("upToStoreyId", scalar, true),
+    ],
+  },
+  point3: { flow: true, fields: [f("x"), f("y"), f("z")] },
   warningsFile: {
     fields: [f("suppressedWarnings", { kind: "scalars", sorted: true }, true)],
   },

@@ -6,6 +6,7 @@ import type {
   CatalogFile,
   ProjectFile,
   StoreyFile,
+  ViewsFile,
   WarningsFile,
 } from "../model/schema";
 import { writeYaml } from "./writer";
@@ -15,6 +16,7 @@ import {
   CATALOG_FILE,
   PROJECT_FILE,
   storeyFilePath,
+  VIEWS_FILE,
   WARNINGS_FILE,
 } from "./paths";
 
@@ -78,6 +80,11 @@ export function projectToFiles(project: Project): Record<string, string> {
     } as unknown as BoardsFile;
     files[BOARDS_FILE] = writeYaml(boards, "boardsFile");
   }
+  // ansichten.yaml nur mit Inhalt (design.md M6 „Dateiformat M5“)
+  if (project.cameraViews.length > 0) {
+    const views: ViewsFile = { cameraViews: project.cameraViews };
+    files[VIEWS_FILE] = writeYaml(views, "viewsFile");
+  }
   return files;
 }
 
@@ -108,6 +115,7 @@ export function filesToProject(
   warningsFile?: WarningsFile,
   cablesFile?: CablesFile,
   boardsFile?: BoardsFile,
+  viewsFile?: ViewsFile,
 ): Project {
   const project: Project = {
     schemaVersion: projectFile.schemaVersion,
@@ -129,6 +137,7 @@ export function filesToProject(
     knxLines: boardsFile?.knxLines ?? [],
     knxAssignments: boardsFile?.knxAssignments ?? [],
     suppressedWarnings: warningsFile?.suppressedWarnings ?? [],
+    cameraViews: viewsFile?.cameraViews ?? [],
   };
   for (const file of storeyFiles) {
     const storeyId = file.storey.id;

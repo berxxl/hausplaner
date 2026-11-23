@@ -43,7 +43,7 @@ Neu oder geändert gegenüber M4 (übrige Zeilen gelten unverändert):
 | `cameraView` | `id`, `name`, `position`, `target`, `upToStoreyId?` | – | `position`, `target` |
 | `position`, `target` | `x`, `y`, `z` (ganze mm, z über Geländenull wie `globalZ`) | – | ja |
 
-- `refrigerant.unit` ist `"indoor"` oder `"outdoor"` und optional. Fehlt es (Typen aus Projekten vor Version 5), gilt: Innengerät, wenn der Typ `condensate` in `connects` hat, sonst Außengerät (`refrigerantUnit(type)`). Die Längenwerte bleiben Pflicht wie bisher; bei Innengeräten haben sie keine Wirkung (maßgebend ist das Außengerät). Geprüft wird nur `minLengthM < maxLengthM`.
+- `refrigerant.unit` ist `"indoor"` oder `"outdoor"` und optional. Fehlt es (Typen aus Projekten vor Version 5), gilt: Innengerät, wenn der Typ `condensate` in `connects` hat, sonst Außengerät (`refrigerantUnit(type)`). Die Längenwerte bleiben Pflicht wie bisher; bei Innengeräten haben sie keine Wirkung (maßgebend ist das Außengerät).
 - `condensateMinSlopePercent`: Zahl ≥ 0 und ≤ 10 (eine Nachkommastelle in der Oberfläche).
 - `ansichten.yaml` wird nur geschrieben, wenn `cameraViews` nicht leer ist, sonst gelöscht (wie `leitungen.yaml`). `upToStoreyId` mit unbekanntem Geschoss gilt als nicht gesetzt und wird vom nächsten Befehl in `normalizeAfterCommand` entfernt.
 - `docs/architektur.md`: Dateiliste um `ansichten.yaml`, `Project.cameraViews`, `interface CameraView`, `Settings.condensateMinSlopePercent`, `DeviceType.refrigerant.unit?`.
