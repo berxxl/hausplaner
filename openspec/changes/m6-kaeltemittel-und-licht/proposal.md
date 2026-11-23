@@ -21,10 +21,12 @@ Fehler bei Kältemittel- und Kondensatleitungen (zu lang, Kondensat ohne Gefäll
 
 ### Modified Capabilities
 
+- `device-catalog`: Standardkatalog um Kondensatablauf und Multisplit-Außengerät; Rolle Innen-/Außengerät
+
 ## Impact
 
-Neue Regeln in `rules/`; erweiterte 3D-Ansicht. Kältemittel und Kondensat sind bereits als Leitungstypen vorhanden. Setzt `m5-plan-export` voraus.
+Neue Regeln in `rules/`; erweiterte 3D-Ansicht. Kältemittel und Kondensat sind bereits als Leitungstypen vorhanden. Schemaversion 5 (Mindestgefälle, Geräterolle im Katalog, gespeicherte Kamerapositionen in `ansichten.yaml`). Setzt `m5-plan-export` voraus.
 
 ## Offene Punkte
 
-- Dämmschicht an Außenwänden (aus m1, Task 9.4.1): Wände haben bisher nur eine Rohbaudicke ohne Außendämmung. Für Kältemittel- und Kondensatdurchführungen nach außen wird die Gesamttiefe gebraucht; Außenansicht und 3D sollen die Dämmung zeigen. Vorher prüfen, ob schon m2 (Geräte an der Fassade) die Schicht braucht. Formatänderung mit Schema-Migration.
+- Dämmschicht an Außenwänden (aus m1, Task 9.4.1; laut design.md „Entscheidungen bei der Ausarbeitung“ 9 nicht in M6): Wände haben bisher nur eine Rohbaudicke ohne Außendämmung. Für Kältemittel- und Kondensatdurchführungen nach außen wird die Gesamttiefe gebraucht; Außenansicht und 3D sollen die Dämmung zeigen. Vorher prüfen, ob schon m2 (Geräte an der Fassade) die Schicht braucht. Formatänderung mit Schema-Migration.
