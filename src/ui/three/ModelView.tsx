@@ -23,6 +23,9 @@ import { HIGHLIGHT_COLOR } from "../surface/routeGeometry";
 import { isCableVisible, isDeviceVisible } from "../filter";
 import type { ProjectStore } from "../../store/history";
 import type { Selection, ViewStore } from "../../store/view";
+import { rgbHex, sceneLights } from "../../geometry/lighting";
+import { LightPanel } from "./LightPanel";
+import { SceneLightsLayer } from "./SceneLightsLayer";
 
 /** Szene in Metern; Grundriss (x, y) und Höhe z → three (x, z, −y). */
 const M = 0.001;
@@ -356,6 +359,18 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     .sort()
     .join(";");
   const warned = warnedIds(project);
+  // Licht (design.md M6 „Licht in 3D“)
+  const lightMode = useStore(view, (s) => s.lightMode);
+  const lightsOff = useStore(view, (s) => s.lightsOff);
+  const shadowsOn = useStore(view, (s) => s.shadows);
+  const shown = visibleStoreys(project, upTo);
+  const topStoreyId = [...shown].sort((a, b) => b.elevationMm - a.elevationMm)[0]?.id ?? null;
+  const visibleDevices = devices.map((d) => d.device);
+  const lit = sceneLights(project, visibleDevices, new Set(lightsOff), topStoreyId);
+  const lightsActive = lightMode === "lights";
+  const shadows = lightsActive && shadowsOn;
+  const litIds = new Set(lightsActive ? lit.lights.map((l) => l.deviceId) : []);
+  const litColor = new Map(lit.lights.map((l) => [l.deviceId, rgbHex(l.color)]));
 
   return (
     <div className="model3d">
@@ -399,25 +414,53 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
           .map((r) => r.id)
           .sort()
           .join(",")}
+        data-light-mode={lightMode}
+        data-lights={
+          lightsActive
+            ? lit.lights
+                .map((l) => `${l.deviceId}:${l.kind}:${rgbHex(l.color)}`)
+                .sort()
+                .join(";")
+            : ""
+        }
         data-storeys={visibleStoreys(project, upTo)
           .map((s) => s.name)
           .sort()
           .join(",")}
       >
+        <LightPanel
+          project={project}
+          view={view}
+          devices={visibleDevices}
+          shown={lit.lights.length}
+          on={lit.on}
+        />
         <Canvas
           // nur bei Änderungen rendern: eine Dauerschleife blockiert ohne GPU den Hauptthread
           frameloop="demand"
+          shadows
           camera={{ fov: 45, near: 0.05, far: 2000 }}
           onPointerMissed={() => view.select(null)}
         >
           <color attach="background" args={["#f5f5f7"]} />
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 20, 8]} intensity={1.1} />
-          <directionalLight position={[-12, 8, -6]} intensity={0.4} />
+          {lightsActive ? (
+            <>
+              <hemisphereLight args={["#ffffff", "#808080", 0.15]} />
+              <SceneLightsLayer lights={lit.lights} shadows={shadows} />
+            </>
+          ) : (
+            <>
+              <ambientLight intensity={0.6} />
+              <directionalLight position={[10, 20, 8]} intensity={1.1} />
+              <directionalLight position={[-12, 8, -6]} intensity={0.4} />
+            </>
+          )}
           {scene.walls.map(({ solid, geometry }) => (
             <mesh
               key={`${solid.storeyId}:${solid.wallId}`}
               geometry={geometry}
+              castShadow={shadows}
+              receiveShadow={shadows}
               onClick={pick({ kind: "wall", id: solid.wallId })}
             >
               <meshStandardMaterial
@@ -430,6 +473,8 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
             <mesh
               key={`${poly.roomId}:${poly.kind}:${i}`}
               geometry={geometry}
+              castShadow={shadows}
+              receiveShadow={shadows}
               onClick={pick({ kind: "room", id: poly.roomId })}
             >
               <meshStandardMaterial
@@ -456,6 +501,8 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
                         ? WARNING_COLOR
                         : STATUS_COLORS[device.status]
                 }
+                emissive={litIds.has(device.id) ? litColor.get(device.id) : "#000000"}
+                emissiveIntensity={litIds.has(device.id) ? 1 : 0}
               />
             </mesh>
           ))}
@@ -476,6 +523,8 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
             <mesh
               key={f.id}
               geometry={geometry}
+              castShadow={shadows}
+              receiveShadow={shadows}
               matrix={matrix}
               matrixAutoUpdate={false}
               onClick={pick({ kind: "furniture", id: f.id })}

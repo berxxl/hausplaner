@@ -98,6 +98,12 @@ export interface ViewState {
   showZones: boolean;
   /** Senkrechte Zuführungen der Wandgeräte in allen Wandansichten (nicht gespeichert). */
   showFeeds: boolean;
+  /** Beleuchtung der 3D-Ansicht (design.md M6 „Licht in 3D“, nicht gespeichert). */
+  lightMode: "uniform" | "lights";
+  /** Ausgeschaltete Leuchten (Geräte-IDs); neue Leuchten sind an. */
+  lightsOff: string[];
+  /** Leuchten werfen Schatten. */
+  shadows: boolean;
 }
 
 export interface ViewStore extends StoreApi<ViewState> {
@@ -129,6 +135,9 @@ export interface ViewStore extends StoreApi<ViewState> {
   setCableFrom(from: Endpoint | null): void;
   /** Im Modus „Weg bearbeiten“: Segment hinzufügen oder entfernen; sonst false. */
   togglePathSegment(segmentId: string): boolean;
+  setLightMode(mode: ViewState["lightMode"]): void;
+  setLightsOff(ids: Iterable<string>): void;
+  setShadows(shadows: boolean): void;
 }
 
 export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
@@ -151,6 +160,9 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     routesHidden: false,
     showZones: false,
     showFeeds: false,
+    lightMode: "uniform",
+    lightsOff: [],
+    shadows: false,
     ...initial,
   }));
   return Object.assign(store, {
@@ -196,6 +208,15 @@ export function createViewStore(initial: Partial<ViewState> = {}): ViewStore {
     },
     setRoutesHidden(routesHidden: boolean) {
       store.setState({ routesHidden });
+    },
+    setLightMode(lightMode: ViewState["lightMode"]) {
+      store.setState({ lightMode });
+    },
+    setLightsOff(ids: Iterable<string>) {
+      store.setState({ lightsOff: [...new Set(ids)].sort() });
+    },
+    setShadows(shadows: boolean) {
+      store.setState({ shadows });
     },
     setFurnitureHidden(furnitureHidden: boolean) {
       store.setState({ furnitureHidden });

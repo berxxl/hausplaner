@@ -11,6 +11,7 @@ import { createSaveController } from "../../../src/store/save";
 import { createViewStore } from "../../../src/store/view";
 import type { Device } from "../../../src/model/types";
 import { mockApi } from "../mock-api";
+import { LightPanel } from "../../../src/ui/three/LightPanel";
 import { readFixture } from "../fixtures";
 import { M6_IDS as I } from "../io/fixture-m6.gen.test";
 
@@ -165,5 +166,39 @@ describe("Klimaverbindung in den Eigenschaften (4.1)", () => {
       prechargedLengthM: 7,
     });
     expect(within(form).getByLabelText("Leitungslänge max.")).toBeInTheDocument();
+  });
+});
+
+describe("Lichtleiste (5.2)", () => {
+  test("Kreis schalten, unbestimmter Zustand, alle an/aus, Hinweis bei mehr als 32", () => {
+    const store = load();
+    const p = P(store);
+    const view = createViewStore();
+    const { rerender } = render(
+      <LightPanel project={p} view={view} devices={p.devices} shown={6} on={6} />,
+    );
+    const panel = screen.getByRole("complementary", { name: "Licht" });
+    fireEvent.click(within(panel).getByRole("radio", { name: "Leuchten" }));
+    expect(view.getState().lightMode).toBe("lights");
+    fireEvent.click(within(panel).getByRole("button", { name: "Alle aus" }));
+    expect(view.getState().lightsOff).toHaveLength(6);
+    const circuit = within(panel).getByRole("checkbox", { name: "F3 Licht Wohnen (UV EG)" });
+    expect(circuit).not.toBeChecked();
+    fireEvent.click(circuit);
+    expect(view.getState().lightsOff).toEqual(["d3decke1", I.pendant]);
+    // eine Leuchte aus → Kreis unbestimmt
+    fireEvent.click(within(panel).getByRole("checkbox", { name: "Spot Wohnen 2" }));
+    expect((circuit as HTMLInputElement).indeterminate).toBe(true);
+    expect(circuit).not.toBeChecked();
+    fireEvent.click(circuit);
+    expect(view.getState().lightsOff).toEqual(["d3decke1", I.pendant]);
+    fireEvent.click(within(panel).getByRole("button", { name: "Alle an" }));
+    expect(view.getState().lightsOff).toEqual([]);
+    fireEvent.click(within(panel).getByRole("checkbox", { name: "Schatten" }));
+    expect(view.getState().shadows).toBe(true);
+    rerender(<LightPanel project={p} view={view} devices={p.devices} shown={32} on={40} />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "32 von 40 Leuchten dargestellt (höchstens 32)",
+    );
   });
 });

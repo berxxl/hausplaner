@@ -22,8 +22,8 @@
 
 ## 5. Licht in 3D
 
-- [ ] 5.1 `geometry/lighting.ts`: `kelvinToRgb`, Lichtstärken für Spot/Punkt/Fläche, `sceneLights` (Lage, Richtung, Schalten, Grenze 32); Unit-Tests: vier Spots 36° ergeben vier Spotlichter mit halbem Öffnungswinkel 18° nach unten (Spec-Scenario „Spotreihe“), 2700 K wärmer als 4000 K (Spec-Scenario „Warmweiß“), nur Kreis der Deckenspots an (Spec-Scenario „Nur Deckenspots“), mehr als 32 Leuchten
-- [ ] 5.2 3D: Lichtmodus im View-Store, Lichtquellen (Spot/Point/RectArea), Selbstleuchten, Schatten, Leiste „Licht“ mit Kreisen und Leuchten, `data-lights`; Belichtungsfaktor per Bild einstellen; Komponententest Lichtleiste (Kreis schalten, unbestimmter Zustand)
+- [x] 5.1 `geometry/lighting.ts`: `kelvinToRgb`, Lichtstärken für Spot/Punkt/Fläche, `sceneLights` (Lage, Richtung, Schalten, Grenze 32); Unit-Tests: vier Spots 36° ergeben vier Spotlichter mit halbem Öffnungswinkel 18° nach unten (Spec-Scenario „Spotreihe“), 2700 K wärmer als 4000 K (Spec-Scenario „Warmweiß“), nur Kreis der Deckenspots an (Spec-Scenario „Nur Deckenspots“), mehr als 32 Leuchten
+- [x] 5.2 3D: Lichtmodus im View-Store, Lichtquellen (Spot/Point/RectArea), Selbstleuchten, Schatten, Leiste „Licht“ mit Kreisen und Leuchten, `data-lights`; Belichtungsfaktor per Bild einstellen; Komponententest Lichtleiste (Kreis schalten, unbestimmter Zustand)
 
 ## 6. Bild und Kamerapositionen
 
