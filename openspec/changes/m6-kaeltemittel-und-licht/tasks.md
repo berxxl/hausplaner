@@ -27,12 +27,12 @@
 
 ## 6. Bild und Kamerapositionen
 
-- [ ] 6.1 „Bild speichern …“ mit Auflösungen, Rendern in Zielgröße, Download, Fehlermeldung bei zu großer Auflösung; Playwright: 1920 × 1080 speichern, PNG-Kopf hat diese Größe (Spec-Scenario „Bild für die Familie“)
-- [ ] 6.2 Kamerapositionen: Befehle „Ansicht speichern/ändern/löschen“, Auswahl „Ansicht“, „Ansicht speichern …“ mit Überschreiben nach Rückfrage, „Anzeigen bis“; Unit-Tests der Befehle mit Undo; Playwright: „Küche vom Esstisch“ speichern, Kamera bewegen, aufrufen, Projektion eines bekannten Punkts wie vorher (Spec-Scenario „Ansicht Küche“)
+- [x] 6.1 „Bild speichern …“ mit Auflösungen, Rendern in Zielgröße, Download, Fehlermeldung bei zu großer Auflösung; Playwright: 1920 × 1080 speichern, PNG-Kopf hat diese Größe (Spec-Scenario „Bild für die Familie“)
+- [x] 6.2 Kamerapositionen: Befehle „Ansicht speichern/ändern/löschen“, Auswahl „Ansicht“, „Ansicht speichern …“ mit Überschreiben nach Rückfrage, „Anzeigen bis“; Unit-Tests der Befehle mit Undo; Playwright: „Küche vom Esstisch“ speichern, Kamera bewegen, aufrufen, Projektion eines bekannten Punkts wie vorher (Spec-Scenario „Ansicht Küche“)
 
 ## 7. Integration
 
-- [ ] 7.1 Playwright-Ablauf mit Fixture m6: Klimaverbindung in den Eigenschaften, Kondensatknoten anheben → Warnung und Segment in Warnfarbe, 3D „Leuchten“ mit vier Spots, nur „F3 Licht“, Helligkeit unter einem Spot größer als daneben (aus dem PNG), Ansicht speichern und aufrufen, speichern und neu laden; alle drei Browser
+- [x] 7.1 Playwright-Ablauf mit Fixture m6: Klimaverbindung in den Eigenschaften, Kondensatknoten anheben → Warnung und Segment in Warnfarbe, 3D „Leuchten“ mit vier Spots, nur „F3 Licht“, Helligkeit unter einem Spot größer als daneben (aus dem PNG), Ansicht speichern und aufrufen, speichern und neu laden; alle drei Browser
 - [ ] 7.2 Manuell: banatstrasse10 migrieren, Klima-Innengerät mit Außengerät und Kondensatleitung planen, Spots im Flur in 3D ansehen, Bild speichern (in Safari); Befunde als Folge-Tasks
 
 ## Workflow follow-up

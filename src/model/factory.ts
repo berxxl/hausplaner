@@ -116,6 +116,7 @@ export function allIds(project: Project): string[] {
     ...project.boards.flatMap((b) => [b.id, ...b.fields.map((f) => f.id)]),
     ...project.circuits.map((c) => c.id),
     ...project.knxLines.map((l) => l.id),
+    ...project.cameraViews.map((v) => v.id),
     ...deviceTypes.map((t) => t.id),
     ...lineTypes.map((t) => t.id),
     ...furnitureTypes.map((t) => t.id),

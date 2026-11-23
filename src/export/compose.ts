@@ -137,12 +137,24 @@ export function composeSheet(
 
 export { legendEntries };
 
-/** Dateiname aus Projekt, optional Planinhalt, und Datum; nur Buchstaben, Ziffern, Leerzeichen, „-“, „_“. */
-export function pdfFileName(project: string, date: string, content?: string): string {
+/**
+ * Dateiname aus Projekt, optional Planinhalt, und Datum; nur Buchstaben, Ziffern, Leerzeichen,
+ * „-“, „_“ (M5; M6 auch für „<Projekt> 3D <Datum>.png“).
+ */
+export function exportFileName(
+  project: string,
+  date: string,
+  content: string | undefined,
+  extension: string,
+): string {
   const clean = (s: string) =>
     s
       .replace(/[^\p{L}\p{N} _-]+/gu, " ")
       .replace(/\s+/g, " ")
       .trim();
-  return `${[clean(project), content ? clean(content) : null, clean(date)].filter(Boolean).join(" ")}.pdf`;
+  return `${[clean(project), content ? clean(content) : null, clean(date)].filter(Boolean).join(" ")}.${extension}`;
+}
+
+export function pdfFileName(project: string, date: string, content?: string): string {
+  return exportFileName(project, date, content, "pdf");
 }

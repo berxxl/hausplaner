@@ -89,13 +89,13 @@ Neu in M6 (alle übergehbar):
 - Projekteinstellungen, Abschnitt „Kondensat“: „Mindestgefälle (%)“, Befehl „Mindestgefälle ändern“, Prüfung 0–10, Schritt 0,1.
 
 ### Licht in 3D (`geometry/lighting.ts`, `ui/three/`)
-- **Modus** (Ansichtszustand im View-Store, nicht gespeichert): „Gleichmäßig“ (bisherige Beleuchtung, Standard) oder „Leuchten“. Im Modus „Leuchten“ gibt es nur ein schwaches Umgebungslicht (Hemisphäre, Intensität 0,08) und die eingeschalteten Leuchten; die Richtungslichter sind aus.
+- **Modus** (Ansichtszustand im View-Store, nicht gespeichert): „Gleichmäßig“ (bisherige Beleuchtung, Standard) oder „Leuchten“. Im Modus „Leuchten“ gibt es nur ein schwaches Umgebungslicht (Hemisphäre, Intensität 0,15) und die eingeschalteten Leuchten; die Richtungslichter sind aus.
 - **Leuchten** sind sichtbare Geräte (Gewerkfilter, „Anzeigen bis“) mit `light` im Typ und Flächenplatzierung. `sceneLights(project, opts)` (rein) liefert je Leuchte `{ deviceId, kind, position, direction, color, intensity, angle?, width?, height? }` in Welt-mm:
   - Lage: Mitte der Gerätevorderseite (Oberfläche + `shape3d.depthMm` entlang der Normalen) + 5 mm; Richtung: Normale der Fläche (Deckenspot strahlt nach unten, Wandauslass in den Raum).
   - **Spot** → `SpotLight`, Öffnungswinkel `angle` = `beamAngleDeg` / 2 (Standard 36°, wenn nicht gesetzt), `penumbra` 0,3, `decay` 2, Lichtstärke I = Φ / (2π (1 − cos(θ/2))) cd.
   - **Punkt** → `PointLight`, `decay` 2, I = Φ / (4π) cd.
   - **Fläche** → `RectAreaLight` mit `shape3d` Breite × Höhe, Leuchtdichte L = Φ / (π · A) (A in m²), Richtung Normale.
-  - Die physikalischen Werte werden mit dem festen Belichtungsfaktor `LIGHT_EXPOSURE` multipliziert (bei der Umsetzung einmal per Bildvergleich eingestellt, damit eine 450-lm-Spotreihe auf 2,5 m einen deutlich hellen, nicht ausgebrannten Kegel ergibt; der Wert steht im Code mit Begründung).
+  - Die physikalischen Werte werden mit dem festen Belichtungsfaktor `LIGHT_EXPOSURE` multipliziert (per Bild eingestellt auf 0,05, damit die 450-lm-Spotreihe der Fixture auf 2,5 m einen deutlich hellen, nicht ausgebrannten Kegel ergibt; der Wert steht im Code mit Begründung). Umgebungslicht im Modus „Leuchten“: Hemisphäre 0,15.
   - **Lichtfarbe:** `kelvinToRgb(K)` (Näherung nach Tanner Helland, 1000–40000 K, Ergebnis 0…1 je Kanal, in three als sRGB-Farbe). 2700 K hat ein größeres Verhältnis Rot/Blau als 4000 K (Spec „Warmweiß“).
   - Eingeschaltete Leuchten leuchten selbst: Material mit `emissive` in Lichtfarbe.
 - **Grenze:** Höchstens 32 Lichtquellen gleichzeitig (Shader-Grenzen und Leistung). Sind mehr eingeschaltet, werden die des obersten angezeigten Geschosses zuerst genommen, dann nach Geräte-ID; Hinweis in der Lichtleiste „<n> von <m> Leuchten dargestellt (höchstens 32)“.
@@ -112,6 +112,7 @@ Neu in M6 (alle übergehbar):
 - Gespeichert im Projekt (`ansichten.yaml`), damit sie über Git bei allen ankommen (Spec „Ansicht Küche“). Inhalt: Name, Kameraposition, Blickziel (Ziel der Orbit-Steuerung) in Welt-mm, z über Geländenull, ganze mm; dazu „Anzeigen bis“ (`upToStoreyId`, fehlt = alle Geschosse).
 - 3D-Werkzeugleiste: Auswahl „Ansicht“ mit den gespeicherten Namen (alphabetisch); Wahl setzt Kamera, Ziel und „Anzeigen bis“. Knopf „Ansicht speichern …“ fragt den Namen (Vorschlag „Ansicht <n>“); gibt es den Namen schon, wird diese Ansicht nach Rückfrage überschrieben. Knopf „Ansicht löschen“ für die gewählte Ansicht.
 - Befehle: „Ansicht speichern“, „Ansicht ändern“ (Überschreiben), „Ansicht löschen“. Ansichten sind keine Auswahlobjekte und erscheinen nicht im Baum.
+- Umsetzung (2026-11-23): Die Auswahl heißt sichtbar „Ansicht“, für Screenreader „Gespeicherte Ansicht“ (die Tab-Leiste der Editoren heißt schon „Ansicht“). Beim Aufrufen wird die Restbewegung der gedämpften Orbit-Steuerung verworfen. Das Blickziel wird nur beim ersten Einpassen auf die Gebäudemitte gesetzt und bleibt danach bei Modelländerungen und beim Wechsel von „Anzeigen bis“ stehen (vorher sprang es bei jeder Änderung zurück, auch nach „Ansicht speichern“).
 
 ### Module
 - Neu, rein: `geometry/refrigerant.ts` (Rollen, Verbindungen, Mehrlänge, Gefälle je Segment), `geometry/lighting.ts` (`kelvinToRgb`, Lichtstärken, `sceneLights`, Begrenzung), `rules/refrigerant.ts`, `store/views3d.ts` (Befehle für Ansichten). 

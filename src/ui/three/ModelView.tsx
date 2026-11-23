@@ -1,6 +1,6 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useStore } from "zustand";
 import {
@@ -26,6 +26,13 @@ import type { Selection, ViewStore } from "../../store/view";
 import { rgbHex, sceneLights } from "../../geometry/lighting";
 import { LightPanel } from "./LightPanel";
 import { SceneLightsLayer } from "./SceneLightsLayer";
+import { CaptureHook, ImageMenu } from "./ImageCapture";
+import type { CaptureApi } from "./imageSizes";
+import { CameraHook, CameraViews, type CameraApi } from "./CameraViews";
+import type { CameraView } from "../../model/types";
+import { downloadBlob } from "../../export/download";
+import { exportFileName } from "../../export/compose";
+import { formatDate } from "../../export/sheet";
 
 /** Szene in Metern; Grundriss (x, y) und Höhe z → three (x, z, −y). */
 const M = 0.001;
@@ -272,19 +279,25 @@ function ProjectionHook({ container }: { container: HTMLElement | null }) {
   return null;
 }
 
+/**
+ * Kamera einmal auf das Gebäude einpassen, Blickziel der Orbit-Steuerung in die Mitte. Danach
+ * bleibt das Blickziel bei Modelländerungen stehen (M6: gespeicherte Ansichten springen sonst).
+ */
 function CameraFit({ bounds }: { bounds: THREE.Box3 }) {
-  const { camera, invalidate } = useThree();
+  const { camera, controls, invalidate } = useThree();
   const done = useRef(false);
   useEffect(() => {
-    if (done.current || bounds.isEmpty()) return;
+    if (done.current || bounds.isEmpty() || !controls) return;
     const c = bounds.getCenter(new THREE.Vector3());
     const r = bounds.getSize(new THREE.Vector3()).length();
     camera.position.set(c.x - r * 0.6, c.y + r * 0.8, c.z + r * 0.9);
-    camera.lookAt(c);
+    const orbit = controls as unknown as { target: THREE.Vector3; update(): void };
+    orbit.target.copy(c);
+    orbit.update();
     camera.updateProjectionMatrix();
     invalidate();
     done.current = true;
-  }, [bounds, camera, invalidate]);
+  }, [bounds, camera, controls, invalidate]);
   return null;
 }
 
@@ -304,6 +317,16 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
   const selection = useStore(view, (s) => s.selection);
   const [upTo, setUpTo] = useState<string | null>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const captureApi = useRef<CaptureApi | null>(null);
+  const registerCapture = useCallback((api: CaptureApi | null) => {
+    captureApi.current = api;
+  }, []);
+  const cameraApi = useRef<CameraApi | null>(null);
+  const registerCamera = useCallback((api: CameraApi | null) => {
+    cameraApi.current = api;
+  }, []);
+  // gewählte Ansicht mit anderem „Anzeigen bis“ erst nach dem Rendern der neuen Szene anwenden
+  const pendingView = useRef<CameraView | null>(null);
   const scene = useMemo(() => buildScene(project, upTo), [project, upTo]);
   const hiddenTrades = useStore(view, (s) => s.hiddenTrades);
   const furnitureHidden = useStore(view, (s) => s.furnitureHidden);
@@ -337,9 +360,13 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
     e.stopPropagation();
     view.select(sel);
   };
-  const center = scene.bounds.isEmpty()
-    ? new THREE.Vector3()
-    : scene.bounds.getCenter(new THREE.Vector3());
+  useEffect(() => {
+    const v = pendingView.current;
+    if (!v) return;
+    pendingView.current = null;
+    cameraApi.current?.set(v.position, v.target);
+  }, [scene]);
+
   const summary = scene.walls
     .map(({ solid: w }) => `${w.wallId}:${Math.round(w.start.x)},${Math.round(w.start.y)}`)
     .sort()
@@ -390,6 +417,29 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
             ))}
           </select>
         </label>
+        <CameraViews
+          project={project}
+          store={store}
+          camera={() => cameraApi.current}
+          upTo={upTo}
+          onRecall={(v) => {
+            if ((v.upToStoreyId ?? null) === upTo) cameraApi.current?.set(v.position, v.target);
+            else {
+              pendingView.current = v;
+              setUpTo(v.upToStoreyId ?? null);
+            }
+          }}
+        />
+        <ImageMenu
+          onSave={async (size) => {
+            const s =
+              size.key === "window"
+                ? captureApi.current!.windowSize()
+                : { width: size.width, height: size.height };
+            const blob = await captureApi.current!.capture(s.width, s.height);
+            downloadBlob(blob, exportFileName(project.name, formatDate(new Date()), "3D", "png"));
+          }}
+        />
         <span className="hint">
           Ziehen dreht, rechte Maustaste schwenkt, Mausrad zoomt. Klick wählt aus.
         </span>
@@ -558,8 +608,10 @@ export function ModelView({ store, view }: { store: ProjectStore; view: ViewStor
             </mesh>
           ))}
           <CameraFit bounds={scene.bounds} />
-          <OrbitControls makeDefault target={center} />
+          <OrbitControls makeDefault />
           <ProjectionHook container={container} />
+          <CaptureHook register={registerCapture} />
+          <CameraHook register={registerCamera} />
         </Canvas>
       </div>
     </div>
